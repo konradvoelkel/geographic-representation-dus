@@ -2,6 +2,16 @@
 
 Ein Eintrag je Version, die Änderungen aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
+## 0.38.0 (2026-11-27), Vorgänge
+
+- **Unterseite `vorgaenge.html`** (Vorhaben 14, Stufe 3, `docs/decisions.md`, Punkt 91): Antworten auf
+  Anfragen je Gremium und Fraktion (mit Mindestzahl und Poisson-Intervall, nicht sortierbar), Anfragen ohne
+  Antwort im Datensatz als Kandidaten und die Vorgänge; gemessen nur in der Hauptperiode, sonst explorativ.
+- **Dialog-Haken**: der Dokumentdialog der Hauptseite lädt Zeilen je Dokument erst beim Öffnen nach (heute
+  die Vorgänge, später ähnliche Dokumente und Beschlusslage), `dokumente.json` wächst nicht.
+- Neue Downloads `vorgang_kanten`, `dokumente_vorgang` (CSV nur Dokumente mit Vorgang), `antwortzeiten`;
+  `verweise` bleibt lokal.
+
 ## 0.37.0 (2026-11-27), Zeit
 
 - **Unterseite `zeit.html`** (Vorhaben 17, Stufe 3, `docs/decisions.md`, Punkt 90): der Rhythmus der

@@ -33,6 +33,9 @@ Stand 2026-11-26, `main` auf `v0.32.0`.
 - **Downloads von 11 und 12** (`v0.36.0`): `dokumente_kopf` und `kennungen`, nur in der Hauptperiode.
 - **`zeit.html`** (`v0.37.0`): Rhythmus, die drei Hypothesen von 17, Bundesvokabular; in der laufenden
   Periode die Liste der Feeds mit ihrem Datenstand.
+- **`vorgaenge.html`** (`v0.38.0`): Antworten auf Anfragen, Kandidaten, Vorgänge; dazu der Dialog-Haken der
+  Hauptseite, der Zeilen je Dokument beim Öffnen nachlädt. Die Hauptseite liegt damit bei 966 522 Byte,
+  rund 29 KB über dem Stand vor der Phase (Ziel höchstens 30 KB, `docs/todo.md`, Punkt 36).
 - Die Worktrees, Venvs und Branches der Vorverarbeitung sind am 2026-11-26 entfernt. Für die Phase
   „Zeigen“ arbeiten Bau-Agenten wieder auf eigenen Branches in Worktrees (Konrad, 2026-11-27; `CLAUDE.md`).
 

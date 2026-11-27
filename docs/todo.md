@@ -315,3 +315,12 @@ von 14 trägt `dokumente_vorgang.csv` nur die Dokumente in einem Vorgang (7,05 �
 vier Datensätze, `CsvPlan` aus Punkt 89 wie beim Vokabular von 17); offen bleibt die Regel für die
 übrigen Tabellen je Dokument (15: `dokumente_funktion`, `dokumente_antragsteller`).
 
+## 36. Spaltenschema nicht mehr auf der Hauptseite
+
+Aufgenommen am 2026-11-27 nach `vorgaenge.html` (Punkt 91): die Hauptseite der Hauptperiode wiegt 966 522
+Byte, rund 29 KB über dem Bau vor `v0.33.0` (Ziel der Phase höchstens 30 KB, hart 1 000 000). Den größten
+Teil des Zuwachses tragen die Spaltenschemata der neuen Tabellen (`<details>` unter „Spaltenschema" je
+Tabelle, bei 15, 11/12, 17 und 14 je rund 3 bis 6 KB). Vor der nächsten Unterseite (22) das Spaltenschema
+nur noch in `schema.json` und auf einer kleinen eigenen Seite führen und auf der Hauptseite verlinken;
+eine Regel für das ganze Register (Reviews der Stufen 3 von 15, 11/12, 17 und 14).
+

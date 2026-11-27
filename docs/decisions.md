@@ -4852,7 +4852,7 @@ Sensitivitäten auf einer eigenen Seite (22 Zeilen, rund 4 KB).
   420 986 → 16 413, Mönchengladbach 295 230 → 14 741. Die Downloads von 17 machen die
   veröffentlichte Seite 1,2 MB größer (53,0 → 54,2 MB); die Pakete im Repo ändern sich nicht.
 
-## NN. Die Unterseite `vorgaenge.html` und der allgemeine Dialog-Haken: Prüfsatz aus drei `guete.json`, gemessen nur die Hauptperiode, `verweise` kein Download (Vorhaben 14, Stufe 3, und Vorarbeit V2, 2026-11-27)
+## 91. Die Unterseite `vorgaenge.html` und der allgemeine Dialog-Haken: Prüfsatz aus drei `guete.json`, gemessen nur die Hauptperiode, `verweise` kein Download (Vorhaben 14, Stufe 3, und Vorarbeit V2, 2026-11-27)
 
 Stufe 3 von Vorhaben 14 nach `docs/plans/14-vorgaenge.md`, § 7 und § 10, und Vorarbeit V2 nach
 `docs/plan-zeigen-2026-11.md` (§ 4, § 5, `v0.36.0`), im Muster von `akteure.html` (Punkt 88). Gebaut
