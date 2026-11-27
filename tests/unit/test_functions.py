@@ -98,7 +98,9 @@ def test_the_title_word_decides_a_political_collection(rules_a: FunctionRules) -
         return classify_function("Vorlage aus der Politik", name, "", "Fraktion", rules_a)
 
     assert political("Rückfrage zum Spielplatz") == _f("kontrolle", "nachfrage", "titel")
-    assert political("Resolution gegen Fremdenfeindlichkeit") == _f("symbol", "resolution", "titel")
+    assert political("Resolution gegen Fremdenfeindlichkeit") == _f(
+        "erklaerung", "resolution", "titel"
+    )
     assert political("Antrag: Tempo 30") == _f("initiative", "antrag", "titel")
     assert political("Spielplatz") == _f("rest", "sammelart_ohne_merkmal", "")
 
@@ -162,12 +164,12 @@ def test_a_political_originator_makes_an_administrative_collection_political(
     assert found == _f("initiative", "antrag", "titel")
 
 
-# --- 3. Symbolpolitik aus dem Titel, nur aus der Politik ---------------------------------------
-def test_a_resolution_motion_is_symbolic(rules_a: FunctionRules) -> None:
+# --- 3. Erklärung oder Appell aus dem Titel, nur aus der Politik (Codebuch: symbol) ---------------------------------------
+def test_a_resolution_motion_is_a_statement(rules_a: FunctionRules) -> None:
     found = classify_function(
         "Antrag", "Resolution zum russischen Angriff auf die Ukraine", "", "Fraktion", rules_a
     )
-    assert found == _f("symbol", "resolution", "titel")
+    assert found == _f("erklaerung", "resolution", "titel")
 
 
 def test_an_information_about_a_resolution_stays_information(rules_a: FunctionRules) -> None:
@@ -177,7 +179,7 @@ def test_an_information_about_a_resolution_stays_information(rules_a: FunctionRu
     assert found == _f("information", "informationsvorlage", "art")
 
 
-def test_a_petition_is_never_symbolic(rules_b: FunctionRules) -> None:
+def test_a_petition_is_never_a_statement(rules_b: FunctionRules) -> None:
     found = classify_function(
         "Eingabe nach 24 GO", "Resolution für den Frieden", "", "Eingabe", rules_b
     )
@@ -191,7 +193,7 @@ def test_variant_b_reads_a_declaration_in_the_resolution_text(
     text = "beschlussvorschlag: der rat verurteilt die lieferung von panzern"
     args = ("Antrag", "Keine Panzer für die Türkei", text, "Fraktion")
     assert classify_function(*args, rules_a) == _f("initiative", "antrag", "art")
-    assert classify_function(*args, rules_b) == _f("symbol", "erklaerung_text", "text")
+    assert classify_function(*args, rules_b) == _f("erklaerung", "erklaerung_text", "text")
 
 
 def test_variant_b_counts_a_report_motion_as_control(
@@ -227,7 +229,7 @@ def test_every_type_of_the_second_city_goes_through_the_table() -> None:
     motion = classify_function(
         "3 - Fraktionsantrag", "Resolution: Gegen jeden Antisemitismus", "", "Fraktion", rules
     )
-    assert motion == _f("symbol", "resolution", "titel")
+    assert motion == _f("erklaerung", "resolution", "titel")
 
 
 # --- die Tabelle je Korpus-ID ---------------------------------------------------------------------
@@ -246,11 +248,11 @@ def test_the_frame_has_one_row_per_corpus_id_and_unknown_originators_count_as_un
     frame = classify_functions(corpus, originators, rules_b)
     assert frame.schema == pl.Schema(FUNCTIONS_SCHEMA)
     assert frame.get_column("id").to_list() == ["a", "b", "c"]
-    assert frame.get_column("funktion").to_list() == ["vollzug", "symbol", "kontrolle"]
+    assert frame.get_column("funktion").to_list() == ["vollzug", "erklaerung", "kontrolle"]
     assert set(frame.get_column("variante").to_list()) == {"B"}
     assert function_figures(frame) == dict.fromkeys(FUNCTION_CLASSES, 0) | {
         "vollzug": 1,
-        "symbol": 1,
+        "erklaerung": 1,
         "kontrolle": 1,
     }
 

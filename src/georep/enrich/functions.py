@@ -9,6 +9,11 @@ Beide fehlen ohne ``functions.enabled`` und ohne Urheber (Option 04 braucht Frak
 Profil). Die Regeln stehen in ``analysis``; hier steht nur, welche Dateien gelesen und geschrieben
 werden. Die Pfade gehören diesem Modul (Synergien 2026-11, § 2.1): wer die Tabellen liest — 14 die
 Fraktionen, 24 und 28 das Lager —, nimmt sie aus ``functions_files``.
+
+Stufe 3 (Messdokument § 7): beide Tabellen stehen im Register der Downloads (Parquet und CSV, mit
+Spaltendoku in ``schema.json``), und die Unterseite ``akteure.html`` (``report.actors``) zeigt sie,
+unter demselben Schalter wie die Schritte. 24, 27 und 28 hängen dort später Abschnitte an
+(``PageSection`` mit ``page="akteure"``, Vorarbeit V1).
 """
 
 from __future__ import annotations
@@ -35,6 +40,9 @@ from georep.http import Transport
 from georep.io import write_parquet
 from georep.layout import Layout
 from georep.pipeline import Step
+from georep.report.actors import PAGE_NAME, actors_data, actors_inputs, actors_links
+from georep.report.pages import Page
+from georep.report.tables import PublishedTable
 from georep.settings import Settings
 
 
@@ -56,7 +64,7 @@ def functions_steps(settings: Settings, layout: Layout, http: Transport) -> list
 
     Beide sind offline; ``http`` (Fundament F7) bleibt ungenutzt.
     """
-    if not settings.functions.enabled or not settings.originators.parties:
+    if not functions_enabled(settings):
         return []
     files = functions_files(layout)
 
@@ -121,4 +129,92 @@ def functions_steps(settings: Settings, layout: Layout, http: Transport) -> list
     ]
 
 
-CONTRIBUTION = Contribution("15-funktion", steps=functions_steps)
+def functions_enabled(settings: Settings) -> bool:
+    """Der Schalter der Schritte, der Tabellen und der Seite: ``functions.enabled`` und Urheber."""
+    return settings.functions.enabled and bool(settings.originators.parties)
+
+
+_ID = ("OParl-URL des Dokuments", "")
+TABLES = (
+    PublishedTable(
+        "dokumente_funktion",
+        lambda layout: functions_files(layout).functions,
+        "Funktion je Ratsdokument: Kontrolle, Information, Initiative, Erklärung oder Appell, Vollzug, "
+        "mit Instrument und Quelle",
+        {
+            "id": _ID,
+            "funktion": (
+                "kontrolle, information, initiative, erklaerung (Erklärung oder Appell), vollzug oder rest "
+                "(auf der Seite "
+                "„Funktion nicht erkannt“); genau eine je Dokument",
+                "",
+            ),
+            "instrument": (
+                "Unterart der Funktion, etwa anfrage, berichtsantrag, informationsvorlage, antrag, "
+                "resolution, beschlussvorlage; bei rest der Grund (sammelart_ohne_merkmal, "
+                "art_unbekannt)",
+                "",
+            ),
+            "quelle": (
+                "woher die Funktion kommt: art (Dokumentart), titel oder text; leer genau bei rest",
+                "",
+            ),
+            "variante": (
+                "Variante des Regelwerks, A oder B; B liest den Beschlusstext eines Antrags "
+                "(Erklärung als erklaerung, Berichtswunsch als Kontrolle)",
+                "",
+            ),
+        },
+        optional=True,
+        enabled=functions_enabled,
+    ),
+    PublishedTable(
+        "dokumente_antragsteller",
+        lambda layout: functions_files(layout).cosponsors,
+        "Antragsteller je Ratsdokument: Parteien, Fraktionen, gemeinsam oder allein, Lager zur "
+        "Ratsmehrheit",
+        {
+            "id": _ID,
+            "antragsteller": (
+                "Parteischlüssel aus Dokumentart, Autorenteil des Titels und Briefkopf, in der "
+                "Folge des Profils; leer außer bei der Urheberklasse Fraktion",
+                "Liste",
+            ),
+            "fraktionen": (
+                "dieselben als Fraktionen am Datum des Dokuments (zwei Parteien einer Fraktion "
+                "sind ein Schlüssel wie A+B)",
+                "Liste",
+            ),
+            "quelle": (
+                "woher die Antragsteller kommen: art, titel, briefkopf, mehrere mit +; parteien, "
+                "wenn keiner der drei eine Partei nennt (dann wie in dokumente_urheber); leer ohne "
+                "Antragsteller",
+                "",
+            ),
+            "gemeinsam": ("mindestens zwei Fraktionen", ""),
+            "lager": (
+                "gegenüber der Ratsmehrheit am Datum: allein_mehrheit, allein_opposition, "
+                "gemeinsam_mehrheit, gemeinsam_opposition, ueber_grenze, ohne_partei (keine "
+                "Fraktion genannt) oder ohne_lager (Gremium außerhalb der Gremien, in denen die "
+                "Ratsmehrheit gilt, oder keine Mehrheit im Profil)",
+                "",
+            ),
+        },
+        joins={"antragsteller": "; ", "fraktionen": "; "},
+        optional=True,
+        enabled=functions_enabled,
+    ),
+)
+
+PAGE = Page(
+    PAGE_NAME,
+    "Akteure: Funktionen und gemeinsame Anträge",
+    "Welche Funktion ein Ratsdokument hat, welche Instrumente die Fraktionen nutzen und wer mit "
+    "wem Anträge stellt.",
+    inputs=actors_inputs,
+    data=actors_data,
+    enabled=functions_enabled,
+    links=actors_links,
+)
+
+CONTRIBUTION = Contribution("15-funktion", steps=functions_steps, tables=TABLES, pages=(PAGE,))

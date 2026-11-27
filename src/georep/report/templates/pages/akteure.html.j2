@@ -1,0 +1,229 @@
+{#
+  Vorhaben 15, Stufe 3 (docs/plans/15-funktion.md, § 7): die erste Unterseite nach F2. Das Modell
+  ist ``report.actors.ActorsModel``; jede Zahl kommt aus den Daten, jeder Name einer Fraktion aus
+  dem Profil. Die Seite ist für alle Fraktionen gleich gebaut: dieselben Spalten, dieselbe Folge
+  (nach Dokumenten), keine Rangfolge der Erklärungen und Appelle. Ein Datensatz, an dem nicht gemessen ist,
+  heißt in jeder Überschrift „explorativ" (docs/plan-zeigen-2026-11.md, § 8).
+#}
+{% from "macros.html.j2" import more %}
+{% set m = data.akteure %}
+{% set c = m.check %}
+{% set ex = " (explorativ)" if m.explorative else "" %}
+<section id="ueberblick">
+<p>Diese Seite gibt jedem der {{ m.documents|num }} Ratsdokumente der {{ model.period.title }}{% if m.first and m.last %} ({{ m.first|date_de }} bis {{ m.last|date_de }}){% endif %} eine <em>Funktion</em>: was das Gremium mit dem Dokument tun soll, nicht sein Thema. Kontrolle heißt fragen (Anfrage), Information mitteilen (Informations- und Berichtsvorlage), Initiative etwas anstoßen (Antrag, Prüfauftrag), Erklärung oder Appell eine Haltung erklären oder Dritte auffordern (Resolution, Appell), Vollzug entscheiden und ausführen (Beschlussvorlage, Satzung, Haushalt). Für die {{ m.fraction_documents|num }} Dokumente von Fraktionen nennt sie die <em>Antragsteller</em>, also auch, wer mit wem Anträge stellt.</p>
+<ul class="toc">
+<li><a href="#funktionen">Funktionen der Dokumente</a></li>
+<li><a href="#fraktionen">Instrumente je Fraktion</a></li>
+<li><a href="#wer-mit-wem">Wer mit wem</a></li>
+<li><a href="#konkordanz">Konkordanz</a></li>
+<li><a href="#erklaerungen">Erklärungen und Appelle</a></li>
+</ul>
+<div class="pruefung" id="pruefung">
+<h2>Wie geprüft</h2>
+<ul>
+{% if not c.measured %}
+<li><strong>Explorativ</strong>: gemessen ist an {{ c.measured_datasets|join("; ") }}, nicht an diesem Datensatz. Was dort gilt, steht unten; jede Zahl auf dieser Seite ist darum explorativ.</li>
+{% endif %}
+<li><strong>Funktion und Antragsteller</strong> {{ c.sentence }}. An den {{ c.chosen.basis|num }} Dokumenten, denen das Regelwerk eine Funktion gibt, stimmt es in {{ c.chosen.hits|num }} mit ihnen überein, κ = {{ c.chosen.kappa|num(2) }} (95-%-Intervall {{ c.chosen.interval[0]|num(2) }}–{{ c.chosen.interval[1]|num(2) }}; Variante {{ c.variant }}).{% if c.variant == c.selected_on_labels %} Diese Variante ist an denselben Labels gewählt, an denen sie gemessen ist; die vorsichtige Zahl ist die der nicht gewählten Variante {{ c.other_variant }}, κ = {{ c.other.kappa|num(2) }} ({{ c.other.interval[0]|num(2) }}–{{ c.other.interval[1]|num(2) }}).{% else %} Die nicht gewählte Variante {{ c.other_variant }}: κ = {{ c.other.kappa|num(2) }} ({{ c.other.interval[0]|num(2) }}–{{ c.other.interval[1]|num(2) }}).{% endif %} Die Kodierer stimmten untereinander bei der Funktion in {{ c.agreed|num }} von {{ c.units|num }} überein{% if c.same_model %}; bei zwei Kodierern desselben Modells ist das ein schwacher Beleg{% endif %}.</li>
+<li><strong>Antragsteller</strong>: {{ c.fraction_hits|num }} von {{ c.fraction_named|num }} genannten Fraktionen bestätigt, {{ c.fraction_hits|num }} von {{ c.fraction_labelled|num }} gefunden.</li>
+{% if m.concordance %}
+<li><strong>Mehrheiten</strong>: eine Annahme mit Beleg im Korpus, nicht aus den gemeinsamen Anträgen abgeleitet; die Quellen stehen unter <a href="#konkordanz">Konkordanz</a>.</li>
+{% endif %}
+<li><strong>Funktion nicht erkannt</strong>: {% if m.unrecognised %}{{ m.unrecognised|num }} Dokumente ({{ (m.unrecognised / m.documents)|pct(1) }}), fast alle Vorlagen ohne lesbaren Text oder mit einer Anlage am Anfang; Art, Titel und Textanfang nennen dort keine Funktion.{% else %}bei keinem; jedes Dokument dieses Datensatzes bekommt eine Funktion.{% endif %}</li>
+</ul>
+<p class="note">Wie gemessen ist, steht im <a href="{{ data.urls.measurement }}">Messdokument</a>; Codebuch, Stichprobe und Labels im Ordner <a href="{{ data.urls.check }}">{{ data.urls.check_folder }}</a>.</p>
+{% if m.missing %}
+<p class="note">In diesem Profil fehlt:</p>
+<ul class="note">
+{% for line in m.missing %}
+<li>{{ line }}</li>
+{% endfor %}
+</ul>
+{% endif %}
+</div>
+</section>
+
+<section id="funktionen">
+<h2>Funktionen der Dokumente{{ ex }}</h2>
+<p>Eine Leiste je Urheberklasse, Anteile an ihren Dokumenten. Die Zahlen stehen in der Tabelle darunter.</p>
+<ul class="fn-legend">
+{% for function, label in data.functions %}
+<li><span class="swatch fn-{{ function }}"></span>{{ label }}</li>
+{% endfor %}
+</ul>
+{% for bar in m.bars %}
+<div class="leiste">
+<p class="leiste-kopf">{{ bar.label }} <span class="count">{{ bar.total|num }} Dokumente</span></p>
+<svg viewBox="0 0 1000 24" preserveAspectRatio="none" role="img" aria-label="{{ bar.label }}: {% for s in bar.segments %}{{ s.label }} {{ s.share|pct(1) }}{{ ', ' if not loop.last }}{% endfor %}">
+{% for s in bar.segments %}
+<rect class="fn-{{ s.function }}" x="{{ '%.3f'|format(s.x * 1000) }}" y="0" width="{{ '%.3f'|format(s.width * 1000) }}" height="24"><title>{{ s.label }}: {{ s.count|num }} ({{ s.share|pct(1) }})</title></rect>
+{% endfor %}
+</svg>
+</div>
+{% endfor %}
+<div class="scroll"><table id="funktionen-tabelle">
+<thead><tr><th scope="col">Funktion</th>{% for art, label in m.table.originators %}<th scope="col" class="num">{{ label }}</th>{% endfor %}<th scope="col" class="num">zusammen</th></tr></thead>
+<tbody>
+{% for row in m.table.rows if row.total %}
+<tr><th scope="row"><span class="swatch fn-{{ row.function }}"></span> {{ row.label }}</th>{% for n in row.counts %}<td class="num">{{ n|num }}</td>{% endfor %}<td class="num">{{ row.total|num }}</td></tr>
+{% endfor %}
+</tbody>
+<tfoot><tr><th scope="row">zusammen</th>{% for n in m.table.totals %}<td class="num">{{ n|num }}</td>{% endfor %}<td class="num">{{ m.table.documents|num }}</td></tr></tfoot>
+</table></div>
+<h3>Instrumente</h3>
+<p class="note">Die Unterart je Funktion, nach Dokumenten. Bei „Funktion nicht erkannt“ steht der Grund.</p>
+{{ more("instrumente", m.instruments|length, model.preview_rows) }}
+<div class="scroll"><table id="instrumente" class="preview">
+<thead><tr><th scope="col" data-sort="text">Funktion</th><th scope="col" data-sort="text">Instrument</th><th scope="col" class="num" data-sort="num">Dokumente</th><th scope="col" class="num" data-sort="num">Anteil an der Funktion</th></tr></thead>
+<tbody>
+{% for row in m.instruments %}
+<tr><td>{{ row.function_label }}</td><td>{{ row.label }}</td><td class="num" data-value="{{ row.count }}">{{ row.count|num }}</td><td class="num" data-value="{{ row.share }}">{{ row.share|pct(1) }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+</section>
+
+<section id="fraktionen">
+<h2>Instrumente je Fraktion (explorativ)</h2>
+{% if m.fractions %}
+<p>Fraktionsdokumente der Funktionen Kontrolle, Initiative und Erklärung oder Appell; ein gemeinsames Dokument zählt für jede beteiligte Fraktion. Wie viel eine Fraktion fragt, ist zum großen Teil Praxis des Gremiums, in dem sie das Dokument stellt{% if m.practice %} (Anteil Kontrolle {% for p in m.practice %}{{ p.label }} {{ p.share|num(2) }}{{ ", " if not loop.last }}{% endfor %}){% endif %}. Darum steht neben dem rohen Anteil <em>beobachtet gegen erwartet</em>: erwartet ist, wie oft die Fraktion fragte, wenn sie in jedem ihrer Gremien so handelte wie alle Fraktionen dort. Über 1 heißt mehr als die Praxis ihrer Gremien. Explorativ heißt: das Verhältnis ist nach dem Ansehen der Daten gerechnet und prüft keine vorab festgelegte Hypothese. Unter {{ m.min_documents }} Dokumenten steht kein Verhältnis. In der Tabelle heißt der rohe Anteil „Kontrolle roh“ und das Verhältnis „beob./erw.“.</p>
+<p class="note">Die Hauptseite zählt Dokumente je Partei aus der Urheberspalte <code>parteien</code>, die die erste Quelle mit Treffer nimmt (Dokumentart, Titel oder Textkopf); diese Seite vereinigt Dokumentart, den Autorenteil des Titels und den Briefkopf. Bei {{ m.difference.different|num }} von {{ m.difference.documents|num }} Fraktionsdokumenten nennen die beiden Zählungen verschiedene Parteien: {{ m.difference.more|num }} mit mehr Parteien hier, {{ m.difference.fewer|num }} mit weniger{% if m.difference.other %}, {{ m.difference.other|num }} mit gleich vielen, aber anderen{% endif %}.</p>
+<div class="scroll"><table id="fraktionen-tabelle">
+<thead><tr>
+<th scope="col" data-sort="text">Fraktion</th>
+<th scope="col" class="num" data-sort="num">Dokumente</th>
+<th scope="col" class="num" data-sort="num">gemeinsam</th>
+<th scope="col" class="num" data-sort="num">Kontrolle</th>
+<th scope="col" class="num" data-sort="num">Initiative</th>
+<th scope="col" class="num">Erklärung/Appell</th>
+<th scope="col" class="num">Kontrolle roh</th>
+<th scope="col" class="num" data-sort="num">beob./erw.</th>
+</tr></thead>
+<tbody>
+{% for f in m.fractions %}
+<tr>
+<th scope="row">{{ f.label }}</th>
+<td class="num" data-value="{{ f.documents }}">{{ f.documents|num }}</td>
+<td class="num" data-value="{{ f.joint }}">{{ f.joint|num }}</td>
+<td class="num" data-value="{{ f.control }}">{{ f.control|num }}</td>
+<td class="num" data-value="{{ f.initiative }}">{{ f.initiative|num }}</td>
+<td class="num">{{ f.statement|num }}</td>
+<td class="num">{{ f.control_share|pct(1) }}</td>
+{% if f.ratio is not none %}
+<td class="num" data-value="{{ f.ratio }}">{{ f.ratio|num(2) }}</td>
+{% else %}
+<td class="num" data-value="-1"><span class="note">{% if f.documents < m.min_documents %}unter {{ m.min_documents }}{% else %}keine Erwartung{% endif %}</span></td>
+{% endif %}
+</tr>
+{% endfor %}
+</tbody></table></div>
+{% for split in m.split %}
+<p class="note">{{ split.alone }} und {{ split.joint }} stehen in zwei Zeilen: die Fraktion {{ split.joint }} gibt es ab {{ split.since|date_de }}; die {{ split.documents|num }} Dokumente von {{ split.alone }} allein sind älter und stammen von der Fraktion des Rates davor.</p>
+{% endfor %}
+<p class="note">Sortiert nach Dokumenten; die Spaltenköpfe sortieren um, außer „Kontrolle roh“ und „Erklärung/Appell“: der rohe Anteil steht nur neben dem Verhältnis, eine Rangfolge danach hinge an der Praxis der Gremien. Erklärungen und Appelle sind eine kleine Klasse; einzeln stehen sie unter <a href="#erklaerungen">Erklärungen und Appelle</a>, ohne Rangfolge je Fraktion.</p>
+{% else %}
+<p>Dieser Datensatz hat keine Fraktionsdokumente der Funktionen Kontrolle, Initiative und Erklärung oder Appell.</p>
+{% endif %}
+</section>
+
+<section id="wer-mit-wem">
+<h2>Wer mit wem{{ ex }}</h2>
+<p>Je Paar von Fraktionen die Dokumente, die beide gemeinsam stellen, in allen Funktionen; ein Dokument von drei Fraktionen zählt für drei Paare. Die Spalte „gemeinsam“ zählt die gemeinsamen Dokumente einer Fraktion, jedes einmal. {{ m.matrices[0].label }} stehen getrennt von den {{ m.matrices[1].label_dative }}: dort gelten eigene Mehrheiten, die der Datensatz nicht kennt.</p>
+<fieldset class="matrix-ebene" id="matrix-ebene" hidden><legend>Gremien</legend>
+{% for matrix in m.matrices %}
+<label><input type="radio" name="matrix-ebene" value="{{ matrix.key }}"{% if loop.first %} checked{% endif %}> {{ matrix.label }}</label>
+{% endfor %}
+</fieldset>
+{% for matrix in m.matrices %}
+<div class="matrix" data-matrix="{{ matrix.key }}">
+<h3>{{ matrix.label }}</h3>
+{% if matrix.documents %}
+<p class="note">{{ matrix.documents|num }} gemeinsame Dokumente.{% if matrix.with_camps %} Farbe und Kürzel einer Zelle sind das Lager des Paars gegenüber der Ratsmehrheit am Datum des Dokuments; welche Fraktionen die Mehrheit bilden, steht unter <a href="#konkordanz">Konkordanz</a>.{% else %} Die Zellen tragen kein Lager{% if matrix.key == "stadt" %}: das Profil nennt keine Ratsmehrheit{% endif %}.{% endif %}</p>
+{% if matrix.with_camps %}
+<ul class="fn-legend lager-legende">
+{% for value, label in data.camps %}
+<li><span class="swatch lager-{{ value }}"></span><span class="lager-kuerzel">{{ data.camp_short[value] }}</span> {{ label }}</li>
+{% endfor %}
+</ul>
+{% endif %}
+<div class="scroll"><table class="matrix-tabelle" id="matrix-{{ matrix.key }}">
+<thead><tr><th scope="col">Fraktion</th>{% for key, label in matrix.fractions %}<th scope="col" class="num">{{ label }}</th>{% endfor %}<th scope="col" class="num">gemeinsam</th></tr></thead>
+<tbody>
+{% for row in matrix.cells %}
+{% set outer = loop %}
+<tr><th scope="row">{{ matrix.fractions[outer.index0][1] }}</th>{% for cell in row %}{% if cell is none %}<td class="num diag">–</td>{% elif cell.camp %}<td class="num lager-{{ cell.camp }}" title="{{ data.camp_names[cell.camp] }}">{{ cell.count|num }}{% if cell.camps %}<a href="#matrix-{{ matrix.key }}-wechsel" class="fn">*</a>{% endif %}<span class="lager-kuerzel" aria-hidden="true">{{ data.camp_short[cell.camp] }}</span><span class="vh"> ({{ data.camp_names[cell.camp] }})</span></td>{% else %}<td class="num{% if not cell.count %} zero{% endif %}">{{ cell.count|num }}</td>{% endif %}{% endfor %}<td class="num">{{ matrix.joint[outer.index0]|num }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+{% if matrix.mixed %}
+<p class="note" id="matrix-{{ matrix.key }}-wechsel">* Das Lager wechselt mit der Mehrheit innerhalb des Datensatzes: {% for a, b, camps in matrix.mixed %}{{ data.labels[a] }} – {{ data.labels[b] }} ({% for value, n in camps %}{{ n|num }} {{ data.camp_names[value] }}{{ ", " if not loop.last }}{% endfor %}){{ "; " if not loop.last }}{% endfor %}. Die Zelle trägt das häufigere.</p>
+{% endif %}
+{% else %}
+<p class="note">Keine gemeinsamen Dokumente in diesen Gremien.</p>
+{% endif %}
+</div>
+{% endfor %}
+{% if m.other_joint %}
+<p class="note">{{ m.other_joint|num }} gemeinsame Dokumente aus Beiräten oder ohne erkanntes Gremium stehen in keiner der beiden Matrizen.</p>
+{% endif %}
+</section>
+
+<section id="konkordanz">
+{% set k = m.concordance %}
+{% if k %}
+<h2>Konkordanz (explorativ)</h2>
+<p>Wie oft trägt eine Fraktion der Ratsmehrheit eine Initiative mit, an der die Opposition beteiligt ist? Das Maß heißt im Messdokument K3: Dokumente über die Grenze (mindestens eine Fraktion jeder Seite) durch alle Dokumente mit einer Fraktion der Opposition, gezählt in {{ k.level_dative }}, wo die Mehrheit des Rates gilt, und je Dokument mit der Mehrheit an seinem Datum. Ein hoher Wert spräche für Konkordanz, ein niedriger für Konkurrenz zwischen Mehrheit und Opposition. Explorativ: das Maß prüft keine vorab festgelegte Hypothese.</p>
+<div class="tiles">
+{% for label, share in (("K3, Initiativen und Erklärungen", k.initiatives), ("dasselbe mit Anfragen", k.all_functions)) %}
+<div class="tile"><div class="label">{{ label }}</div>{% if share.n %}<div class="value">{{ share.share|pct(1) }}</div><div class="sub">{{ share.hits|num }} von {{ share.n|num }}; 95 %: {{ share.interval[0]|pct(1) }} bis {{ share.interval[1]|pct(1) }}</div>{% else %}<div class="value">–</div><div class="sub">keine Initiative mit Beteiligung der Opposition</div>{% endif %}</div>
+{% endfor %}
+</div>
+{% if m.running %}
+<p class="note">Die Periode läuft noch, die Daten reichen bis {% if m.last %}{{ m.last|date_de }}{% else %}heute{% endif %}. Ein kleines K3 ist in einer laufenden Periode noch kein Befund: n ist klein und wächst mit jeder Sitzung, und ob die Zusammenarbeit über die Grenze selten bleibt, kann erst eine vorab festgelegte Prüfung an neuen Dokumenten zeigen.</p>
+{% endif %}
+<h3>Die Mehrheiten und ihre Quelle</h3>
+<p class="note">Die Mehrheit ist eine Annahme mit Beleg: die Vereinbarung der Partner und Drucksachen, in denen der Korpus sie selbst nennt. Aus den gemeinsamen Anträgen ist sie nicht abgeleitet; für dieses Maß wäre das zirkulär. Ein Wechsel innerhalb einer Wahlperiode ist nicht geprüft.</p>
+<div class="scroll"><table id="mehrheiten">
+<thead><tr><th scope="col">Wahlperiode des Rates</th><th scope="col">Mehrheit</th><th scope="col">gilt</th><th scope="col">Vereinbarung</th><th scope="col">Belege im Korpus</th><th scope="col" class="num">Fraktionsdokumente hier</th></tr></thead>
+<tbody>
+{% for t in k.majorities %}
+<tr><td>{{ t.period }}</td><td>{{ t.parties }}</td><td>{{ t.valid_from|date_de }} bis {% if t.valid_to %}{{ t.valid_to|date_de }}{% else %}heute{% endif %}</td><td>{{ t.agreement }}{% if t.agreement_date %} ({{ t.agreement_date }}){% endif %}</td><td>{% for e in t.evidence %}{% if e.url %}<a href="{{ e.url }}">{{ e.reference }}</a>{% else %}{{ e.reference }}{% endif %}{{ ", " if not loop.last }}{% endfor %}</td><td class="num">{{ t.documents|num }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+<h3>Über die Grenze</h3>
+{% if k.across %}
+<p class="note">Alle {{ k.across|length|num }} Dokumente über die Grenze in {{ k.level_dative }}, nach Datum; {{ k.many|num }} davon tragen mindestens {{ m.many_fractions }} Fraktionen, sind also eher Erklärungen und Grundsatzanträge vieler Fraktionen als Zusammenarbeit zweier.</p>
+{{ more("ueber-die-grenze", k.across|length, model.preview_rows) }}
+<div class="scroll"><table id="ueber-die-grenze" class="preview">
+<thead><tr><th scope="col" data-sort="num">Datum</th><th scope="col" data-sort="text">Drucksache</th><th scope="col" data-sort="text">Titel</th><th scope="col" data-sort="text">Antragsteller</th><th scope="col" class="num" data-sort="num">Fraktionen</th></tr></thead>
+<tbody>
+{% for d in k.across %}
+<tr><td class="num" data-value="{{ d.date.strftime('%Y%m%d') if d.date else 0 }}">{% if d.date %}{{ d.date|date_de }}{% endif %}</td><td>{% if d.url %}<a href="{{ d.url }}">{{ d.reference }}</a>{% else %}{{ d.reference }}{% endif %}</td><td>{{ d.title }}</td><td>{{ d.authors }}</td><td class="num" data-value="{{ d.fractions }}">{{ d.fractions }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+{% else %}
+<p class="note">Kein Dokument in {{ k.level_dative }} geht über die Grenze.</p>
+{% endif %}
+<p>Gemeinsame Anträge messen Zusammenarbeit beim Antragstellen, nicht beim Entscheiden. Ob Initiativen der Opposition angenommen werden, auch einstimmig und ohne Mitzeichnung, ob die Mehrheit einen eigenen Antrag zum selben Gegenstand beschließt, wie oft „gegen die Stimmen der …“ beschlossen wird und wie die Fraktionen mit den Anträgen einzelner Fraktionen umgehen, zeigen erst Beschlüsse und Abstimmungen.{% if "abstimmungen" in guests %} Davon handelt der Abschnitt <a href="#abstimmungen">Abstimmungen</a> unten.{% else %} Sie stehen noch nicht auf dieser Seite.{% endif %}</p>
+{% else %}
+<h2>Konkordanz</h2>
+<p>Dieses Profil nennt keine Ratsmehrheit. Ohne sie hat kein Dokument ein Lager, und das Maß der Konkordanz (wie oft eine Fraktion der Mehrheit eine Initiative der Opposition mitträgt) lässt sich nicht rechnen. Die Matrix unter <a href="#wer-mit-wem">Wer mit wem</a> zeigt die gemeinsamen Dokumente trotzdem.</p>
+{% endif %}
+</section>
+
+<section id="erklaerungen">
+<h2>Erklärungen und Appelle{{ ex }}</h2>
+<p>Die Klasse „Erklärung oder Appell“ ist im Codebuch der Prüfung so bestimmt:</p>
+<blockquote class="definition">{{ c.statement_definition }}</blockquote>
+{% if m.statements %}
+<p>In diesem Datensatz sind es {{ m.statements|length|num }} Dokumente: Initiativen aus der Politik, die das Regelwerk an Wörtern im Titel erkennt{% if m.variant == "B" %} oder an einer Erklärung im Beschlusstext{% endif %}; die Wörter stehen in den Settings des Profils. Eine kleine Klasse; die Seite zeigt sie als Liste, nicht als Anteil oder Rangfolge je Fraktion.</p>
+{{ more("erklaerungen-liste", m.statements|length, model.preview_rows) }}
+<div class="scroll"><table id="erklaerungen-liste" class="preview">
+<thead><tr><th scope="col" data-sort="num">Datum</th><th scope="col" data-sort="text">Drucksache</th><th scope="col" data-sort="text">Titel</th><th scope="col" data-sort="text">Antragsteller</th><th scope="col" data-sort="text">Gremium</th><th scope="col" data-sort="text">Instrument</th></tr></thead>
+<tbody>
+{% for d in m.statements %}
+<tr><td class="num" data-value="{{ d.date.strftime('%Y%m%d') if d.date else 0 }}">{% if d.date %}{{ d.date|date_de }}{% endif %}</td><td>{% if d.url %}<a href="{{ d.url }}">{{ d.reference }}</a>{% else %}{{ d.reference }}{% endif %}</td><td>{{ d.title }}</td><td>{{ d.authors }}</td><td>{{ d.body }}</td><td>{{ d.instrument }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+{% else %}
+<p>Kein Dokument dieses Datensatzes ist eine Erklärung oder ein Appell.</p>
+{% endif %}
+</section>

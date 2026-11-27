@@ -67,7 +67,7 @@ def _valid_name(name: str) -> bool:
     return bool(PAGE_NAME.fullmatch(name)) and name not in RESERVED
 
 
-def no_links(settings: Settings) -> frozenset[str]:
+def no_links(layout: Layout, settings: Settings) -> frozenset[str]:
     """Eine Seite ohne eigene Links nach außen."""
     return frozenset()
 
@@ -84,8 +84,10 @@ class Page:
     enabled: Callable[[Settings], bool] | None = (
         None  # None: immer, wenn der Beitrag im Register ist
     )
-    # Links nach außen, die diese Seite zusätzlich zeigen darf (etwa das Ratsinformationssystem)
-    links: Callable[[Settings], frozenset[str]] = no_links
+    # Links nach außen, die diese Seite zusätzlich zeigen darf (etwa das Ratsinformationssystem).
+    # Mit ``layout`` wie ``inputs`` und ``data`` (Vorhaben 15): die PDF-Links einer Liste von
+    # Dokumenten stehen in den Daten, nicht in den Settings.
+    links: Callable[[Layout, Settings], frozenset[str]] = no_links
 
     def __post_init__(self) -> None:
         if not _valid_name(self.name):
@@ -142,7 +144,9 @@ class PageSection:
     inputs: Callable[[Layout, Settings], tuple[Path, ...]]  # liest der Schritt der Seite mit
     data: Callable[[Layout, Settings], Mapping[str, object]]  # was die Vorlage als ``data`` sieht
     enabled: Callable[[Settings], bool] | None = None  # None: immer, wenn die Zielseite gebaut wird
-    links: Callable[[Settings], frozenset[str]] = no_links  # erlaubt die Zielseite zusätzlich
+    links: Callable[[Layout, Settings], frozenset[str]] = (
+        no_links  # erlaubt die Zielseite zusätzlich
+    )
 
     def __post_init__(self) -> None:
         if not _valid_name(self.page):
@@ -472,7 +476,9 @@ def build_page(
     commit: str | None,
 ) -> str:
     """Der Schritt ``page_<name>``: Seite mit ihren Abschnitten rendern, schreiben, eine Zeile."""
-    allowed = page.links(settings).union(*(section.links(settings) for section in sections))
+    allowed = page.links(layout, settings).union(
+        *(section.links(layout, settings) for section in sections)
+    )
     html = render_page(
         page_frame(settings, now=now, commit=commit),
         page,

@@ -1,7 +1,13 @@
 # Vorhaben 15: Dokumentfunktion und gemeinsame Anträge
 
-**Stand 2026-11-26: Urteil bauen mit Variante B (§ 5), Stufe 2 auf `main` (`v0.24.0`, Punkt 75);
-Stufe 3 (`akteure.html`) offen.** Der Branch ist gemerged und entfernt.
+**Stand 2026-11-27: Urteil bauen mit Variante B (§ 5), Stufe 2 auf `main` (`v0.24.0`, Punkt 75);
+Stufe 3 gebaut auf `feat/15-akteure`** (Entscheidungseintrag „Die erste Unterseite `akteure.html`"
+am Ende von `docs/decisions.md`; die Nummer vergibt der Merge): `akteure.html` in allen fünf
+Paketprofilen mit den fünf Abschnitten aus § 7, der Prüfsatz aus `validierung/15-funktion-f4/guete.json`,
+der Linkblock „Weitere Auswertungen" auf `index.html` und die Downloads `dokumente_funktion` und
+`dokumente_antragsteller` (§ 10, Punkt 1: nicht `mitantraege`). Mönchengladbach bekommt die Seite
+ohne Konkordanz und „explorativ“ in jeder Überschrift mit Zahlen. Haltepunkt Z1: Konrad sieht die Seite an, bevor 14, 17
+und 22 nach ihrem Muster folgen.
 
 Stufe 1 (Messen) vom 2026-11-23 auf dem Branch `feat/15-funktion`. Briefing:
 [../plan-vorverarbeitung-2026-11.md](../plan-vorverarbeitung-2026-11.md), § 11 „15 Dokumentfunktion und gemeinsame

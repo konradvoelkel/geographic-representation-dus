@@ -735,7 +735,7 @@ text_instrument = [
 text_words = [
     { pattern = '.*anfrage', function = "kontrolle/anfrage" },
     { pattern = '.*antrag', function = "initiative/antrag" },  # Änderungs-, Haushalts-, Prüfantrag verfeinern die Titelmuster aus defaults.toml
-    { pattern = 'resolution', function = "symbol/resolution" },
+    { pattern = 'resolution', function = "erklaerung/resolution" },
     { pattern = 'informationsvorlage|mitteilung', function = "information/informationsvorlage" },
     { pattern = 'beschlussdarstellung|dringlichkeitsbeschluss', function = "vollzug/beschlussvorlage" },
 ]

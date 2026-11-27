@@ -1,4 +1,4 @@
-"""Funktion je Ratsdokument: Kontrolle, Information, Initiative, Symbolpolitik, Vollzug (Vorhaben 15).
+"""Funktion je Ratsdokument: Kontrolle, Information, Initiative, Erklärung oder Appell, Vollzug (Vorhaben 15).
 
 Maßgeblich ist, was das Gremium mit dem Dokument tun soll (Codebuch, Grundsatz): eine Anfrage
 kontrolliert, eine Informationsvorlage informiert, ein Antrag stößt etwas an, eine Resolution
@@ -13,9 +13,10 @@ erklärt eine Haltung, eine Beschlussvorlage vollzieht. Das Regelwerk ist das de
    zuerst das Titelwort, dann das erste Instrumentwort im Textkopf; aus der Verwaltung der
    Briefkopf der Politik, sonst Kenntnisnahme gegen Entscheidung im Textkopf, sonst der Titel,
    sonst ein zweiter, weiterer Blick in den Text.
-3. **Symbolpolitik aus dem Titel**, nur für Initiativen aus der Politik (Urheberklasse Fraktion,
+3. **Erklärung oder Appell aus dem Titel** (``erklaerung``; im Codebuch ``symbol``), nur für
+   Initiativen aus der Politik (Urheberklasse Fraktion,
    Person oder unbekannt).
-4. **Variante B**: der Beschlusstext eines Antrags kann eine Erklärung sein (Symbol), und ein
+4. **Variante B**: der Beschlusstext eines Antrags kann eine Erklärung sein, und ein
    Antrag, der nur einen Bericht verlangt, ist Kontrolle.
 
 Was keine Regel trifft, ist die Restklasse, auf der Seite „Funktion nicht erkannt" (§ 4.2): fast
@@ -43,8 +44,12 @@ from georep.settings import (
     function_and_instrument,
 )
 
-# Version 1: id, funktion, instrument, quelle, variante (Messdokument § 6).
-FUNCTIONS_SCHEMA_VERSION = 1  # erhöhen, wenn sich Spalten oder Typen von dokumente_funktion ändern
+# Version 1: id, funktion, instrument, quelle, variante (Messdokument § 6). Version 2 (2026-11-27):
+# die Funktion ``erklaerung`` statt ``symbol`` (Konrad: „Symbolpolitik" ist wertend), dieselbe Klasse.
+FUNCTIONS_SCHEMA_VERSION = (
+    2  # erhöhen, wenn sich Spalten, Typen oder Werte von dokumente_funktion ändern
+)
+STATEMENT = "erklaerung"  # „Erklärung oder Appell"; im Codebuch und in der Messung ``symbol``
 FUNKTION = "funktion"
 INSTRUMENT = "instrument"
 QUELLE = "quelle"
@@ -53,10 +58,12 @@ REST = "rest"
 # Woher die Funktion kommt: die Dokumentart, der Titel, der Text; leer genau bei der Restklasse.
 SOURCES = ("art", "titel", "text", "")
 FROM_TYPE, FROM_TITLE, FROM_TEXT, NOWHERE = SOURCES
-# Urheberklassen (Option 04, ``analysis.parties.URHEBER_ARTEN``), die Symbolpolitik tragen
+# Urheberklassen (Option 04, ``analysis.parties.URHEBER_ARTEN``), die eine Erklärung tragen
 # können: die Politik, und was nicht zuzuordnen ist. Verwaltung und Eingabe nicht.
 POLITICAL = ("Fraktion", "Person", "unbekannt")
-ELIGIBLE = "eingabe"  # das Instrument der Eingaben nach § 24 GO NRW: nie Symbol, nie Berichtsantrag
+ELIGIBLE = (
+    "eingabe"  # das Instrument der Eingaben nach § 24 GO NRW: nie Erklärung, nie Berichtsantrag
+)
 REPORT_MOTION = "berichtsantrag"
 
 FUNCTIONS_SCHEMA: dict[str, PolarsDataType] = {
@@ -217,13 +224,13 @@ def _notice_or_decision(text: str, rules: FunctionRules) -> str | None:
 
 
 def _political(title: str, head: str, rules: FunctionRules) -> DocumentFunction:
-    """Sammelart der Politik: Titelwort (Anfrage ohne Antrag, Symbol, Antrag), dann der Textkopf."""
+    """Sammelart der Politik: Titelwort (Anfrage ohne Antrag, Erklärung, Antrag), dann der Textkopf."""
     motion = _hit(rules.motion_title, title)
     if _hit(rules.request_title, title) and not motion:  # eine Anfrage zu einer Resolution
         followup = _hit(rules.followup_title, title)
         return DocumentFunction("kontrolle", "nachfrage" if followup else "anfrage", FROM_TITLE)
     if _hit(rules.symbol_title, title):
-        return DocumentFunction("symbol", "resolution", FROM_TITLE)
+        return DocumentFunction(STATEMENT, "resolution", FROM_TITLE)
     if motion:
         return DocumentFunction(
             "initiative", _initiative_instrument(title, "antrag", rules), FROM_TITLE
@@ -332,11 +339,11 @@ def classify_function(
         found.funktion == "initiative" and origin in POLITICAL and found.instrument != ELIGIBLE
     )
     if political_initiative and _hit(rules.symbol_title, title):
-        return DocumentFunction("symbol", "resolution", FROM_TITLE)
+        return DocumentFunction(STATEMENT, "resolution", FROM_TITLE)
     if political_initiative and rules.variant == "B":
         decision = body[: rules.decision_chars]
         if _hit(rules.symbol_text, decision):
-            return DocumentFunction("symbol", "erklaerung_text", FROM_TEXT)
+            return DocumentFunction(STATEMENT, "erklaerung_text", FROM_TEXT)
         if found.instrument == REPORT_MOTION:
             return DocumentFunction("kontrolle", REPORT_MOTION, found.quelle)
         if _hit(rules.report_text, decision):

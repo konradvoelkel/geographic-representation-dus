@@ -15,6 +15,7 @@ Schritte ``corpus`` und ``bodies``, die Urheber aus Option 04.
 from __future__ import annotations
 
 import csv
+import datetime as dt
 import json
 import tomllib
 from dataclasses import dataclass
@@ -28,9 +29,20 @@ from georep.analysis.functions import FunctionRules, classify_functions, functio
 from georep.analysis.parties import classify_originators
 from georep.analysis.practice import RATIO, observed_expected
 from georep.bootstrap import bootstrap_from_settings
+from georep.enrich.functions import PAGE
 from georep.layout import Layout
 from georep.pipeline import build_steps, run_pipeline
-from georep.settings import Settings, load_settings
+from georep.report.actors import (
+    DOCUMENT_COLUMNS,
+    RULE_CHECK,
+    ActorsModel,
+    actors_links,
+    build_actors,
+    page_data,
+    read_check,
+)
+from georep.report.pages import page_frame, render_page
+from georep.settings import CODEBOOK_FUNCTIONS, Settings, load_settings
 from georep.validation.measures import cohen_kappa
 
 pytestmark = pytest.mark.slow
@@ -46,6 +58,7 @@ PERIODS = {"duesseldorf-2014": "2014-2020", "duesseldorf": "2020-2025", "duessel
 class Period:
     settings: Settings
     documents: pl.DataFrame  # Korpus, Urheber, Gremium, Funktion A und B, Antragsteller
+    layout: Layout
 
 
 def _period(profile: str, root: Path) -> Period:
@@ -65,9 +78,9 @@ def _period(profile: str, root: Path) -> Period:
         corpus, originators, bodies, CosponsorRules.from_settings(settings)
     )
     documents = (
-        corpus.select("id", "date", "paper_type")
+        corpus.select("id", "date", "paper_type", "name", "reference", "download_url")
         .join(originators.select("id", "urheber_art", "parteien"), on="id")
-        .join(bodies.select("id", "gremium", "gremium_art"), on="id", how="left")
+        .join(bodies.select("id", "gremium", "gremium_art", "stadtbezirk"), on="id", how="left")
         .join(
             classify_functions(corpus, originators, a).select(
                 "id", pl.col("funktion").alias("funktion_a")
@@ -81,7 +94,7 @@ def _period(profile: str, root: Path) -> Period:
         .join(cosponsors, on="id")
         .sort("id")
     )
-    return Period(settings, documents)
+    return Period(settings, documents, layout)
 
 
 @pytest.fixture(scope="module")
@@ -91,9 +104,9 @@ def periods(tmp_path_factory: pytest.TempPathFactory) -> dict[str, Period]:
 
 
 # --- Abdeckung (§ 3.2, § 3.3) ---------------------------------------------------------------------
-# Variante B je Periode: Kontrolle, Information, Initiative, Symbol, Vollzug, Rest. Variante A in
-# § 3.2; B verschiebt 186 Berichtsanträge in die Kontrolle (77, 89, 20) und 71 Erklärungen ins
-# Symbol (32, 37, 2), in Mönchengladbach 27 Berichtsanträge.
+# Variante B je Periode: Kontrolle, Information, Initiative, Erklärung, Vollzug, Rest. Variante A in
+# § 3.2; B verschiebt 186 Berichtsanträge in die Kontrolle (77, 89, 20) und 71 Erklärungen aus dem
+# Beschlusstext in die Klasse erklaerung (32, 37, 2), in Mönchengladbach 27 Berichtsanträge.
 COVERAGE_B = {
     "duesseldorf-2014": (5_395, 3_790, 6_049, 55, 5_695, 1_231),
     "duesseldorf": (4_039, 4_203, 5_084, 52, 5_730, 0),
@@ -145,7 +158,7 @@ K3 = {"duesseldorf-2014": (49, 653), "duesseldorf": (41, 1_333), "duesseldorf-20
 @pytest.mark.parametrize("profile", list(K3))
 def test_k3_on_the_city_level(periods: dict[str, Period], profile: str) -> None:
     initiatives = periods[profile].documents.filter(
-        pl.col("funktion").is_in(["initiative", "symbol"])
+        pl.col("funktion").is_in(["initiative", "erklaerung"])
     )
     counts = dict(initiatives.group_by("lager").len().iter_rows())
     opposition = sum(
@@ -155,7 +168,7 @@ def test_k3_on_the_city_level(periods: dict[str, Period], profile: str) -> None:
 
 
 # --- Kontrolle je Fraktion gegen die Praxis der Gremien (§ 3.7) ---------------------------------
-# Beobachtet durch erwartet, Fraktionsdokumente der Funktionen Kontrolle, Initiative und Symbol
+# Beobachtet durch erwartet, Fraktionsdokumente der Funktionen Kontrolle, Initiative und Erklärung
 # (Variante A wie in der Messung), Schicht das Gremium. 2020-2025 und ab 2025 sind es die Zahlen
 # der Messung. 2014-2020 nicht: 105 Fraktionsdokumente haben dort kein Gremium, und das Messskript
 # gab ihnen beim Join ohne null-Schlüssel keine Erwartung (CDU 0,99, SPD 0,79, Tierschutz/FW 1,53);
@@ -175,7 +188,7 @@ def test_control_against_the_practice_of_the_bodies(
         periods[profile]
         .documents.filter(
             (pl.col("urheber_art") == "Fraktion")
-            & pl.col("funktion_a").is_in(["kontrolle", "initiative", "symbol"])
+            & pl.col("funktion_a").is_in(["kontrolle", "initiative", "erklaerung"])
         )
         .with_columns((pl.col("funktion_a") == "kontrolle").alias("kontrolle"))
     )
@@ -235,10 +248,17 @@ def test_kappa_of_the_function_stays_where_the_coding_put_it(sample: Sample) -> 
         for i, row in sample.rows.items()
         if row["funktion"] != "rest" and sample.labels[i]["funktion"] != "unklar"
     )
-    assert len(basis) == 135
-    for column, hits, kappa in (("funktion", 125, 0.905), ("funktion_a", 117, 0.829)):
+    b, a = RULE_CHECK.variants["B"], RULE_CHECK.variants["A"]
+    assert len(basis) == b.basis == a.basis == 135  # die Zahlen des Prüfsatzes auf akteure.html
+    for column, hits, kappa in (("funktion", b.hits, b.kappa), ("funktion_a", a.hits, a.kappa)):
         rule = [str(sample.rows[i][column]) for i in basis]
-        label = [str(sample.labels[i]["funktion"]) for i in basis]
+        # im Codebuch heißt die Klasse ``erklaerung`` noch ``symbol`` (dieselbe Definition)
+        label = [
+            CODEBOOK_FUNCTIONS.get(
+                str(sample.labels[i]["funktion"]), str(sample.labels[i]["funktion"])
+            )
+            for i in basis
+        ]
         assert sum(r == lab for r, lab in zip(rule, label, strict=True)) == hits
         found = cohen_kappa(rule, label)
         assert found is not None and round(found, 3) == kappa
@@ -263,4 +283,102 @@ def test_the_cosponsors_are_right_wherever_they_name_a_fraction(sample: Sample) 
             joint += 1
             exact += rule == label
     assert (tp, tp + fp, tp + fn) == (119, 119, 138)
+    expected = (RULE_CHECK.fraction_hits, RULE_CHECK.fraction_named, RULE_CHECK.fraction_labelled)
+    assert (tp, tp + fp, tp + fn) == expected  # die Zahlen des Prüfsatzes auf akteure.html
     assert (exact, joint) == (26, 30)
+
+
+# --- Die Unterseite akteure.html (Stufe 3, Messdokument § 7) --------------------------------------
+# Die Zahlen der Seite aus denselben Tabellen wie oben, über ``build_actors``: Erklärungen, die
+# beiden Zählungen der Parteien (Frage 25; zusammen 330, davon 281 mit mehr und 49 mit weniger
+# Parteien, wie § 3.8), K3 über alle Funktionen und die Dokumente über die Grenze mit mindestens
+# vier Fraktionen (§ 3.11: 42 von 50 für 2014-2020; die Hauptperiode zählt seit Punkt 75 die Ampel
+# bis zum 2020-10-31 und hat 27 von 41), die stärkste Kante in Rat und Ausschüssen und beobachtet
+# gegen erwartet in Variante B (oben steht Variante A, wie gemessen).
+@dataclass(frozen=True)
+class PageNumbers:
+    statements: int
+    difference: tuple[int, int, int]  # verschieden, mehr, weniger
+    k3_all: tuple[int, int]
+    across: tuple[int, int]  # über die Grenze, davon mit mindestens vier Fraktionen
+    ratios: dict[str, float]
+    city_pair: tuple[str, str, int, str] | None = None
+
+
+PAGE_NUMBERS = {
+    "duesseldorf-2014": PageNumbers(
+        statements=55,
+        difference=(144, 107, 37),
+        k3_all=(50, 1_565),
+        across=(50, 42),
+        ratios={"CDU": 0.98, "SPD": 0.77, "GRUENE": 0.8, "FDP": 0.61, "T_FW": 1.44},
+    ),
+    "duesseldorf": PageNumbers(
+        statements=52,
+        difference=(179, 169, 10),
+        k3_all=(41, 2_731),
+        across=(41, 27),
+        ratios={"CDU": 0.73, "GRUENE": 0.85, "SPD+VOLT": 1.0, "T_FW": 1.64, "AfD": 1.72},
+        city_pair=("CDU", "GRUENE", 577, "gemeinsam_mehrheit"),
+    ),
+    "duesseldorf-2025": PageNumbers(
+        statements=3,
+        difference=(7, 5, 2),
+        k3_all=(1, 778),
+        across=(1, 0),
+        ratios={"CDU": 0.67, "GRUENE": 0.94, "AfD": 1.17, "T_FW+PARTEI": 1.05},
+    ),
+}
+PAGE_BUDGET = 500_000  # docs/plan-zeigen-2026-11.md, § 6
+
+
+def _model(period: Period) -> ActorsModel:
+    settings = period.settings.model_copy(
+        update={
+            "validation": period.settings.validation.model_copy(
+                update={"root": REPO / "validierung"}
+            )
+        }
+    )
+    return build_actors(period.documents.select(DOCUMENT_COLUMNS), settings, read_check(settings))
+
+
+@pytest.mark.parametrize("profile", list(PAGE_NUMBERS))
+def test_the_numbers_of_the_page(periods: dict[str, Period], profile: str) -> None:
+    model, expected = _model(periods[profile]), PAGE_NUMBERS[profile]
+    assert len(model.statements) == expected.statements
+    d = model.difference
+    assert (d.different, d.more, d.fewer) == expected.difference
+    assert model.concordance is not None and model.check.measured
+    k3 = model.concordance
+    assert (k3.initiatives.hits, k3.initiatives.n) == K3[profile]
+    assert (k3.all_functions.hits, k3.all_functions.n) == expected.k3_all
+    assert (len(k3.across), k3.many) == expected.across
+    ratios = {f.key: f.ratio for f in model.fractions}
+    assert {k: round(ratios[k] or 0.0, 2) for k in expected.ratios} == expected.ratios
+    if expected.city_pair is not None:
+        a, b, count, camp = expected.city_pair
+        city = model.matrices[0]
+        keys = [k for k, _ in city.fractions]
+        cell = city.cells[keys.index(a)][keys.index(b)]
+        assert cell is not None and (cell.count, cell.camp) == (count, camp)
+
+
+def test_the_page_of_the_second_city_is_explorative_and_without_concordance(
+    periods: dict[str, Period],
+) -> None:
+    model = _model(periods["moenchengladbach"])
+    assert not model.check.measured and model.explorative
+    assert model.concordance is None and not model.matrices[0].with_camps
+
+
+@pytest.mark.parametrize("profile", [*PAGE_NUMBERS, "moenchengladbach"])
+def test_the_page_stays_under_its_budget(periods: dict[str, Period], profile: str) -> None:
+    period = periods[profile]
+    html = render_page(
+        page_frame(period.settings, now=dt.datetime(2026, 11, 27, tzinfo=dt.UTC), commit=None),
+        PAGE,
+        page_data(_model(period), period.settings),
+        actors_links(period.layout, period.settings),
+    )
+    assert len(html.encode("utf-8")) < PAGE_BUDGET
