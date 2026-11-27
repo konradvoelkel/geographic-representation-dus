@@ -2,7 +2,11 @@
   "vorhaben": "14-vorgaenge-2-f4",
   "codebuch_version": "2026-11-23.2",
   "einheit": "pair_with_span",
-  "modell": "claude-opus-5-5",
+  "modelle": {
+    "kodierer_a": "claude-opus-5-5",
+    "kodierer_b": "claude-opus-5-5",
+    "schlichtung": "claude-opus-5-5"
+  },
   "datum": "2026-11-23",
   "einheiten": 100,
   "uneinig": 8,
@@ -213,6 +217,6 @@
       "treffer": null
     }
   },
-  "satz": "geprüft von zwei KI-Kodierern an 100 Dokumentpaaren, nicht von Menschen",
+  "satz": "geprüft von zwei KI-Kodierern desselben Modells (claude-opus-5-5) an 100 Dokumentpaaren, nicht von Menschen",
   "selbstgewichtend": false
 }

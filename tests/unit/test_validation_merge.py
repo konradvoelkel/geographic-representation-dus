@@ -145,6 +145,55 @@ def test_the_sentence_names_the_models(models: Models, disputed: int, expected: 
     assert sentence(models, 5, "document", disputed) == expected
 
 
+def _as_before_the_models(folder: Path) -> None:
+    """guete.json und README in der Form bis zum 2026-11-26: ``modell``, ein Satz ohne Modell."""
+    path = folder / "guete.json"
+    quality = json.loads(path.read_text(encoding="utf-8"))
+    earlier = {("modell" if key == "modelle" else key): value for key, value in quality.items()} | {
+        "modell": quality["modelle"]["kodierer_a"],
+        "satz": f"geprüft von zwei KI-Kodierern an {quality['einheiten']} Dokumenten, "
+        "nicht von Menschen",
+    }
+    path.write_text(json.dumps(earlier, ensure_ascii=False, indent=2), encoding="utf-8")
+    readme = folder / "README.md"
+    lines = [
+        line.replace(
+            "zwei KI-Kodierer, unabhängig", f"zwei KI-Kodierer, Modell `{MODEL}`, unabhängig"
+        )
+        for line in readme.read_text(encoding="utf-8").split("\n")
+        if not line.startswith("- **Modelle**:")
+    ]
+    readme.write_text("\n".join(lines), encoding="utf-8")
+
+
+def test_restate_brings_earlier_labels_into_the_new_form_and_nothing_else(project: Path) -> None:
+    """V3, Punkt 2: die bisherigen Labels bekommen Satz und Modellfelder aus dem, was guete.json
+    schon nennt (ein Modell für alle Rollen); Labels, Zahlen und jede andere Zeile bleiben."""
+    _disputed_two(project)
+    assert main(["validate", "merge", PROJECT, "--model", MODEL]) == 0
+    folder = project / "repo" / "validierung" / PROJECT
+    names = ("guete.json", "README.md", "labels.csv")
+    merged = {name: (folder / name).read_bytes() for name in names}
+    _as_before_the_models(folder)
+    assert (folder / "guete.json").read_bytes() != merged["guete.json"]
+    assert main(["validate", "restate", PROJECT]) == 0
+    assert {name: (folder / name).read_bytes() for name in names} == merged
+    assert main(["validate", "restate", PROJECT]) == 0  # ein zweiter Lauf ändert nichts
+    assert {name: (folder / name).read_bytes() for name in names} == merged
+
+
+def test_restate_refuses_a_readme_that_does_not_fit_its_quality_file(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _disputed_two(project)
+    assert main(["validate", "merge", PROJECT, "--model", MODEL]) == 0
+    path = project / "repo" / "validierung" / PROJECT / "guete.json"
+    quality = json.loads(path.read_text(encoding="utf-8"))
+    path.write_text(json.dumps(quality | {"uneinig": 5}, ensure_ascii=False), encoding="utf-8")
+    assert main(["validate", "restate", PROJECT]) == 1
+    assert "passt nicht zu guete.json" in capsys.readouterr().err
+
+
 def test_agreeing_coders_give_labels_without_adjudication(
     project: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:

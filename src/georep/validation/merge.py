@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import re
 from collections import Counter
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -35,7 +36,7 @@ from typing import Any
 
 import polars as pl
 
-from georep.errors import MissingInputError
+from georep.errors import MissingInputError, SchemaError
 from georep.io import atomic_path, write_json, write_text
 from georep.layout import Layout
 from georep.settings import Settings
@@ -674,6 +675,84 @@ def merge_project(
         },
     )
     return MergeReport(results, count, 0, paths.labels, None, len(passed))
+
+
+def recorded_models(quality: Mapping[str, Any]) -> Models:
+    """Das Modell je Rolle, wie guete.json es nennt; bis zum 2026-11-26 stand ``modell`` für alle."""
+    found = quality.get("modelle")
+    if isinstance(found, dict):
+        names = [found.get(role) for role in ("kodierer_a", "kodierer_b", "schlichtung")]
+        if all(isinstance(name, str) and name for name in names):
+            return Models(*(str(name) for name in names))
+        raise SchemaError(f"guete.json: modelle {found!r} nennt nicht jede Rolle")
+    single = quality.get("modell")
+    if isinstance(single, str) and single:
+        return Models.same(single)
+    raise SchemaError("guete.json nennt kein Modell (weder modelle noch modell)")
+
+
+def restated_quality(quality: Mapping[str, Any], models: Models) -> dict[str, Any]:
+    """guete.json mit ``modelle`` an der Stelle von ``modell`` und dem Satz nach Punkt 71.
+
+    Jeder andere Schlüssel bleibt mit seinem Wert an seiner Stelle; der Satz kommt aus
+    ``einheiten``, ``einheit`` und ``uneinig``, die merge geschrieben hat.
+    """
+    try:
+        text = sentence(models, quality["einheiten"], quality["einheit"], quality["uneinig"])
+    except KeyError as error:
+        raise SchemaError(f"guete.json ohne {error}; merge schreibt es") from error
+    out: dict[str, Any] = {}
+    for key, value in quality.items():
+        if key in ("modell", "modelle"):
+            out["modelle"] = models.as_json()
+        else:
+            out[key] = text if key == "satz" else value
+    return out
+
+
+def restated_readme(text: str, quality: Mapping[str, Any], models: Models) -> str:
+    """Das README mit den Zeilen **Kodierer** und **Modelle** in der Form von merge.
+
+    Die alte Zeile **Kodierer** nannte ``Modell `M``` für beide Kodierer; ohne diese Angabe muss
+    sie genau die Zeile sein, die merge aus ``uneinig`` und ``schlichtung_herkunft`` schriebe,
+    sonst stimmt das README nicht mit guete.json überein, und nichts wird geschrieben.
+    """
+    lines = text.split("\n")
+    found = [i for i, line in enumerate(lines) if line.startswith("- **Kodierer**:")]
+    if len(found) != 1:
+        raise SchemaError(f"README.md: {len(found)} Zeilen **Kodierer**, erwartet genau eine")
+    at = found[0]
+    expected = coders_line(int(quality["uneinig"]), quality.get("schlichtung_herkunft") or {})
+    if re.sub(r"Modell `[^`]*`, ", "", lines[at], count=1) != expected:
+        raise SchemaError(
+            "README.md: die Zeile **Kodierer** passt nicht zu guete.json (uneinig, "
+            "schlichtung_herkunft); merge schreibt beide neu"
+        )
+    lines[at] = expected
+    if at + 1 < len(lines) and lines[at + 1].startswith("- **Modelle**:"):
+        lines[at + 1] = models_line(models)
+    else:
+        lines.insert(at + 1, models_line(models))
+    return "\n".join(lines)
+
+
+def restate_project(settings: Settings, project: str) -> tuple[Path, str]:
+    """``georep validate restate``: Satz und Modellfelder neu, aus dem, was guete.json schon sagt.
+
+    Für die Labels bis zum 2026-11-26 (Frage 19): sie bleiben, wie sie sind, und ihre Seiten nennen
+    das Modell. Labels und Zahlen fasst der Lauf nicht an; ein zweiter Lauf ändert nichts.
+    """
+    paths = validation_paths(settings, project)
+    for path in (paths.quality, paths.readme):
+        if not path.is_file():
+            raise MissingInputError(f"{path} fehlt; `georep validate merge {project}` legt es an")
+    quality: dict[str, Any] = json.loads(paths.quality.read_text(encoding="utf-8"))
+    models = recorded_models(quality)
+    restated = restated_quality(quality, models)
+    readme_text = restated_readme(paths.readme.read_text(encoding="utf-8"), quality, models)
+    write_json(paths.quality, restated)
+    write_text(paths.readme, readme_text)
+    return paths.quality, str(restated["satz"])
 
 
 def write_labels(

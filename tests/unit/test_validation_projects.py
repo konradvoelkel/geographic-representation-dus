@@ -44,6 +44,42 @@ def test_every_codebook_in_the_repository_is_valid(folder: str) -> None:
     )
 
 
+# Jedes Vorhaben mit Labels: guete.json von merge, dazu README und die Labels.
+QUALITY = sorted(p.parent.name for p in VALIDATION.glob("*/guete.json"))
+ROLES = ("kodierer_a", "kodierer_b", "schlichtung")
+
+
+@pytest.mark.parametrize("folder", QUALITY, ids=str)
+def test_every_quality_file_names_the_model_of_each_role(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, folder: str
+) -> None:
+    """Frage 19: alle Labels bis zum 2026-11-26 kodierten und schlichteten Agenten desselben
+    Modells. ``restate`` hat Satz und Modellfelder in die Form von Punkt 71 gebracht; ein Lauf über
+    den Stand im Repo ändert kein Byte, auch nicht an Labels und Zahlen (V3, Punkt 2)."""
+    source = VALIDATION / folder
+    files = ["guete.json", "README.md", *(p.name for p in source.glob("labels*.csv"))]
+    target = tmp_path / "repo" / "validierung" / folder
+    target.mkdir(parents=True)
+    for name in files:
+        shutil.copy(source / name, target / name)
+    (tmp_path / "repo" / "settings.toml").write_text(
+        f'data_root = "{tmp_path / "data"}"\n'
+        f'validation.root = "{tmp_path / "repo" / "validierung"}"\n',
+        encoding="utf-8",
+    )
+    monkeypatch.chdir(tmp_path / "repo")
+    assert main(["validate", "restate", folder]) == 0
+    for name in files:
+        assert (target / name).read_bytes() == (source / name).read_bytes(), name
+    quality: dict[str, Any] = json.loads((source / "guete.json").read_text(encoding="utf-8"))
+    assert quality["modelle"] == dict.fromkeys(ROLES, "claude-opus-5-5") and "modell" not in quality
+    assert quality["satz"].startswith(
+        "geprüft von zwei KI-Kodierern desselben Modells (claude-opus-5-5) an "
+    )
+    readme = (source / "README.md").read_text(encoding="utf-8")
+    assert "- **Modelle**: Kodierer A `claude-opus-5-5`, Kodierer B `claude-opus-5-5`" in readme
+
+
 def _copy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, project: str) -> Path:
     repo = tmp_path / "repo"
     target = repo / "validierung" / project

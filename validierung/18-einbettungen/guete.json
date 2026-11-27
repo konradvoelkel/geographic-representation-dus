@@ -2,7 +2,11 @@
   "vorhaben": "18-einbettungen",
   "codebuch_version": "2026-11-23.1",
   "einheit": "query_document",
-  "modell": "claude-opus-5-5",
+  "modelle": {
+    "kodierer_a": "claude-opus-5-5",
+    "kodierer_b": "claude-opus-5-5",
+    "schlichtung": "claude-opus-5-5"
+  },
   "datum": "2026-11-24",
   "einheiten": 916,
   "uneinig": 35,
@@ -26,5 +30,5 @@
       "alpha_genuegt": true
     }
   },
-  "satz": "geprüft von zwei KI-Kodierern an 916 Paaren aus Suchanfrage und Dokument, nicht von Menschen"
+  "satz": "geprüft von zwei KI-Kodierern desselben Modells (claude-opus-5-5) an 916 Paaren aus Suchanfrage und Dokument, nicht von Menschen"
 }

@@ -1,4 +1,4 @@
-"""``georep validate sample|tasks|import|merge|score <vorhaben>``: die Befehlszeile von F4.
+"""``georep validate sample|tasks|import|merge|restate|score <vorhaben>``: die Befehlszeile von F4.
 
 Unterbefehle und Ausgabe stehen hier; ``cli.py`` hängt den Parser ein und ruft ``run``. So berührt
 das Fundament die gemeinsame Datei nur mit drei Zeilen (plan-vorverarbeitung-2026-11.md, § 2.3).
@@ -14,7 +14,7 @@ from pathlib import Path
 from georep.layout import Layout
 from georep.settings import Settings
 from georep.validation.importer import import_project
-from georep.validation.merge import Models, merge_project
+from georep.validation.merge import Models, merge_project, restate_project
 from georep.validation.paths import CODERS
 from georep.validation.sample import sample_project
 from georep.validation.score import score_project
@@ -77,6 +77,14 @@ def add_parser(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None
     merge.add_argument("project", metavar="vorhaben", help=PROJECT_HELP)
     add_model_options(merge)
     merge.add_argument("--force", action="store_true", help="vorhandene Labels neu schreiben")
+
+    restate = actions.add_parser(
+        "restate",
+        help="Satz und Modellfelder in guete.json und die Zeilen Kodierer und Modelle im README in "
+        "die Form von docs/decisions.md, Punkt 71 bringen, aus den Modellen, die guete.json schon "
+        "nennt (Labels bis 2026-11-26); Labels und Zahlen bleiben",
+    )
+    restate.add_argument("project", metavar="vorhaben", help=PROJECT_HELP)
 
     imported = actions.add_parser(
         "import",
@@ -168,6 +176,10 @@ def run(args: argparse.Namespace, settings: Settings, layout: Layout) -> int:
             force=args.force,
         )
         print("\n".join(merged.lines()))
+        return 0
+    if args.action == "restate":
+        path, text = restate_project(settings, args.project)
+        print(f"{text} -> {path}")
         return 0
     if args.action == "import":
         taken = import_project(settings, layout, args.project, args.source, force=args.force)

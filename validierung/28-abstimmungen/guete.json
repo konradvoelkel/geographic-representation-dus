@@ -2,7 +2,11 @@
   "vorhaben": "28-abstimmungen",
   "codebuch_version": "2026-11-24.1",
   "einheit": "document",
-  "modell": "claude-opus-5-5",
+  "modelle": {
+    "kodierer_a": "claude-opus-5-5",
+    "kodierer_b": "claude-opus-5-5",
+    "schlichtung": "claude-opus-5-5"
+  },
   "datum": "2026-11-24",
   "einheiten": 150,
   "uneinig": 13,
@@ -90,5 +94,5 @@
       "alpha_genuegt": true
     }
   },
-  "satz": "geprüft von zwei KI-Kodierern an 150 Dokumenten, nicht von Menschen"
+  "satz": "geprüft von zwei KI-Kodierern desselben Modells (claude-opus-5-5) an 150 Dokumenten, nicht von Menschen"
 }
