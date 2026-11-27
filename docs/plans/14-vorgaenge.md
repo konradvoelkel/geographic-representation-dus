@@ -3,7 +3,8 @@
 **Stand 2026-11-26: Urteil bauen mit der Rückfallregel (§ 5.1), Stufe 2 auf `main` (`v0.25.0`,
 Punkt 76); Stufe 3 (`vorgaenge.html`, Haken des Dokumentdialogs) offen, die Zahl 104/106 erst nach dem
 F4-Nachzug (§ 10).** Der Branch ist gemerged und entfernt. Die Prüfstichprobe der Rückfallregel
-(Frage 9.18) ist am 2026-11-27 vorab festgelegt (§ 4.3); ihre Kodierung steht aus.
+(Frage 9.18) ist am 2026-11-27 vorab festgelegt und kodiert (§ 4.3): 50 von 50, Kriterium
+erfüllt, zusammen mit § 5.1 154 von 156 (Wilson ab 0,954).
 
 Stufe 1 (Messen) vom 2026-11-23 auf dem Branch `feat/14-vorgaenge`. Briefing:
 [../plan-vorverarbeitung-2026-11.md](../plan-vorverarbeitung-2026-11.md), § 11 „14 Vorgänge".
@@ -678,6 +679,59 @@ Hauptperiode) und nach drei Fassungen kodiert.
   (validierung.md, § 3); keine Kennzahl auf der Seite, die Uneinigkeiten gehen in Frage 9.17, und an
   diesen Kanten wird nicht nachkodiert.
 
+#### Ergebnis (2026-11-27, nach der Kodierung)
+
+Kodiert nach der Regel aus Frage 19: Kodierer A `claude-opus-5-5`, Kodierer B `claude-sonnet-5-5`,
+Schlichtung `claude-opus-5-5`, je ein frischer Agent. Das ist die erste Messung mit Kodierer B auf
+einem anderen Modell. Labels, README und `guete.json` stehen unter
+[../../validierung/14-vorgaenge-3-f4/](../../validierung/14-vorgaenge-3-f4/); der Satz dort lautet
+„geprüft von zwei KI-Kodierern (claude-opus-5-5 und claude-sonnet-5-5) an 50 Dokumentpaaren,
+Schlichtung durch claude-opus-5-5, nicht von Menschen".
+
+| Frage | gleich kodiert | Krippendorffs α | Labels |
+|---|---|---|---|
+| `nummer_gemeint` | 50 / 50 | 1,000 | ja 46, keine_fundstelle 4 |
+| `selbe_sache` | 50 / 50 | nicht definiert | ja 50 |
+| `beziehung` | 49 / 50 | 0,961 | umsetzung 33, aenderung 13, nachfrage 2, antwort 1, fortsetzung 1 |
+
+Die eine Uneinigkeit (`a013463353a1`, ein Nachtrag zu einer Eingabe nach § 24 GO: A `umsetzung`,
+B `aenderung`) entschied der Schlichter zu `umsetzung`.
+
+**Gegen das Kriterium.**
+
+- **Kantenpräzision 50 von 50 = 1,000** (Wilson 0,929 bis 1,000); für die 1 710 Kanten gewichtet
+  1,000 (Wilson bei Kishs n_eff 49,9: 0,928 bis 1,000). Erfüllt, ungewichtet und gewichtet.
+- **α von `selbe_sache`** ist nicht rechenbar: beide Kodierer beurteilten jede Einheit gleich und
+  mit demselben Wert (ja bei allen 50). Ohne Streuung gibt es keinen Zufallsabgleich, α und κ sind
+  nicht definiert. **Entscheidung des Supervisors (2026-11-27): das zählt als erfüllt**, als
+  vollständige Übereinstimmung, bei der kein Zufallsabgleich möglich ist. Die Grenze: das belegt
+  nicht, dass das Codebuch Grenzfälle trennt, denn in diesen 50 Kanten kam keiner vor, an dem die
+  Kodierer hätten auseinandergehen können. `guete.json` sagt weiter `alpha_genuegt = false`, weil F4
+  ein undefiniertes α nie genügen lässt; die Stufe 3 von 14 stützt die Anzeige darum auf diese
+  Entscheidung.
+- **Urteil: erfüllt.** Nach „Was folgt" oben zeigt Stufe 3 von 14 die Präzision der Rückfallregel
+  aus `guete.json`, für die Hauptperiode gemessen.
+
+**Nebenmaß** (kein Kriterium): mit den 104 von 106 aus § 5.1 zusammen **154 von 156 = 0,987**,
+Wilson 0,954 bis 0,996. Die untere Grenze liegt über 0,95; das Ziel der Frage 9.18 ist damit am
+Nebenmaß erreicht.
+
+**Ohne Einfluss auf das Urteil** (`docs/plans/14-vorgaenge-pruefung.py --auswertung`):
+Kantenpräzision je Fundstelle Titel 43/43, Nachtrag 4/4, Sammelbericht 2/2, Anlage 1/1;
+Rollenpräzision je Kantentyp 49 von 50 (umsetzung 27/27, aenderung 9/9, bezug 4/4, kontrolle 2/2,
+nachfrage 2/2, antwort 1/1, fortsetzung 1/1, nachtrag 3/4: `a013463353a1` ist als `umsetzung`
+geschlichtet, erwartet war `aenderung`).
+
+**Grenzen.**
+
+- 43 der 50 Kanten sind Titelkanten; die Anlage trägt eine, der Sammelbericht zwei, der Nachtrag
+  vier. Die Präzision je Fundstelle ist damit **nicht geprüft** (Wilson je Schicht: Anlage 0,207
+  bis 1, Sammelbericht 0,342 bis 1, Nachtrag 0,510 bis 1). Die beiden bekannten Fehler der
+  Rückfallregel (§ 5.1) lagen in einer Anlage und einem Titel.
+- Nur die Hauptperiode und nur Kanten innerhalb der Periode; die Nachbarperioden und
+  Mönchengladbach heißen auf der Seite „explorativ".
+- Kein menschlicher Goldstandard; zwei Modelle teilen weniger Fehler als eines, aber nicht keine.
+
 ## 5. Urteil gegen das Kriterium: bauen / umbauen / verwerfen
 
 ### 5.1 Endgültiges Urteil (Abschluss der Stufe 1, 2026-11-23): bauen, mit der Rückfallregel
@@ -951,7 +1005,7 @@ der Antwortquote als Maß.
 | 9.15 | Zeigt der Dokumentdialog schwache Kanten? | 2 126 Kanten, darunter richtige (Entwurf: 6 von 15 verworfenen) | nein im Vorgang; höchstens als „genannt in einer Aufzählung" ohne Rolle |
 | 9.16 | Was, wenn die Stichprobe 2 das Kriterium verfehlt? | § 8 des Meta-Plans erlaubt eine Runde | Rückfallregel aus § 5 (nur Titel, Anlage, Nummer, Sammelbericht), vorab festgelegt — **eingetreten** (0,850, § 4.2; Rückfallregel 104 / 106, § 5.1) |
 | 9.17 | Eine spätere Fassung .3 für Textverweise, mit den Regeln des Schlichters der Bestätigung? | 11 307 Textkanten liegen schwach in den Daten; .2 trug zu 85 % | **Vorschlag, keine Runde jetzt** (§ 9.1 unten); nur mit neuer Ziehung und vorab festgelegtem Kriterium |
-| 9.18 | Eine eigene Stichprobe nur aus Rückfall-Kanten (rund 50, nach Typ geschichtet), um das Intervall über 0,95 zu heben? | die Präzision 0,981 ruht auf 106 Kanten aus zwei Ziehungen, die untere Grenze ist 0,934 | ja, als Prüfung neben Stufe 2, keine Umbau-Runde (sie ändert keine Regel) — **vorbereitet** am 2026-11-27: Grundgesamtheit, Seed, Codebuch und Kriterium in § 4.3, Ordner `validierung/14-vorgaenge-3-f4/` |
+| 9.18 | Eine eigene Stichprobe nur aus Rückfall-Kanten (rund 50, nach Typ geschichtet), um das Intervall über 0,95 zu heben? | die Präzision 0,981 ruht auf 106 Kanten aus zwei Ziehungen, die untere Grenze ist 0,934 | ja, als Prüfung neben Stufe 2, keine Umbau-Runde (sie ändert keine Regel) — **erledigt** am 2026-11-27 (§ 4.3, `validierung/14-vorgaenge-3-f4/`): 50 von 50, zusammen mit § 5.1 154 von 156, untere Wilson-Grenze 0,954 |
 
 ### 9.1 Vorschlag für eine Fassung .3 (nicht begonnen)
 

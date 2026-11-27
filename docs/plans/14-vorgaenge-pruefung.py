@@ -2,6 +2,7 @@
 
     uv run python docs/plans/14-vorgaenge-pruefung.py   # nach `georep run`, Profil duesseldorf
     uv run georep validate sample 14-vorgaenge-3-f4
+    uv run python docs/plans/14-vorgaenge-pruefung.py --auswertung   # nach merge und score
 
 Die Einheiten sind die starken Kanten der Rückfallregel (`processed/vorgang_kanten.parquet`,
 `stark`), wie `georep validate sample` sie für die Einheit `pair_with_span` liest: `kante` (die
@@ -17,11 +18,18 @@ Fundstelle im Text bekommt nur der Sammelbericht: dort nennt B A in einer eigene
 Auftrag zeigt B als Fenster um sie; Titel, Anlagenname und Nummer sieht der Kodierer im Titel und
 im Kontext. Die Spanne kommt aus `processed/verweise.parquet` und muss im Rohtext von B wörtlich
 stehen, sonst bleibt sie leer. Kein Netz, kein Modell; geschrieben wird nur unter `data_root`.
+
+Mit `--auswertung` liest es nur: die Labels (`validierung/14-vorgaenge-3-f4/labels.csv`) und den
+Kantentyp jeder Kante aus `vorgang_kanten.parquet` über `id_a`, `id_b`, und druckt die
+Kantenpräzision je Fundstelle und die Rollenpräzision je Kantentyp (Anteil `beziehung` in der
+Erwartung unter den Kanten mit `selbe_sache = ja`, Zuordnung aus `[auswertung.erwartet]` der
+Fassung .2, im Kopf des Codebuchs). Beides steht ohne Einfluss auf das Urteil in § 4.3.
 """
 
 from __future__ import annotations
 
 import hashlib
+import sys
 from pathlib import Path
 
 import polars as pl
@@ -43,6 +51,19 @@ WHERE = {
     "sammelbericht": "Text von B",
 }
 SCHEMA_VERSION = 1
+FOLDER = REPO / "validierung" / "14-vorgaenge-3-f4"
+# [auswertung.erwartet] der Fassung .2: Kantentyp des Verfahrens -> Rollen, die als richtig zählen
+EXPECTED = {
+    "antwort": {"antwort"},
+    "nachfrage": {"nachfrage"},
+    "umsetzung": {"umsetzung"},
+    "kontrolle": {"umsetzung"},
+    "aenderung": {"aenderung"},
+    "nachtrag": {"aenderung"},
+    "bau": {"fortsetzung"},
+    "fortsetzung": {"fortsetzung"},
+    "bezug": {"antwort", "nachfrage", "umsetzung", "aenderung", "fortsetzung", "bezug"},
+}
 
 
 def kante(von: str, nach: str) -> str:
@@ -139,5 +160,44 @@ def main() -> None:
     print(f"{frame.height} Kanten -> {layout.root / TARGET} (längste Fundstelle {longest} Zeichen)")
 
 
+def evaluate() -> None:
+    """Kantenpräzision je Fundstelle und Rollenpräzision je Kantentyp aus den Labels."""
+    layout = Layout.from_settings(load_settings())
+    sample = pl.read_csv(FOLDER / "stichprobe.csv", infer_schema=False)
+    labels = pl.read_csv(FOLDER / "labels.csv", infer_schema=False).pivot(
+        "frage", index="id", values="label"
+    )
+    edges = pl.read_parquet(procedure_files(layout).edges).select(
+        pl.col("nach").alias("id_a"), pl.col("von").alias("id_b"), "typ"
+    )
+    frame = (
+        sample.select("id", "id_a", "id_b", "schicht")
+        .join(labels, on="id", how="left")
+        .join(edges, on=["id_a", "id_b"], how="left")
+        .sort("id")
+    )
+    if frame.get_column("typ").null_count():
+        raise SystemExit("eine Kante der Stichprobe fehlt in vorgang_kanten.parquet")
+    print("Kantenpräzision je Fundstelle (selbe_sache = ja unter ja und nein):")
+    for (source,), group in sorted(frame.group_by("schicht"), key=lambda item: str(item[0][0])):
+        counted = group.filter(pl.col("selbe_sache").is_in(["ja", "nein"]))
+        hits = counted.filter(pl.col("selbe_sache") == "ja").height
+        print(f"  {source}: {hits} von {counted.height}")
+    print("Rollenpräzision je Kantentyp (beziehung in der Erwartung, unter selbe_sache = ja):")
+    same = frame.filter(pl.col("selbe_sache") == "ja")
+    for (kind,), group in sorted(same.group_by("typ"), key=lambda item: str(item[0][0])):
+        right = [r for r in group.iter_rows(named=True) if r["beziehung"] in EXPECTED[str(kind)]]
+        wrong = sorted(
+            f"{r['id']} ({r['beziehung']})"
+            for r in group.iter_rows(named=True)
+            if r["beziehung"] not in EXPECTED[str(kind)]
+        )
+        tail = f"; anders: {', '.join(wrong)}" if wrong else ""
+        print(f"  {kind}: {len(right)} von {group.height}{tail}")
+
+
 if __name__ == "__main__":
-    main()
+    if sys.argv[1:] == ["--auswertung"]:
+        evaluate()
+    else:
+        main()
