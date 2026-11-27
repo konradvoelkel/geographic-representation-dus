@@ -204,9 +204,15 @@ fi
 PAPERS=$(number "$WORK/papers.out" neu)
 PDFS=$(number "$WORK/pdfs.out" geladen)
 TEXTS=$(number "$WORK/pdfs.out" extrahiert)
+# Die Seitengröße ist die der Auswertung (details.html, seit v0.39.0); die Startseite (index.html)
+# hat ihr eigenes Budget und steht als eigene Zahl daneben (docs/plan-startseite-2026-11.md, § 3).
 PAGE_KB=0
+if [ -f "$OUT/$PROFILE/details.html" ]; then
+  PAGE_KB=$(($(wc -c <"$OUT/$PROFILE/details.html") / 1000))
+fi
+START_KB=0
 if [ -f "$OUT/$PROFILE/index.html" ]; then
-  PAGE_KB=$(($(wc -c <"$OUT/$PROFILE/index.html") / 1000))
+  START_KB=$(($(wc -c <"$OUT/$PROFILE/index.html") / 1000))
 fi
 
 # (8) R2: PDFs und Textstore des Profils sichern, dazu Metadaten und fertige Tabellen
@@ -236,7 +242,8 @@ mkdir -p "$OUT/$PROFILE" || fail "Standdatei anlegen"
   printf '{\n  "profil": "%s",\n  "beginn": "%s",\n  "ende": "%s",\n' "$PROFILE" "$STARTED" "$ENDED"
   printf '  "ergebnis": "%s",\n  "dauer_s": %s,\n' "$RESULT" "$TOOK"
   printf '  "neue_paper": %s,\n  "pdfs": %s,\n  "texte": %s,\n' "$PAPERS" "$PDFS" "$TEXTS"
-  printf '  "seite_kb": %s,\n  "schnappschuss": "%s",\n  "schritte": [\n' "$PAGE_KB" "$SNAPSHOT"
+  printf '  "seite_kb": %s,\n  "startseite_kb": %s,\n' "$PAGE_KB" "$START_KB"
+  printf '  "schnappschuss": "%s",\n  "schritte": [\n' "$SNAPSHOT"
   printf '%s' "$SUMMARY" | sed 's/.*/    "&",/' | sed '$ s/,$//'
   printf '  ]\n}\n'
 } >"$OUT/$PROFILE/stand.json" || fail "stand.json schreiben"
@@ -252,4 +259,4 @@ else
 fi
 
 health ""
-log "georep-monitor: $PAPERS neue Paper, $PDFS PDFs, $TEXTS Texte, Seite $PAGE_KB KB, Schnappschuss $SNAPSHOT, Dauer $(($(date +%s) - START))s"
+log "georep-monitor: $PAPERS neue Paper, $PDFS PDFs, $TEXTS Texte, Seite $PAGE_KB KB, Startseite $START_KB KB, Schnappschuss $SNAPSHOT, Dauer $(($(date +%s) - START))s"

@@ -6,17 +6,18 @@
 <script>{{ redirect|safe }}</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Ratsdokumente {{ model.city.genitive }} und ihre Orte, {{ model.period.title }}</title>
-<meta name="description" content="Wie sichtbar sind die {{ model.figures.districts }} Kommunalwahlbezirke {{ model.city.genitive }} in den Ratsdokumenten der {{ model.period.title }}? Startseite mit Links zur ganzen Auswertung, zu den Unterseiten und zu den Downloads.">
+<meta name="description" content="Wo in {{ model.city.name }} nennen die Ratsdokumente der {{ model.period.title }} Straßen und Orte? Karte mit Zeitregler und Gremium, Kurzfassung, Links zur ganzen Auswertung und zu den Downloads.">
 <style>
 {% include "frame/style.css.j2" +%}
-ul.start-links { padding-left: 1.2em; }
-ul.start-links li { margin: .4rem 0; }
-</style>
+{{ start_css|safe }}</style>
+{% if model.preview_rows %}
+<noscript><style>table.preview tbody tr { display: table-row !important; } p.more { display: none !important; }</style></noscript>
+{% endif %}
 </head>
+{% from "macros.html.j2" import more, english %}
 <body>
 <header>
 <h1>Geografische Repräsentation in {{ model.city.adjective }} Ratsdokumenten</h1>
-<p class="lead">Wie sichtbar sind die {{ model.figures.districts }} Kommunalwahlbezirke {{ model.city.genitive }} in den {{ model.figures.documents|num }} Dokumenten des {{ model.city.council }}s der {{ model.period.title }}? Für jeden Wahlbezirk gibt es ein Wörterbuch aus Straßennamen und Orten, und gezählt wird, welche Dokumente einen davon nennen.</p>
 <p class="meta">Datenstand: {{ model.period.title }}, Kommunalwahl {{ model.stand.election|date_de }}; Dokumente {{ model.stand.period_start|date_de }} bis {% if model.stand.period_end %}{{ model.stand.period_end|date_de }}{% else %}heute (laufende Wahlperiode){% endif %}{% if model.stand.newest_document %}; neuestes Dokument vom {{ model.stand.newest_document|date_de }}{% endif %}. Gebaut mit georep {{ model.version }}; Quelltext und Daten im <a href="{{ links.repository }}">Repository</a>.</p>
 {% if model.parent_url %}
 <p class="meta" data-parent="1"><a href="{{ model.parent_url }}">Zur Hauptperiode {{ model.city.genitive }}</a></p>
@@ -25,7 +26,79 @@ ul.start-links li { margin: .4rem 0; }
 <!--georep:weitere-staedte-->
 </header>
 <main>
-<noscript><p class="note">Ohne JavaScript führt eine alte Adresse mit Anker (etwa <code>#suche=…</code>) nicht von selbst zur Auswertung; dieselbe Adresse mit <a href="{{ details }}">{{ details }}</a> statt der Startseite zeigt sie.</p></noscript>
+<noscript><p class="note">Ohne JavaScript zeigt die Karte die Dokumente je Wahlbezirk in den letzten zwölf Monaten; Zeitregler, Gremium, Punkte und Dokumentlisten brauchen ein Skript. Eine alte Adresse mit Anker (etwa <code>#suche=…</code>) führt dann nicht von selbst zur Auswertung: dieselbe Adresse mit <a href="{{ details }}">{{ details }}</a> zeigt sie.</p></noscript>
+<section id="start-kurz" aria-labelledby="start-kurz-title">
+<h2 id="start-kurz-title">Kurzfassung</h2>
+<ul class="start-kurz">
+{% for s in summary %}
+<li>{{ s.text }} <a href="{{ details }}#{{ s.target }}">{{ s.link }}</a></li>
+{% endfor %}
+</ul>
+</section>
+{% set m = start_map %}
+<section id="start-karte" aria-labelledby="start-karte-title">
+<h2 id="start-karte-title">Wo die Dokumente Orte nennen</h2>
+<div class="start-grid">
+<div class="start-figure">
+<p id="start-caption" class="start-caption">Dokumente je Wahlbezirk, {{ m.window_label() }}, alle Gremien</p>
+<p id="start-offline" class="note" hidden></p>
+<svg id="start-map" class="start-map" viewBox="0 0 {{ m.width }} {{ m.height }}" style="aspect-ratio: {{ m.width }} / {{ m.height }}" role="group" aria-labelledby="start-map-title" xmlns="http://www.w3.org/2000/svg">
+<title id="start-map-title">Karte der {{ m.districts|length }} Wahlbezirke mit den Grenzen der Stadtbezirke</title>
+<g class="start-areas" fill-rule="evenodd">
+{% for number, name, path in m.districts %}
+<path class="start-area q{{ classes.classes[number] }}" data-wb="{{ number }}" data-sb="{{ m.city_district_of.get(number, 0) }}" data-name="{{ name }}" tabindex="0" d="{{ path }}"><title>Wahlbezirk {{ number }} {{ name }}: {{ counts[number]|num }} Dokumente</title></path>
+{% endfor %}
+</g>
+<g class="start-borders" aria-hidden="true">
+{% for c in m.city_districts %}<path d="{{ c.path }}"/>{% endfor %}
+</g>
+<g class="start-points" aria-hidden="true"></g>
+{# die Namen über den Punkten, mit Rand in --surface: Orientierung vor Vollständigkeit #}
+<g class="start-labels" aria-hidden="true">
+{% for name, x, y in m.labels %}<text x="{{ x }}" y="{{ y }}">{{ name }}</text>{% endfor %}
+</g>
+</svg>
+<p id="start-status" class="start-status" aria-live="polite">{{ m.window_documents()|num }} Dokumente an {{ m.window_places()|num }} Orten, {{ m.window_label() }}, alle Gremien.</p>
+</div>
+<div class="start-side">
+<div id="start-controls" hidden>
+<fieldset class="start-time"><legend>Zeitraum: <output id="start-range">{{ m.window_label() }}</output></legend>
+<svg id="start-strip" class="start-strip" preserveAspectRatio="none" aria-hidden="true"></svg>
+<label>von <input type="range" id="start-von" min="0" step="1" value="{{ m.window[0] }}"></label>
+<label>bis <input type="range" id="start-bis" min="0" step="1" value="{{ m.window[1] }}"></label>
+<div id="start-presets" class="start-presets"></div>
+</fieldset>
+<fieldset><legend>Gremium</legend>
+<label>Art <select id="start-art"><option value="">alle Gremien</option></select></label>
+<label>Gremium <select id="start-gremium" disabled></select></label>
+</fieldset>
+<fieldset><legend>Ansicht</legend>
+<label><input type="radio" name="start-mode" value="punkte" checked> Punkte</label>
+<label><input type="radio" name="start-mode" value="flaechen"> Flächen</label>
+</fieldset>
+<label class="start-zoom">Ausschnitt <select id="start-zoom"><option value="">ganze Stadt</option>
+{% for c in m.city_districts %}<option value="{{ c.view_box|join(' ') }}" data-sb="{{ c.number }}">{{ c.label }}</option>{% endfor %}
+</select></label>
+</div>
+<div id="start-legend-points" class="legend" hidden><p class="note">Fläche eines Kreises: Dokumente an diesem Ort im Zeitraum</p>
+<svg class="start-sizes" viewBox="0 0 150 36" aria-hidden="true">{% for count, x in ((1, 12), (10, 52), (50, 104)) %}<circle cx="{{ x }}" cy="18" r="{{ size(count)|round(1) }}"/><text x="{{ (x + size(count) + 3)|round(1) }}" y="22">{{ count }}</text>{% endfor %}</svg></div>
+<div id="start-legend-areas" class="legend"><p class="note">Dokumente je Wahlbezirk</p><ul>
+{% for klass, label in legend %}<li><span class="swatch q{{ klass }}"></span>{{ label }}</li>
+{% endfor %}{% for klass in range(legend|length, 5) %}<li hidden><span class="swatch q{{ klass }}"></span></li>
+{% endfor %}</ul></div>
+</div>
+</div>
+<p class="note" id="start-map-note">Ein Punkt ist ein Ort, wie die Auswertung zählt: ein Begriff aus dem Wörterbuch eines Wahlbezirks, also eine Straße oder ein Ort, im Wahlbezirk. Er heißt, dass der Name im Dokument vorkommt, nicht, dass das Dokument von dem Ort handelt; Wahlbezirke mit vielen Straßen haben darum mehr Punkte (<a href="{{ details }}#methode">Methode und Grenzen</a>). Eine Straße durch mehrere Wahlbezirke steht in jedem.</p>
+<p id="start-many" class="note" hidden><span></span><button type="button" class="start-place">zeigen</button></p>
+<details id="start-list"><summary>Als Liste: die Orte mit den meisten Dokumenten im Zeitraum</summary>
+{{ more("start-list-table", top|length, model.preview_rows) }}
+<div class="scroll"><table id="start-list-table" class="preview">
+<thead><tr><th scope="col" data-sort="text">Ort</th><th scope="col" class="num" data-sort="num">Wahlbezirk</th><th scope="col" class="num" data-sort="num">Dokumente</th></tr></thead>
+<tbody id="start-list-body">
+{% for place, count in top %}<tr><td>{{ place.name }}</td><td class="num" data-value="{{ place.district }}">{{ place.district }}</td><td class="num" data-value="{{ count }}">{{ count|num }}</td></tr>
+{% endfor %}</tbody></table></div>
+</details>
+</section>
 <section id="start-links" aria-labelledby="start-links-title">
 <h2 id="start-links-title">Die Auswertung</h2>
 <ul class="start-links">
@@ -33,11 +106,16 @@ ul.start-links li { margin: .4rem 0; }
 <li><a href="{{ item.href }}">{{ item.title }}</a>: {{ item.lead }}</li>
 {% endfor %}
 </ul>
+{{ english(model, details) }}
 </section>
 </main>
-<footer>
-<p>Ergebnisse: <a href="{{ links.cc0 }}">CC0 1.0</a>; Quelltext: <a href="{{ links.gpl }}">GPL-3.0-or-later</a>. Quellen und Lizenzen der Daten nennen die <a href="{{ details }}">Details</a>.</p>
-<p>Erzeugt am {{ model.generated_at|datetime_de }} mit georep {{ model.version }}{% if model.commit %}, Commit {{ model.commit }}{% endif %}.</p>
-</footer>
+{% include "frame/footer.html.j2" +%}
+{% include "frame/dialog.html.j2" +%}
+<script>
+{% include "frame/script.js.j2" +%}
+</script>
+<script>
+{{ start_js|safe }}
+</script>
 </body>
 </html>

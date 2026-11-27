@@ -126,7 +126,7 @@ def test_the_whole_chain_on_the_reference_publishes_both_sections(
     # dazu je Dialog-Haken seine Datei (Vorarbeit V2)
     files = [n for t in published(layout, settings) for n in t.download_names(layout)]
     hooks = len(dialogs_for(settings))
-    assert len(list(layout.site_data.iterdir())) == len(files) + 5 + hooks
+    assert len(list(layout.site_data.iterdir())) == len(files) + 6 + hooks
     assert '<section id="kontrollvariablen">' in page and "Modell C" in page
     assert '<section id="abgeleitete-daten">' in page
     assert settings.context.dataset.license in page  # Namensnennung aus den Settings

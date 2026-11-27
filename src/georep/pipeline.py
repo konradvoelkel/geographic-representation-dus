@@ -92,6 +92,19 @@ from georep.prep.pois import (
 )
 from georep.prep.precincts import canonical_precincts, district_names_from_csv, read_source
 from georep.prep.raw_texts import extract_raw_missing
+from georep.prep.streetpoints import (
+    GEBREF_CRS,
+    STREET_POINTS_SCHEMA_VERSION,
+    described,
+    fresh,
+    label_points,
+    normalize_street,
+    read_house_points,
+    street_point_files,
+    street_points,
+    street_points_digest,
+    to_crs,
+)
 from georep.prep.streets import directory_agreement, read_streets_json, streets_by_district
 from georep.prep.voters import (
     ELIGIBLE_TOTAL,
@@ -130,7 +143,7 @@ from georep.schema import (
 )
 from georep.search.dictionary import all_terms, build_dictionary
 from georep.search.index import build_index
-from georep.settings import Settings
+from georep.settings import Settings, archive_name
 from georep.sources import cached_session
 from georep.sources.oparl import (
     fetch_organizations,
@@ -138,7 +151,7 @@ from georep.sources.oparl import (
     read_progress,
     write_progress,
 )
-from georep.sources.opendata import fetch_csv, fetch_districts_file, fetch_geojson
+from georep.sources.opendata import fetch_csv, fetch_districts_file, fetch_geojson, fetch_zip
 from georep.sources.overpass import fetch_streets_per_precinct
 from georep.sources.pdfs import PdfStore
 from georep.sources.wiki import fetch_geosearch_pois, fetch_sparql_pois, sparql_query
@@ -819,6 +832,74 @@ def build_steps(
         write_parquet(frame, layout.dictionary, schema_version=1)
         return f"{len(all_terms(frame))} Begriffe in {frame.height} Wahlbezirken"
 
+    # --- Startseite (plan-startseite, § 4.1, § 4.2): Straßenpunkte und Namen der Stadtteile
+    street = settings.street_points
+    spoints = street_point_files(layout)
+    # Dieselben Stimmbezirke wie die Karte der Seite: die der gerechneten Wahlbezirke
+    street_precincts = layout.target_view(settings).precincts_geojson
+
+    def street_points_step() -> str:
+        now = time.time()
+        loaded: list[tuple[Path, str]] = []
+        fetched = 0
+        wanted = [(street.url, "zip")] + (
+            [(street.labels.url, "geojson")] if street.labels.url else []
+        )
+        for url, kind in wanted:
+            target = spoints.archives / archive_name(url)
+            if not fresh(target, max_age_s=settings.cache.opendata_s, now=now):
+                if fetched and street.delay_s:
+                    sleep(street.delay_s)  # eine Anfrage nach der anderen, mit Pause
+                content = (
+                    fetch_zip(transport(), url)
+                    if kind == "zip"
+                    else fetch_districts_file(transport(), url, fmt="geojson")
+                )
+                write_bytes(layout.guard_writable(target), content)
+                fetched += 1
+            loaded.append((target, url))
+        ags = settings.city.ags
+        working_crs = settings.geo.working_crs
+        houses = to_crs(read_house_points(loaded[0][0], ags), GEBREF_CRS, working_crs)
+        names = {
+            int(district): frozenset(normalize_street(str(name)) for name in (words or ()))
+            for district, words in pl.read_parquet(layout.streets_by_district).iter_rows()
+        }
+        points = street_points(
+            houses, read_canonical_precincts(street_precincts, working_crs), names, street.round_m
+        )
+        write_parquet(
+            points,
+            layout.guard_writable(spoints.points),
+            schema_version=STREET_POINTS_SCHEMA_VERSION,
+        )
+        line = (
+            f"{len(loaded)} Dateien, {fetched} davon geladen; {houses.height} Hausnummern der "
+            f"Gemeinde {ags}, {points.height} von {sum(len(v) for v in names.values())} Straßen je "
+            f"Wahlbezirk mit Punkt"
+        )
+        if street.labels.url:
+            collection = json.loads(loaded[1][0].read_text(encoding="utf-8"))
+            labels = label_points(collection, street.labels.name, working_crs)
+            write_parquet(
+                labels,
+                layout.guard_writable(spoints.labels),
+                schema_version=STREET_POINTS_SCHEMA_VERSION,
+            )
+            line += f", {labels.height} Namen von Stadtteilen"
+        elif spoints.labels.is_file():
+            spoints.labels.unlink()  # ohne Quelle beschriftet die Karte die Stadtbezirke
+        write_json(
+            layout.guard_writable(spoints.sources),
+            {
+                "ags": ags,
+                "raster_m": street.round_m,
+                "namen": street.labels.name,
+                "dateien": [described(path, url) for path, url in loaded],
+            },
+        )
+        return line
+
     def corpus() -> str:
         records = PaperStore(layout.papers).load().values()
         frame = build_corpus(records, TextStore(layout.texts))
@@ -1323,6 +1404,24 @@ def build_steps(
             (layout.dictionary,),
             dictionary,
         ),
+        # --- Startseite: der Netzschritt der Straßenpunkte, nur mit seinem Schalter (wie need_data)
+        *(
+            [
+                Step(
+                    "street_points",
+                    (street_precincts, layout.streets_by_district),
+                    (spoints.points, spoints.sources),
+                    street_points_step,
+                    STREET_POINTS_SCHEMA_VERSION,
+                    network=True,
+                    extra=street_points_digest(
+                        street.url, street.round_m, street.labels.url, street.labels.name
+                    ),
+                )
+            ]
+            if street.fetch
+            else []
+        ),
         Step(
             "corpus",
             (layout.papers, layout.texts),
@@ -1568,6 +1667,10 @@ def build_steps(
             optional=(
                 layout.raw_texts,
                 *contributed_table_files(layout, settings, optional=True),
+                # plan-startseite, § 4.2: die Straßenpunkte und Namen der Stadtteile aus dem Paket
+                # oder aus street_points; ohne sie liegt eine Straße auf ihren Stimmbezirken
+                spoints.points,
+                spoints.labels,
             ),
         ),
         # --- Fundament F2: die Unterseiten der Beiträge

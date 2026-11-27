@@ -121,6 +121,21 @@ Auswertung, zu den Unterseiten und zu den Downloads; eine alte Adresse mit Anker
 `karte.html` mit Leaflet und OpenStreetMap-Kacheln — die einzige Datei mit Fremdressourcen und die
 einzige, die Netz braucht.
 
+### Startseite: Kurzfassung und Karte
+
+Seit `v0.40.0` ([plan-startseite-2026-11.md](plan-startseite-2026-11.md), Stufe B) trägt die
+Startseite jeder Stadt und Periode vier Sätze Kurzfassung (Umfang, Spreizung zwischen den
+Wahlbezirken mit dem Vorbehalt der Wörterbuchgröße, die Leitfrage über alle Wahlbezirke, die Gremien),
+jeder mit einem Link auf den Abschnitt von `details.html`, aus dem seine Zahl stammt, und eine Karte
+aus eigenen Vektordaten (keine Kacheln, kein Fremdskript): je Ort, also je Straße oder Ort im
+Wörterbuch eines Wahlbezirks, ein Kreis, dessen Fläche der Zahl der Dokumente im Zeitraum folgt. Ein
+Zeitregler in Monaten (Voreinstellung: die letzten zwölf Monate bis zum neuesten Dokument), ein Filter
+„Gremium" in zwei Stufen und ein Umschalter auf die Flächen der Wahlbezirke; die Adresse
+`#zeitraum=2024-10..2025-09&gremium=OVA` ist teilbar. Ein Klick öffnet den Dokumentdialog, ein Tippen
+sucht im Umkreis von 24 Pixeln. Straßen liegen am Mittelpunkt ihrer Hausnummern im Wahlbezirk (Paket
+`snapshots/<stadt>-strassenpunkte/`, ohne Hausnummern, auf 25 m gerundet). Ohne JavaScript steht die
+Karte als Choroplethe der letzten zwölf Monate. Die Daten liegen in `data/karte.json`.
+
 ### Suche „Straße oder Ort"
 
 Der Abschnitt [`#suche`](https://konradvoelkel.github.io/geographic-representation-dus/details.html#suche)

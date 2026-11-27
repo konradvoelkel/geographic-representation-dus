@@ -1,5 +1,5 @@
 /* Vorhaben 17, Stufe 3: zeit.html. Eine Farbe für alle Balken (--q2, wie die Monatsreihe der
-   Hauptseite), die Haushaltsmonate als Band dahinter in --d1, der Mischung aus --selected, deren
+   Details), die Haushaltsmonate als Band dahinter in --d1, der Mischung aus --selected, deren
    Kontrast zur Fläche der Rahmen nachrechnet; die Wahljahre trennt eine Linie in --axis. Keine
    Klasse hier tauscht ein Umschalter. Die Balken strecken sich mit der Breite
    (preserveAspectRatio="none"); Linien behalten ihre Stärke (vector-effect), Beschriftungen

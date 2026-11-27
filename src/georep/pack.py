@@ -51,6 +51,7 @@ from georep.prep.context import (
 )
 from georep.prep.raw_texts import RAW_SUFFIX
 from georep.prep.references import MASK, ReferenceRules, mask_person_names
+from georep.prep.streetpoints import START_DIR, street_point_files
 from georep.search.vectors import NEIGHBORS_SCHEMA, NEIGHBORS_SCHEMA_VERSION
 from georep.settings import Settings
 from georep.stores import RAW_TEXT_SCHEMA_VERSION, RawTextStore, TextStore
@@ -999,3 +1000,80 @@ def pack_need(
         readme_written=not (target / README_NAME).exists(),
     )
     return _with_readme(report, settings, today, command="pack --need")
+
+
+# --- Startseite: ein Paket mit den Straßenpunkten und den Namen der Stadtteile -------------------
+
+
+def pack_street_points(
+    layout: Layout,
+    settings: Settings,
+    target: Path,
+    *,
+    force: bool = False,
+    today: dt.date | None = None,
+) -> PackReport:
+    """Die Dateien unter ``external/startkarte/`` packen (``docs/plan-startseite-2026-11.md``, § 4.2).
+
+    Gebaut nach dem Muster von ``pack_need`` (Punkt 80): je (Straße, Wahlbezirk) ein Punkt und die
+    Zahl der Hausnummern, **keine** Hausnummer, dazu die Namen der Stadtteile, wo das Profil eine
+    Quelle nennt, und ``quellen.json``. Gepackt wird nur, was ``street_points`` für **diese**
+    Settings geschrieben hat: dieselbe Gemeinde, dieselbe Quelle, dasselbe Raster, und die Namen
+    genau dann, wenn das Profil eine Quelle für sie nennt.
+    """
+    claim_target(layout, target)
+    street = settings.street_points
+    files = street_point_files(layout)
+    wanted = [files.points, *((files.labels,) if street.labels.url else ()), files.sources]
+    missing = [str(path) for path in wanted if not path.is_file()]
+    if missing:
+        raise PackError(
+            f"{missing} fehlen; lief `georep fetch street_points` (mit "
+            "GEOREP_STREET_POINTS__FETCH=true) für dieses Profil?"
+        )
+    described = json.loads(files.sources.read_text(encoding="utf-8"))
+    urls = [entry.get("url") for entry in described.get("dateien", [])]
+    expected = [street.url, *((street.labels.url,) if street.labels.url else ())]
+    if (
+        described.get("ags") != settings.city.ags
+        or urls != expected
+        or described.get("raster_m") != street.round_m
+    ):
+        raise PackError(
+            f"{files.sources}: die Punkte stammen aus anderen Quellen, einer anderen Gemeinde "
+            f"({described.get('ags')}) oder einem anderen Raster als [street_points] und city.ags "
+            f"({settings.city.ags}); erst `georep fetch street_points --force`, dann packen"
+        )
+    points = pl.read_parquet(files.points)
+    if not points.height:
+        raise PackError(f"{files.points}: keine Zeile; das Paket wäre leer")
+    if "hausnummer" in points.columns:
+        raise PackError(f"{files.points}: trägt eine Hausnummer; das Paket darf keine tragen")
+    packed: list[PackedFile] = []
+    skipped: list[str] = []
+    for source in wanted:
+        name = f"external/{START_DIR}/{source.name}"
+        destination = target / name
+        if destination.exists() and not force:
+            skipped.append(name)
+        else:
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            with atomic_path(destination) as tmp:
+                shutil.copyfile(source, tmp)
+        packed.append(
+            PackedFile(name=name, bytes=destination.stat().st_size, sha256=sha256_of(destination))
+        )
+    figures = [
+        ("Straßen je Wahlbezirk", points.height),
+        ("Hausnummern", int(points.get_column("hausnummern").sum())),
+    ]
+    if street.labels.url:
+        figures.append(("Namen", pl.scan_parquet(files.labels).select(pl.len()).collect().item()))
+    report = PackReport(
+        target=target,
+        files=tuple(packed),
+        skipped=tuple(skipped),
+        figures=tuple(figures),
+        readme_written=not (target / README_NAME).exists(),
+    )
+    return _with_readme(report, settings, today, command="pack --street-points")

@@ -115,3 +115,12 @@ def test_ohne_unterseiten_gibt_es_den_abschnitt_nicht(
 ) -> None:
     """Seit Vorhaben 15 hat das Standardprofil eine Unterseite; ohne sie fehlt der Abschnitt."""
     assert 'id="weitere"' not in render_report(replace(mini_model, pages=()), mini_visuals)
+
+
+def test_no_subpage_speaks_of_the_main_page(mini_run: Layout) -> None:
+    """Seit dem Umzug (plan-startseite, § 3) gibt es keine „Hauptseite" mehr: die Unterseiten
+    nennen die Details oder die Startseite und verlinken sie."""
+    for name in ("akteure", "vorgaenge", "zeit"):
+        page = (mini_run.site / f"{name}.html").read_text(encoding="utf-8")
+        assert "Hauptseite" not in page, name
+        assert 'href="details.html"' in page and 'href="index.html"' in page, name

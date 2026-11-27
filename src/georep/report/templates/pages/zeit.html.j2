@@ -204,7 +204,7 @@
 
 <section id="neuigkeiten">
 <h2>Neuigkeiten je Wahlbezirk</h2>
-<p>Je Wahlbezirk ein Atom-Feed mit den höchstens {{ f.limit }} neuesten Dokumenten, in denen ein Straßen- oder Ortsname des Wahlbezirks vorkommt; das ist dieselbe Zuordnung wie die Zahl der Dokumente auf der Hauptseite. Ein Eintrag nennt Drucksache, Titel, Datum und den Link aufs PDF im Ratsinformationssystem, keinen Text und keine Personen. Ein Feedreader liest die Datei über ihre Adresse; es gibt keine Anmeldung und keine Mail.</p>
+<p>Je Wahlbezirk ein Atom-Feed mit den höchstens {{ f.limit }} neuesten Dokumenten, in denen ein Straßen- oder Ortsname des Wahlbezirks vorkommt; das ist dieselbe Zuordnung wie die Zahl der Dokumente auf den <a href="details.html">Details</a>. Ein Eintrag nennt Drucksache, Titel, Datum und den Link aufs PDF im Ratsinformationssystem, keinen Text und keine Personen. Ein Feedreader liest die Datei über ihre Adresse; es gibt keine Anmeldung und keine Mail.</p>
 <p class="stand"><strong>Stand der Daten: {% if f.stand %}{{ f.stand|date_de }}{% else %}unbekannt{% endif %}</strong> (das neueste Dokument).{% if not f.timer %} Ohne laufenden Abruf zeigen die Feeds diesen Stand: sie ändern sich erst mit einem neuen Schnappschuss der Periode oder wenn ein Timer die Periode fortschreibt.{% endif %}</p>
 {{ more("feeds", f.rows|length, model.preview_rows) }}
 <div class="scroll"><table id="feeds" class="preview">

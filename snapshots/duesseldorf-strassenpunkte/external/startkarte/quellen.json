@@ -1,0 +1,21 @@
+{
+  "ags": "05111000",
+  "raster_m": 25.0,
+  "namen": "Name",
+  "dateien": [
+    {
+      "url": "https://www.opengeodata.nrw.de/produkte/geobasis/lk/akt/gebref_txt/gebref_EPSG25832_ASCII.zip",
+      "datei": "gebref_EPSG25832_ASCII.zip",
+      "bytes": 90258596,
+      "sha256": "ff62bfc23a798f67a2371fa241ceec716a2275297a2706f88e94912a28043fce",
+      "abgerufen": "2026-11-27"
+    },
+    {
+      "url": "https://opendata.duesseldorf.de/sites/default/files/Stadtteile_2025_WGS84_EPSG4326_1.geojson",
+      "datei": "Stadtteile_2025_WGS84_EPSG4326_1.geojson",
+      "bytes": 1335152,
+      "sha256": "79a500c6e390089eb4567f7baac53cbb45831ee7dc13b46346282965811c4d2b",
+      "abgerufen": "2026-11-27"
+    }
+  ]
+}

@@ -72,6 +72,11 @@ PACKAGES = (
     # Vorhaben 22: die Stadtauszüge der Bedarfsquellen (198 018 und 91 866 Bytes, 2026-11-24)
     Package("snapshots/duesseldorf-bedarf", limit=1 * MIB, native=False, readme=True),
     Package("snapshots/moenchengladbach-bedarf", limit=1 * MIB, native=False, readme=True),
+    # Startseite: je (Straße, Wahlbezirk) ein Punkt, keine Hausnummer (36 491 und 23 063 Bytes)
+    Package("snapshots/duesseldorf-strassenpunkte", limit=256 * 1024, native=False, readme=True),
+    Package(
+        "snapshots/moenchengladbach-strassenpunkte", limit=256 * 1024, native=False, readme=True
+    ),
 )
 # Alle zusammen, als zweite grobe Schranke: 174 580 489 Bytes = 166,49 MiB am 2026-11-23 (92,5 %
 # der Grenze; Mönchengladbach wuchs mit Punkt 65 um 819 292 Bytes, die drei Textstores sind seit
@@ -294,6 +299,35 @@ def test_the_need_packages_are_read_by_the_two_cities_alone() -> None:
     for profile in ("duesseldorf-2014", "duesseldorf-2025"):
         need = load_settings(profile=profile, cwd=nowhere).context.need
         assert not need.enabled and need.package is None, profile
+
+
+def test_the_street_point_packages_belong_to_their_cities() -> None:
+    """Startseite: Düsseldorf mit seinen Perioden ein Paket mit Stadtteilen, Mönchengladbach eins ohne.
+
+    Die Perioden erben das Paket der Stadt: dasselbe Wörterbuch, dieselben Wahlbezirke. Keine
+    Datei trägt eine Hausnummer (``plan-startseite``, § 4.2).
+    """
+    import polars as pl
+
+    from georep.prep.streetpoints import LABELS_FILE, POINTS_FILE, START_DIR, STREET_COLUMNS
+    from georep.settings import load_settings
+
+    nowhere = Path("/nonexistent")
+    for profile, folder, labels in (
+        ("duesseldorf", "duesseldorf-strassenpunkte", True),
+        ("duesseldorf-2014", "duesseldorf-strassenpunkte", True),
+        ("duesseldorf-2025", "duesseldorf-strassenpunkte", True),
+        ("duesseldorf-vergleich", "duesseldorf-strassenpunkte", True),
+        ("moenchengladbach", "moenchengladbach-strassenpunkte", False),
+    ):
+        street = load_settings(profile=profile, cwd=nowhere).street_points
+        assert street.package == Path("snapshots") / folder, profile
+        assert bool(street.labels.url) is labels, profile
+        package = REPO / street.package / "external" / START_DIR
+        points = pl.read_parquet(package / POINTS_FILE)
+        assert points.columns == list(STREET_COLUMNS), profile
+        assert (points.get_column("x") % 25 == 0).all() and (points.get_column("y") % 25 == 0).all()
+        assert (package / LABELS_FILE).is_file() is labels, profile
 
 
 def test_the_text_package_is_read_by_the_main_period_alone() -> None:

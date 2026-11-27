@@ -15,7 +15,7 @@
 {% set ex = " (explorativ)" if m.explorative else "" %}
 {% set sitzung = data.session_guest in guests %}
 <section id="ueberblick">
-<p>Diese Seite verbindet die {{ v.documents|num }} Ratsdokumente der {{ model.period.title }}{% if m.first and m.last %} ({{ m.first|date_de }} bis {{ m.last|date_de }}){% endif %} über ihre Drucksachennummern: welche Anfrage eine Antwort im Ratsinformationssystem hat und wie lange sie brauchte, und welche Drucksachen zu einem <em>Vorgang</em> gehören, etwa Antrag und Umsetzung, Vorlage und Änderungsantrag, Original und Nachtrag. Im Dokumentdialog der Hauptseite steht bei jedem Dokument sein Vorgang.</p>
+<p>Diese Seite verbindet die {{ v.documents|num }} Ratsdokumente der {{ model.period.title }}{% if m.first and m.last %} ({{ m.first|date_de }} bis {{ m.last|date_de }}){% endif %} über ihre Drucksachennummern: welche Anfrage eine Antwort im Ratsinformationssystem hat und wie lange sie brauchte, und welche Drucksachen zu einem <em>Vorgang</em> gehören, etwa Antrag und Umsetzung, Vorlage und Änderungsantrag, Original und Nachtrag. Im Dokumentdialog der <a href="index.html">Startseite</a> und der <a href="details.html">Details</a> steht bei jedem Dokument sein Vorgang.</p>
 <ul class="toc">
 <li><a href="#antworten">Antworten je Gremium</a></li>
 <li><a href="#fraktionen">Je Fraktion</a></li>
@@ -147,5 +147,5 @@
 {% endfor %}
 </tbody></table></div>
 </div>
-<p class="note">Eine Verbindung hat die stärkste ihrer Fundstellen in dieser Folge: Titel, Nachtragsnummer, Anlagenname, Sammelbericht. Im Dokumentdialog der Hauptseite stehen bei jedem Dokument seine Verbindungen in beide Richtungen; wird es von einer Drucksache einer späteren Periode genannt, steht das nur im Dialog jener Periode. Kanten, Vorgang je Dokument und Antwort je Anfrage stehen auf der Hauptseite unter den Downloads (<code>vorgang_kanten</code>, <code>dokumente_vorgang</code>, <code>antwortzeiten</code>).</p>
+<p class="note">Eine Verbindung hat die stärkste ihrer Fundstellen in dieser Folge: Titel, Nachtragsnummer, Anlagenname, Sammelbericht. Im Dokumentdialog der Startseite und der Details stehen bei jedem Dokument seine Verbindungen in beide Richtungen; wird es von einer Drucksache einer späteren Periode genannt, steht das nur im Dialog jener Periode. Kanten, Vorgang je Dokument und Antwort je Anfrage stehen auf den Details unter den <a href="details.html#downloads">Downloads</a> (<code>vorgang_kanten</code>, <code>dokumente_vorgang</code>, <code>antwortzeiten</code>).</p>
 </section>

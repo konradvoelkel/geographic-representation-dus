@@ -201,7 +201,9 @@ texts = ""                     # Punkt 68: Pfad eines Textpakets aus `georep pac
 raw_texts = ""                 # Fundament F1: Pfad eines Rohtextpakets aus `georep pack --raw-texts`, das bootstrap als Rohtextstore anlegt (cache/<profil>/text/rohtexte.parquet) -- damit eine Kette ohne PDFs (GitHub Pages) den Rohtext trotzdem hat. Übernommen wird es nur, wenn jeder Name eine Hauptdatei der Paper dieses Datensatzes ist. Der Schlüssel steht hier und nicht in einem Block am Ende, weil TOML [bootstrap] nur einmal erlaubt. Stadtneutral leer = kein Paket
 
 [report]                       # Anzeigeschalter der Seite; Option 01 setzt Quellen und Hinweise je Profil
-page_budget_bytes = 1000000    # Punkt 50: so viele Byte darf index.html haben. Der Schritt report sagt es, wenn die Seite darueber liegt, und der slow-Test liest dieselbe Zahl; 0 schaltet die Pruefung ab. 1,0 MB nach dem Nachladen der Begriffslisten (vorher 1,5 MB bei 1,28 MB Seite): die Luft ist knapp gewaehlt, weil die Seite in zwei Tagen um 594 KB gewachsen ist, ohne dass ein Test gezuckt haette (docs/seitengroesse-2026-10.md, § 7)
+page_budget_bytes = 1000000    # Punkt 50: so viele Byte darf details.html haben (bis v0.38.0 index.html). Der Schritt report sagt es, wenn die Seite darueber liegt, und der slow-Test liest dieselbe Zahl; 0 schaltet die Pruefung ab. 1,0 MB nach dem Nachladen der Begriffslisten (vorher 1,5 MB bei 1,28 MB Seite): die Luft ist knapp gewaehlt, weil die Seite in zwei Tagen um 594 KB gewachsen ist, ohne dass ein Test gezuckt haette (docs/seitengroesse-2026-10.md, § 7)
+start_budget_bytes = 150000    # plan-startseite, § 3: so viele Byte darf die Startseite index.html haben, hart; Ziel 120 000. details.html haelt page_budget_bytes. publish --strict-budget prueft je Datei; 0 schaltet ab
+map_budget_bytes = 500000      # Phase Zeigen, § 6: data/karte.json hoechstens so viele Byte roh je Profil, getrennt von den nachgeladenen Dialogdateien; 0 schaltet ab
 table_preview_rows = 3         # Punkt 48: so viele Zeilen zeigt eine lange Tabelle, dann kommt die Schaltflaeche "alle n Zeilen zeigen". Zwei wirken mit Kopfzeile gedraengt, fuenf sind schon eine halbe Seite; 0 oder eine Zahl ueber der Zeilenzahl heisst "nichts einklappen" (docs/seitengroesse-2026-10.md, § 3)
 regression = true              # Option 07: false, wenn es zur Periode keine Wahlbeteiligung gibt (laufende Periode): kein Streudiagramm, keine Tabelle 5, kein Umschalter auf der Karte
 monitoring_url = ""            # Option 07: relativer Link auf die Seite der laufenden Periode, relativ zur Stadtseite ("2025/"); leer = kein Abschnitt. Stadtneutral leer, weil nicht jede Stadt eine laufende Periode fortschreibt; Duesseldorf setzt ihn im Profil, seit snapshots/2025 im Repo liegt und Pages die Unterseite baut (Punkt 56, 2026-10-14). Ein Periodenprofil setzt ihn wieder leer, sonst zeigte eine Unterseite auf sich selbst oder ins Nichts
@@ -211,6 +213,11 @@ monitoring_url = ""            # Option 07: relativer Link auf die Seite der lau
 district_percent = [-0.25, -0.10, 0.10, 0.25]  # Abweichung der Trefferquote vom Stadtmittel; auf der Referenz 2026-10-13 fuellen sich die Klassen mit 6, 12, 11, 8, 4 Wahlbezirken (Spannweite -57,8 % bis +144,8 %), mit +-20 % oder +-15 % draengt zu viel in die Randklassen
 party_points = [-0.02, -0.005, 0.005, 0.02]    # Abweichung eines Parteianteils vom Mittel aller Parteien im Bezirk, als Anteil (mal 100 sind es Prozentpunkte): 23, 67, 64, 72, 20 der 246 Zellen
 party_ratio = [0.5, 0.8, 1.25, 2.0]            # Verhaeltnis zum Mittel, log-symmetrisch um 1 (1/2, 1/1,25, 1,25, 2): 61, 32, 60, 78, 15 Zellen; ein Logarithmus geht nicht, 20 Zellen sind exakt 0
+
+[report.start]                 # die Karte der Startseite (docs/plan-startseite-2026-11.md, § 4 und § 5); nur Anzeige, zaehlt im Zusatz des Schritts report
+max_places = 20                # § 4.3: ein Dokument mit mehr Orten (Begriff je Wahlbezirk) steht als Zeile unter der Karte, nicht als Punkt; in der Hauptperiode 276 Dokumente mit 22 % der Punkte, 59 davon in den letzten zwoelf Monaten
+months = 12                    # § 5: der Zeitregler steht beim Oeffnen auf den letzten zwoelf Monaten bis zum neuesten Dokument, auch in abgeschlossenen Perioden (Frage S.6)
+city_district_names = {}       # Name je Stadtbezirk (Schluessel als Text), wo kein Paket Stadtteile beschriftet; ohne Eintrag steht "Stadtbezirk <n>"
 
 # --- Fundament F6: OParl Sitzungen und Personen (docs/runbook-sitzungen.md) -------------------------
 [council]                      # drei Listen des OParl-Bodys, je ein Netzschritt; Ausgaben unter raw/ (meetings, agenda_items, consultations, persons, memberships als JSONL)
@@ -383,6 +390,17 @@ instrument_titles = [{ pattern = 'antrag', instrument = "antrag" }, { pattern = 
 lexicon = "bundespolitik"      # Paketdatei georep/lexika/<name>.toml; ihre Version steht in der Datei, im Stamp und in jeder Ausgabe. Version 2026-11-23.1 hat 94 von 100 kodierten Treffern richtig (Messdokument § 4.1)
 head_chars = 2000              # S3.1: nur Titel und die ersten so vielen Zeichen des Texts (gegen längere Dokumente)
 periods = []                   # Ordner der Profile einer Stadt in zeitlicher Folge, über die cycle_tests rechnet; leer = keine Tests. Das Profil, das sie nennt, braucht deren Läufe vorher (wie compare)
+
+[street_points]                # Startseite (plan-startseite, § 4.1, § 4.2): je (Strasse, Wahlbezirk) der Medoid der Hauskoordinaten, gerundet, und die Namen der Stadtteile; nicht im Settings-Fingerprint, der Stamp von street_points traegt Quelle, Raster und Namen
+package = ""                   # Paket snapshots/<stadt>-strassenpunkte (georep pack --street-points); bootstrap kopiert nach external/startkarte/. Leer: eine Strasse liegt auf der Flaeche ihrer Stimmbezirke
+fetch = false                  # Schalter fuer den Netzschritt street_points, wie context.need.fetch: ohne ihn fehlt er; fuer eine Shell GEOREP_STREET_POINTS__FETCH=true
+url = "https://www.opengeodata.nrw.de/produkte/geobasis/lk/akt/gebref_txt/gebref_EPSG25832_ASCII.zip"  # Gebaeudereferenzen NRW (Geobasis NRW, Datenlizenz Deutschland Zero 2.0), eine Zeile je Hausnummer in EPSG:25832, rund 90 MB; landesweit wie die Archive von [context.need], gelesen wird nur city.ags
+round_m = 25.0                 # § 4.2: Raster der Punkte in Metern; kein Punkt feiner als Strasse je Wahlbezirk, und der Punkt trifft keine einzelne Hausnummer
+delay_s = 2.0                  # Pause zwischen zwei geladenen Dateien, eine Anfrage nach der anderen
+
+[street_points.labels]         # die Namen der Stadtteile fuer die Grundkarte; leer: die Karte beschriftet die Stadtbezirke
+url = ""                       # GeoJSON der Stadt in EPSG:4326, je Stadtteil eine Flaeche
+name = ""                      # die Eigenschaft mit dem Namen
 
 [feeds]                        # Vorhaben 17: ein Atom-Feed je Wahlbezirk unter site/feeds/ (Schritt feeds), nur Kennung, Titel, Datum und Link, keine Texte und keine Personen; nur für eine laufende Periode sinnvoll
 enabled = false

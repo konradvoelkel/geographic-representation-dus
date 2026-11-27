@@ -307,7 +307,7 @@ def test_pipeline_reproduces_the_thesis_results(
     assert {"dokumente_kopf", "kennungen"} <= {t.name for t in tables}
     files = [n for t in tables for n in t.download_names(layout)]
     hooks = len(dialogs_for(settings))
-    assert len(list(layout.site_data.iterdir())) == len(files) + 5 + hooks
+    assert len(list(layout.site_data.iterdir())) == len(files) + 6 + hooks
     assert (layout.site / "karte.html").stat().st_size < 1_000_000
     _compare_results(
         _results_as_legacy(layout.results),

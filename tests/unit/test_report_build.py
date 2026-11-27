@@ -22,6 +22,7 @@ from georep.report.build import (
     current_commit,
 )
 from georep.report.dialog import dialogs_for
+from georep.report.startkarte import KARTE_NAME
 from georep.report.tables import GEOJSON_COLUMNS, all_rows, csv_plan, published
 from georep.settings import Settings
 from tests.conftest import within_budget
@@ -36,7 +37,7 @@ def test_site_has_index_map_and_every_download_file(
     hooks = [hook.file_name for hook in dialogs_for(default_settings)]
     expected = sorted(
         [name for t in tables for name in t.download_names(mini_run)]
-        + [GEOJSON_NAME, SCHEMA_NAME, DOCUMENTS_NAME, SUMMARY_NAME, TERMS_NAME]
+        + [GEOJSON_NAME, SCHEMA_NAME, DOCUMENTS_NAME, SUMMARY_NAME, TERMS_NAME, KARTE_NAME]
         + hooks
     )
     # Je Tabelle Parquet und CSV (Vorhaben 11: der Kopf ohne CSV), dazu GeoJSON, Schema,
@@ -119,6 +120,11 @@ def test_the_summary_line_says_when_the_page_is_over_its_budget() -> None:
     assert over.over_budget()
     assert over.line().endswith("; Seite über dem Budget (1,05 von 1,00 MB)")
     assert not SiteSummary(41, 53, 1, 9_999_999, 0).over_budget()  # 0 schaltet die Prüfung ab
+    # plan-startseite, § 3: die Startseite gegen ihr eigenes Budget
+    start = SiteSummary(41, 53, 13_300_000, 958_527, 1_000_000, 151_200, 150_000)
+    assert start.start_over_budget() and not start.over_budget()
+    assert start.line().endswith("; Startseite über dem Budget (151,2 von 150,0 KB)")
+    assert not SiteSummary(41, 53, 1, 1, 0, 9_999_999, 0).start_over_budget()
 
 
 def test_the_publish_line_names_a_page_over_the_budget() -> None:

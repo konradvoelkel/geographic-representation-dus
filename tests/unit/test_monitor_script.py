@@ -66,6 +66,7 @@ case "$*" in
     if [ -n "${STUB_PROFILE_SITE:-}" ]; then
       mkdir -p "$STUB_PROFILE_SITE/data"
       echo "<html>Profil</html>" > "$STUB_PROFILE_SITE/index.html"
+      head -c 4321 /dev/zero > "$STUB_PROFILE_SITE/details.html"
       echo "{}" > "$STUB_PROFILE_SITE/index.html.stamp.json"
       echo "spalte" > "$STUB_PROFILE_SITE/data/monatsreihe.csv"
     fi
@@ -185,10 +186,14 @@ def test_a_dry_run_walks_the_steps_in_order_and_writes_the_stand(sandbox: dict[s
     assert stand["profil"] == "2025" and stand["ergebnis"] == "trocken"
     assert (stand["neue_paper"], stand["pdfs"], stand["texte"]) == (3, 2, 2)
     assert re.fullmatch(r"\d{4}-\d{2}", stand["schnappschuss"])  # der Monat dieses Laufs
-    assert stand["seite_kb"] >= 0 and stand["dauer_s"] >= 0
+    # plan-startseite, § 3: die Seite ist die Auswertung (details.html), die Startseite zählt extra
+    assert stand["seite_kb"] == 4 and stand["startseite_kb"] == 0 and stand["dauer_s"] >= 0
     assert len(stand["schritte"]) == 7 and all(stand["schritte"])  # paths steht nicht im Stand
     assert "ohne MONITOR_R2_REMOTE" in result.stdout and "ohne MONITOR_VPS_HOST" in result.stdout
-    assert "georep-monitor: 3 neue Paper, 2 PDFs, 2 Texte" in result.stdout
+    assert (
+        "georep-monitor: 3 neue Paper, 2 PDFs, 2 Texte, Seite 4 KB, Startseite 0 KB"
+        in result.stdout
+    )
 
     # Der Schnappschuss des Monats liegt neben der Seite, mit Prüfsummen
     snapshots = sorted((out / "2025" / "snapshots").iterdir())

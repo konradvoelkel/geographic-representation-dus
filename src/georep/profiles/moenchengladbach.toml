@@ -557,3 +557,13 @@ number_extra = '\b(?:FB|Fachbereich(?:es|s)?)[ \t]+(?P<n>\d{1,2}(?:\.\d{1,2})?)(
 # --- Vorhaben 20: Kurzfassungen (docs/plans/20-kurzfassungen.md, § 6 und § 10) -------------------
 [summaries]
 enabled = false                # aus: die Nachmessung (Messdokument § 5.4, 2026-11-26) hat gemma4 (4 von 50) und qwen3.6:27b (5 von 50) verworfen, kein Stapellauf; an, liefe jedes `georep run --models` den Stapel mit 5 bis 8 GPU-Stunden. Der Schritt bleibt gebaut; für eine spätere Messung GEOREP_SUMMARIES__ENABLED=true. Ausgaben nur unter cache_root/<profil>/summaries/, nie veröffentlicht (Frage 6)
+
+# --- Startseite: Straßenpunkte (docs/plan-startseite-2026-11.md, § 4.2); Stadtteile nennt das Profil keine, die Karte beschriftet die Stadtbezirke
+[street_points]
+package = "snapshots/moenchengladbach-strassenpunkte"  # georep pack --street-points; GebRef NRW, gefiltert über city.ags
+
+[report.start.city_district_names]  # wie die Bezirksvertretungen ([bodies.district_body_names]); BV1 ist Stadtbezirk 1
+"1" = "Nord"
+"2" = "Ost"
+"3" = "Süd"
+"4" = "West"
