@@ -50,6 +50,7 @@ from georep.prep.context import (
 )
 from georep.prep.identifiers import IDENTIFIERS_SCHEMA_VERSION
 from georep.prep.papers import CORPUS_SCHEMA_VERSION
+from georep.prep.streetpoints import STREET_POINTS_SCHEMA_VERSION
 from georep.prep.structure import STRUCTURE_SCHEMA_VERSION
 from georep.report.build import report_fingerprint
 from georep.report.feeds import FEEDS_SCHEMA_VERSION
@@ -113,6 +114,8 @@ VERSIONS = {
     "identifiers": IDENTIFIERS_SCHEMA_VERSION,
     # Vorhaben 20: ein Modellschritt (``georep.enrich.summaries``), zwei Dateien unter cache_root
     "summaries": SUMMARIES_SCHEMA_VERSION,
+    # Startseite: der Netzschritt der Straßenpunkte (``georep.prep.streetpoints``)
+    "street_points": STREET_POINTS_SCHEMA_VERSION,
 }
 
 
@@ -132,8 +135,13 @@ def steps(default_settings: Settings, tmp_path: Path) -> dict[str, int]:
     context = default_settings.context.model_copy(update={"need": need})
     # Vorhaben 20: der Modellschritt ist in allen Profilen aus (Nachmessung § 5.4)
     summaries = default_settings.summaries.model_copy(update={"enabled": True})
+    # Startseite: der Netzschritt steht nur mit ``street_points.fetch`` im Register
+    street = default_settings.street_points.model_copy(
+        update={"fetch": True, "url": "https://x/a.zip"}
+    )
     settings = default_settings.model_copy(
         update={
+            "street_points": street,
             "council": council,
             "procedures": procedures,
             "cycles": cycles,

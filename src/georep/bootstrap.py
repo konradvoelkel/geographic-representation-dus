@@ -29,6 +29,7 @@ from georep.io import atomic_path
 from georep.layout import Layout
 from georep.prep.context import NEED_DIR, NEED_FILES
 from georep.prep.raw_texts import RAW_SUFFIX
+from georep.prep.streetpoints import LABELS_FILE, START_DIR, START_FILES
 from georep.records import PaperRecord
 from georep.search.vectors import NEIGHBORS_SCHEMA_VERSION
 from georep.settings import Settings
@@ -311,6 +312,8 @@ def bootstrap_from_settings(
         # Vorhaben 26: ebenso nur mit eingeschalteten Schritten
         outcomes=settings.outcomes.package if settings.outcomes.enabled else None,
         need=settings.context.need.package if settings.context.need.enabled else None,
+        # Startseite: die Straßenpunkte und Namen der Stadtteile, wo das Profil ein Paket nennt
+        street_points=settings.street_points.package,
     )
 
 
@@ -328,6 +331,7 @@ def bootstrap(
     neighbors: Path | None = None,
     outcomes: Path | None = None,
     need: Path | None = None,
+    street_points: Path | None = None,
 ) -> BootstrapReport:
     """Die Eingaben aus ``reference_root`` übernehmen.
 
@@ -359,6 +363,10 @@ def bootstrap(
     ``need`` ist die Naht von Vorhaben 22: das Paket mit den Stadtauszügen der Bedarfsquellen
     (``[context.need].package``), kopiert nach ``external/bedarf/``; bringt der eingefrorene
     Datensatz eigene mit (die Mini-Fixture), gelten seine, wie bei der Beratungsfolge.
+    ``street_points`` ist die Naht der Startseite (``docs/plan-startseite-2026-11.md``, § 4.2): das
+    Paket mit den Straßenpunkten und, wo es welche gibt, den Namen der Stadtteile
+    (``[street_points].package``), kopiert nach ``external/startkarte/``; eine Datei, die das
+    Paket nicht trägt (Stadtteile in Mönchengladbach), fehlt nicht, sie gibt es dort nicht.
     """
     reference = layout.reference_view()
     layout.ensure_dirs()
@@ -404,6 +412,12 @@ def bootstrap(
             own = reference.external / NEED_DIR / name
             source = own if own.is_file() else need / "external" / NEED_DIR / name
             pairs.append((source, layout.external / NEED_DIR / name))
+    if street_points is not None:  # Startseite
+        for name in START_FILES:
+            own = reference.external / START_DIR / name
+            source = own if own.is_file() else street_points / "external" / START_DIR / name
+            if source.is_file() or name != LABELS_FILE:
+                pairs.append((source, layout.external / START_DIR / name))
     for source, target in pairs:
         _copy_input(layout, source, target, report, force=force)
     # Option 02: die zwei Eingaben des Crosswalks, wenn der Schnappschuss sie mitbringt

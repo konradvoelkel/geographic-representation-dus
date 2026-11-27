@@ -1552,6 +1552,18 @@ class NameGuard(_Strict):
         return _compiles([value], "report.names.person_titles")[0]
 
 
+class StartSettings(_Strict):
+    """Die Karte der Startseite (``docs/plan-startseite-2026-11.md``, § 4, § 5): nur Anzeige."""
+
+    # § 4.3: ein Dokument mit mehr Orten steht als Zeile unter der Karte, nicht als Punkt
+    max_places: int = Field(default=20, ge=1)
+    # § 5: die Voreinstellung des Zeitreglers, Monate bis zum neuesten Dokument
+    months: int = Field(default=12, ge=1)
+    # Wo kein Paket Stadtteile beschriftet, steht der Stadtbezirk; sein Name hier, sonst
+    # „Stadtbezirk <n>" (Schlüssel als Text, weil TOML-Schlüssel Texte sind)
+    city_district_names: dict[str, str] = {}
+
+
 class Report(_Strict):
     """Was im Kopf und Fuß der Seite steht und nicht aus den Daten kommt."""
 
@@ -1569,6 +1581,11 @@ class Report(_Strict):
     # Zeile, der slow-Test prüft dieselbe Zahl; 0 schaltet beides ab. Eine Verabredung, keine
     # Grenze der Technik (docs/seitengroesse-2026-10.md, § 7).
     page_budget_bytes: int = Field(default=1_000_000, ge=0)
+    # plan-startseite, § 3 und Phase „Zeigen", § 6: die Startseite hat ihr eigenes Budget (hart
+    # 150 000, Ziel 120 000), ``data/karte.json`` höchstens 500 000 Byte roh; 0 schaltet ab
+    start_budget_bytes: int = Field(default=150_000, ge=0)
+    map_budget_bytes: int = Field(default=500_000, ge=0)
+    start: StartSettings = StartSettings()
     notes: list[str] = []  # Sätze, die nur für diese Stadt in „Methode und Grenzen" gehören
     data_note: str = ""  # woher Straßen und Orte stammen, wenn kein Netzschritt gelaufen ist
     # Option 07: Teile der Seite, die eine laufende Periode nicht hat oder zusätzlich trägt.
@@ -2321,6 +2338,45 @@ class Cycles(_Strict):
         return self
 
 
+class StreetPointLabels(_Strict):
+    """Die Namen der Stadtteile für die Grundkarte der Startseite (plan-startseite, § 4.1)."""
+
+    url: str = ""  # GeoJSON der Stadt (EPSG:4326); leer: die Karte beschriftet die Stadtbezirke
+    name: str = ""  # die Eigenschaft eines Features mit dem Namen
+
+    @model_validator(mode="after")
+    def _name_with_url(self) -> StreetPointLabels:
+        if self.url and not self.name:
+            raise ValueError("street_points.labels.name fehlt: welche Eigenschaft trägt den Namen?")
+        return self
+
+
+class StreetPoints(_Strict):
+    """Straßenpunkte und Ortsnamen der Startkarte (plan-startseite, § 4.1, § 4.2).
+
+    Ohne ``package`` liegt eine Straße auf der Fläche ihrer Stimmbezirke; ohne ``fetch`` fehlt der
+    Netzschritt ``street_points``, wie ``need_data`` (Punkt 80).
+    """
+
+    package: Path | None = None  # Paket snapshots/<stadt>-strassenpunkte; bootstrap kopiert es
+    fetch: bool = False  # schaltet nur den Netzschritt ein (wie context.need.fetch)
+    url: str = ""  # Gebäudereferenzen: ein Zip mit gebref.txt, eine Zeile je Hausnummer
+    round_m: float = Field(default=25.0, gt=0.0)  # Raster der Punkte in Metern
+    delay_s: float = Field(default=2.0, ge=0.0)  # Pause zwischen zwei geladenen Dateien
+    labels: StreetPointLabels = StreetPointLabels()
+
+    @field_validator("package", mode="before")
+    @classmethod
+    def _empty_is_none(cls, value: object) -> object:
+        return None if value in ("", None) else value
+
+    @model_validator(mode="after")
+    def _url_when_fetching(self) -> StreetPoints:
+        if self.fetch and not self.url:
+            raise ValueError("street_points.fetch ohne street_points.url")
+        return self
+
+
 class Feeds(_Strict):
     """Atom-Feed je Wahlbezirk (Vorhaben 17); nur für eine laufende Periode sinnvoll."""
 
@@ -2927,6 +2983,7 @@ class Settings(BaseSettings):
     structure: StructureSettings = StructureSettings()  # Vorhaben 11: Struktur der Dokumente
     identifiers: Identifiers = Identifiers()  # Vorhaben 12: Kennungen und Beträge
     summaries: Summaries = Summaries()  # Vorhaben 20: Kurzfassungen, nie veröffentlicht
+    street_points: StreetPoints = StreetPoints()  # Startseite: Straßenpunkte, Ortsnamen
 
     @property
     def base_profile(self) -> str:
@@ -3081,6 +3138,8 @@ class Settings(BaseSettings):
         Klassen und Hypothesen zählen.
         Vorhaben 17: ``feeds.timer`` ist Anzeige (ein Satz auf ``zeit.html``) und steht im Zusatz
         von ``report``.
+        Startseite: ``[street_points]`` steht ganz draußen; Quelle, Raster und Namen der Stadtteile
+        trägt der Stamp des Netzschritts ``street_points`` als ``extra``.
         """
         payload = self.model_dump(
             mode="json",
@@ -3146,6 +3205,11 @@ class Settings(BaseSettings):
                 # Vorhaben 17, Review K2: ``feeds.timer`` ändert nur einen Satz auf zeit.html;
                 # er steht im Zusatz von ``report`` und der Unterseiten (``report_fingerprint``)
                 "feeds": {"timer"},
+                # plan-startseite, § 4.2: der Block betrifft nur den Netzschritt ``street_points``
+                # (sein Stamp trägt Quelle, Raster und Namen als ``extra``, Muster Punkt 53) und
+                # ``report``, der die Kopie des Pakets als Eingabe liest; hier ließe er jeden
+                # Schritt neu laufen
+                "street_points": True,
             },
         )
         return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:16]

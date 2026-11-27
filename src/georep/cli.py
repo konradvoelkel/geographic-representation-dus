@@ -33,6 +33,7 @@ from georep.pack import (
     pack_neighbors,
     pack_outcomes,
     pack_raw_texts,
+    pack_street_points,
     pack_texts,
 )
 from georep.pipeline import Outcome, build_steps, freshness, run_step, select_steps
@@ -196,6 +197,12 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="nur die Stadtauszüge der Bedarfsquellen packen (external/bedarf/) statt der Eingaben "
         "eines Laufs",
+    )
+    # Startseite: die Straßenpunkte und die Namen der Stadtteile (plan-startseite, § 4.2)
+    only.add_argument(
+        "--street-points",
+        action="store_true",
+        help="nur die Straßenpunkte und die Namen der Stadtteile packen (external/startkarte/)",
     )
 
     # Punkt 58: die Abbildung Organisation -> Gremium aus den Daten lernen, nicht raten
@@ -453,7 +460,8 @@ def _cmd_pack(args: argparse.Namespace, settings: Settings, layout: Layout) -> i
     (Fundament F1), mit ``--attachments`` nur die Anlagen je Drucksache (Vorhaben 14), mit ``--neighbors`` nur die
     ähnlichen Dokumente (Vorhaben 18), mit ``--outcomes`` nur die Tabelle Paper ×
     Tagesordnungspunkt (Vorhaben 26), mit ``--need`` nur die Stadtauszüge der Bedarfsquellen
-    (Vorhaben 22).
+    (Vorhaben 22), mit ``--street-points`` nur die Straßenpunkte und Namen der Stadtteile
+    (Startseite).
     """
     write = (
         pack_consultations
@@ -470,6 +478,8 @@ def _cmd_pack(args: argparse.Namespace, settings: Settings, layout: Layout) -> i
         if args.outcomes
         else pack_need
         if args.need
+        else pack_street_points  # Startseite
+        if args.street_points
         else pack
     )
     report = write(layout, settings, args.target, force=args.force)
