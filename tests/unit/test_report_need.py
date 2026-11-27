@@ -334,3 +334,13 @@ def test_die_namensnennung_zaehlt_im_zusatz_der_seiten(default_settings: Setting
         }
     )
     assert report_fingerprint(shifted) != before
+
+
+def test_die_seite_verlinkt_die_spalten_ihrer_tabellen(mini_run: Layout) -> None:
+    """Punkt 94: das Spaltenschema steht auf ``spalten.html``, je Tabelle mit ihrem Namen als
+    Anker; die Seite verweist dorthin, und beide Tabellen haben dort ihren Abschnitt."""
+    page = (mini_run.site / "bedarf.html").read_text(encoding="utf-8")
+    columns = (mini_run.site / "spalten.html").read_text(encoding="utf-8")
+    assert 'href="spalten.html#wahlbezirke_bedarf"' in page
+    for table in TABLES:
+        assert columns.count(f'<section id="{table.name}">') == 1
