@@ -4695,7 +4695,9 @@ fünf Paketprofilen:
   Wahlbezirk* (nur mit `feeds.enabled`).
 - Die Downloads `zeit_monate`, `haushaltsmonate`, `dokumente_bundesvokabular` (Kennung, Kategorien,
   Kopf, Lexikon) und, nur im Profil mit `cycles.periods`, `zeit_hypothesen`, je Parquet und CSV mit
-  Spaltendoku in `schema.json`; die Listen trennt in der CSV „; ".
+  Spaltendoku in `schema.json`; die Listen trennt in der CSV „; ". Die CSV des Vokabulars trägt nur
+  die Dokumente mit Treffer und nicht die Spalte `lexikon` (`CsvPlan` aus Punkt 89, Review N2); das
+  Parquet bleibt vollständig, eine Zeile je Korpus-ID.
 - Der Linkblock „Weitere Auswertungen" auf `index.html` (Abschnitt `58-weitere`) trägt `zeit.html` in
   jedem Profil. Einen Link auf die Feeds trägt `index.html` nicht, auch nicht in der laufenden Periode
   (Plan § 7, Frage 9.11): die Liste erreicht man über den Linkblock, und „höchstens ein Link" heißt

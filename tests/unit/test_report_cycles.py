@@ -747,6 +747,24 @@ def test_die_tabellen_stehen_als_download_mit_spaltendoku(
     assert list(hypotheses.columns) == [*CORE_SCHEMA, *HYPOTHESES_EXTRA]
 
 
+def test_die_csv_des_vokabulars_traegt_nur_dokumente_mit_treffer(
+    mini_run: Layout, default_settings: Settings
+) -> None:
+    """Review N2: ohne ``lexikon`` (Version in Beschreibung und Spaltendoku) und nur die Zeilen mit
+    Treffer; das Parquet bleibt vollständig, eine Zeile je Korpus-ID."""
+    parquet = pl.read_parquet(mini_run.site_data / "dokumente_bundesvokabular.parquet")
+    frame = pl.read_csv(mini_run.site_data / "dokumente_bundesvokabular.csv")
+    with_hits = parquet.filter(pl.col("kategorien").list.len() > 0)
+    assert frame.columns == ["id", "kategorien", "kopf"]
+    assert frame.height == with_hits.height < parquet.height
+    assert sorted(frame.get_column("id").to_list()) == sorted(with_hits.get_column("id").to_list())
+    assert "lexikon" in parquet.columns
+    table = next(t for t in TABLES if t.name == "dokumente_bundesvokabular")
+    assert "nur im Parquet" in table.columns["lexikon"][0]
+    index = mini_run.site_index.read_text(encoding="utf-8")
+    assert "nur Dokumente mit Treffer, ohne die Spalte lexikon" in index
+
+
 def test_der_bericht_liest_die_tabellen_von_17_mit(
     tmp_path: Path, default_settings: Settings
 ) -> None:

@@ -80,7 +80,7 @@ from georep.report.feeds import (
     timestamp,
 )
 from georep.report.pages import Page
-from georep.report.tables import PublishedTable
+from georep.report.tables import CsvPlan, PublishedTable
 from georep.search.index import PAPER_IDS, TERM
 from georep.settings import Settings
 from georep.spans import check_spans, sort_spans
@@ -417,6 +417,16 @@ def time_steps(settings: Settings, layout: Layout, http: Transport) -> list[Step
 
 
 # --- Stufe 3 (Messdokument § 7): die Tabellen als Downloads und die Unterseite zeit.html ----------
+def vocabulary_csv_rows(frame: pl.DataFrame) -> pl.DataFrame:
+    """Die CSV des Vokabulars: nur Dokumente mit Treffer, ohne ``lexikon`` (Review N2).
+
+    In der Hauptperiode tragen 2 002 von 19 108 Dokumenten einen Treffer; die übrigen Zeilen wären
+    leere Listen, und ``lexikon`` steht in jeder Zeile gleich (es steht in der Beschreibung und in
+    ``schema.json``). Das Parquet bleibt vollständig, eine Zeile je Korpus-ID.
+    """
+    return frame.filter(pl.col("kategorien").list.len() > 0).drop("lexikon")
+
+
 _ID = ("OParl-URL des Dokuments", "")
 _WAHLJAHR = (
     "Wahljahr, benannt nach dem Jahr seines Beginns (2020 ist 2020/21); leer außerhalb der "
@@ -491,9 +501,14 @@ TABLES = (
                 "dieselben, gesucht nur in Titel und den ersten Zeichen des Texts (cycles.head_chars)",
                 "Liste",
             ),
-            "lexikon": ("Name und Version des Lexikons, mit dem gesucht ist", ""),
+            "lexikon": (
+                "Name und Version des Lexikons, mit dem gesucht ist; nur im Parquet, die CSV "
+                "trägt nur die Dokumente mit Treffer und diese Spalte nicht",
+                "",
+            ),
         },
         joins={"kategorien": "; ", "kopf": "; "},
+        csv=CsvPlan(vocabulary_csv_rows, "nur Dokumente mit Treffer, ohne die Spalte lexikon"),
         optional=True,
         enabled=lambda settings: settings.cycles.enabled,
     ),
