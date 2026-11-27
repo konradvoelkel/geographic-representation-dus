@@ -338,3 +338,26 @@ def test_ein_spaeter_ankommender_haken_schreibt_nicht_in_einen_neuen_dialog() ->
     hook = environment().get_template("frame/dialog.js.j2").render()
     assert "var call = ++opened;" in hook and "if (call !== opened) return;" in hook
     assert "try { if (d[0]) a.href = new URL(" in hook
+
+
+# --- Review Runde 1, N4: dieselben Dokumente am Anfang und am Ende --------------------------------
+@pytest.mark.parametrize("where", [0, -1])
+def test_ein_fremdes_dokument_am_rand_von_dokumente_json_bricht_ab(
+    mini_run: Layout,
+    mini_model: ReportModel,
+    default_settings: Settings,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    where: int,
+) -> None:
+    """Gleich lang genügt nicht: der erste und der letzte Link müssen die der Folge sein."""
+    from georep.errors import SchemaError
+
+    layout = _copy(mini_run, tmp_path)
+    target = layout.site_data / DOCUMENTS_NAME
+    listed = json.loads(target.read_text(encoding="utf-8"))
+    listed["documents"][where][0] = "fremd.pdf"
+    target.write_text(json.dumps(listed), encoding="utf-8")
+    _register(monkeypatch, _probe())
+    with pytest.raises(SchemaError, match="Link"):
+        write_dialogs(layout, mini_model, default_settings)

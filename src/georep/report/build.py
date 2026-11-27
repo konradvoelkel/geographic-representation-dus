@@ -58,6 +58,7 @@ from georep.report.documents import (
     DOCUMENT_COLUMNS,
     document_order,
     documents_payload,
+    listed_link,
     originator_labels,
 )
 from georep.report.geometry import (
@@ -301,22 +302,29 @@ def write_dialogs(layout: Layout, model: ReportModel, settings: Settings) -> lis
             stale.unlink()
     if not hooks:
         return []
-    order = document_order(
-        pl.read_parquet(layout.corpus, columns=DOCUMENT_COLUMNS),
-        pl.read_parquet(layout.index),
-        model.hidden_terms,
-    )
+    corpus = pl.read_parquet(layout.corpus, columns=DOCUMENT_COLUMNS)
+    order = document_order(corpus, pl.read_parquet(layout.index), model.hidden_terms)
     listed = json.loads((layout.site_data / DOCUMENTS_NAME).read_text(encoding="utf-8"))
     if len(listed["documents"]) != len(order):
         raise SchemaError(
             f"{DOCUMENTS_NAME}: {len(listed['documents'])} Dokumente, die Folge kennt {len(order)}"
         )
+    # Review N4: gleich lang genügt nicht; der erste und der letzte Link sind die der Folge
+    urls = dict(corpus.select("id", "download_url").iter_rows())
+    base = str(listed["base"])
+    for where in (0, -1) if order else ():
+        expected = listed_link(urls[order[where]] or "", base)
+        if listed["documents"][where][0] != expected:
+            raise SchemaError(
+                f"{DOCUMENTS_NAME}: Link {listed['documents'][where][0]!r} an Stelle {where}, die "
+                f"Folge erwartet {expected!r}"
+            )
     downloads = []
     for hook in hooks:
         payload = dialog_payload(
             hook.rows(layout, settings),
             order,
-            str(listed["base"]),
+            base,
             title=hook.title,
             version=model.version,
             generated_at=model.generated_at,

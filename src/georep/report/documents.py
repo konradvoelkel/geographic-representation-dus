@@ -28,6 +28,15 @@ def _https(url: str) -> str:
     return "https://" + url[len("http://") :] if url.startswith("http://") else url
 
 
+def listed_link(url: str, base: str) -> str:
+    """Der Link eines Dokuments, wie ``dokumente.json`` ihn trägt: als https, ohne das Präfix.
+
+    Review N4: ``report.build.write_dialogs`` vergleicht damit den ersten und letzten Link.
+    """
+    full = _https(url)
+    return full[len(base) :] if base and full.startswith(base) else full
+
+
 def download_base(urls: Sequence[str]) -> str:
     """Das gemeinsame Verzeichnis der Download-URLs, als https; leer, wenn es keines gibt."""
     if not urls:
@@ -107,7 +116,7 @@ def documents_payload(
     base = download_base(urls)
     rows = [
         [
-            _https(url)[len(base) :] if base and _https(url).startswith(base) else _https(url),
+            listed_link(url, base),
             row["date"].isoformat() if row["date"] is not None else "",
             row["reference"] or "",
             row["name"] or "",
