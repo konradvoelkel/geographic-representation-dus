@@ -675,3 +675,19 @@ def test_listen_nennen_gremien_beim_namen_und_keine_profilnamen() -> None:
     box = page[page.index('<div class="pruefung"') :]
     box = box[: box.index("</div>")]
     assert "duesseldorf" not in box and "Wahlperiode 2014 bis 2020" in box
+
+
+def test_die_beiden_randfaelle_k3_ohne_nenner_und_gremium_unbekannt(
+    default_settings: Settings,
+) -> None:
+    """N7, wie hier verstanden: K3 ohne eine Initiative mit Opposition ist kein „0,0 %", und die
+    Praxis eines unbekannten Gremiums heißt „Gremium unbekannt", nicht „unbekannt"."""
+    rows = [
+        _doc(1, fraktionen=["CDU", "GRUENE"], lager="gemeinsam_mehrheit"),
+        _doc(2, funktion="kontrolle", fraktionen=["CDU"], gremium="", art="unbekannt"),
+    ]
+    page = _render(_check_settings(default_settings), rows)
+    tiles = page[page.index('<div class="tiles">') :]
+    tiles = tiles[: tiles.index("</div>\n</div>")]
+    assert "keine Initiative mit Beteiligung der Opposition" in tiles and "0,0" not in tiles
+    assert "Gremium unbekannt 1,00" in page

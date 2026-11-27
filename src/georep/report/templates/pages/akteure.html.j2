@@ -172,8 +172,9 @@
 <h2>Konkordanz (explorativ)</h2>
 <p>Wie oft trägt eine Fraktion der Ratsmehrheit eine Initiative mit, an der die Opposition beteiligt ist? Das Maß heißt im Messdokument K3: Dokumente über die Grenze (mindestens eine Fraktion jeder Seite) durch alle Dokumente mit einer Fraktion der Opposition, gezählt in {{ k.level_dative }}, wo die Mehrheit des Rates gilt, und je Dokument mit der Mehrheit an seinem Datum. Ein hoher Wert spräche für Konkordanz, ein niedriger für Konkurrenz zwischen Mehrheit und Opposition. Explorativ: das Maß prüft keine vorab festgelegte Hypothese.</p>
 <div class="tiles">
-<div class="tile"><div class="label">K3, Initiativen und Erklärungen</div><div class="value">{{ k.initiatives.share|pct(1) }}</div><div class="sub">{{ k.initiatives.hits|num }} von {{ k.initiatives.n|num }}{% if k.initiatives.n %}; 95 %: {{ k.initiatives.interval[0]|pct(1) }} bis {{ k.initiatives.interval[1]|pct(1) }}{% endif %}</div></div>
-<div class="tile"><div class="label">dasselbe mit Anfragen</div><div class="value">{{ k.all_functions.share|pct(1) }}</div><div class="sub">{{ k.all_functions.hits|num }} von {{ k.all_functions.n|num }}{% if k.all_functions.n %}; 95 %: {{ k.all_functions.interval[0]|pct(1) }} bis {{ k.all_functions.interval[1]|pct(1) }}{% endif %}</div></div>
+{% for label, share in (("K3, Initiativen und Erklärungen", k.initiatives), ("dasselbe mit Anfragen", k.all_functions)) %}
+<div class="tile"><div class="label">{{ label }}</div>{% if share.n %}<div class="value">{{ share.share|pct(1) }}</div><div class="sub">{{ share.hits|num }} von {{ share.n|num }}; 95 %: {{ share.interval[0]|pct(1) }} bis {{ share.interval[1]|pct(1) }}</div>{% else %}<div class="value">–</div><div class="sub">keine Initiative mit Beteiligung der Opposition</div>{% endif %}</div>
+{% endfor %}
 </div>
 {% if m.running %}
 <p class="note">Die Periode läuft noch, die Daten reichen bis {% if m.last %}{{ m.last|date_de }}{% else %}heute{% endif %}. Ein kleines K3 ist in einer laufenden Periode noch kein Befund: n ist klein und wächst mit jeder Sitzung, und ob die Zusammenarbeit über die Grenze selten bleibt, kann erst eine vorab festgelegte Prüfung an neuen Dokumenten zeigen.</p>

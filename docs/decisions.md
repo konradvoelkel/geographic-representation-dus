@@ -4457,6 +4457,11 @@ kleines K3 dort noch kein Befund ist; in der Periode seit 2025 sind es 0 von 312
 sonst das Kürzel. Ein Fraktionsdokument ohne genannte Fraktion heißt in der Spalte Antragsteller
 „Fraktion nicht erkannt", nicht „Fraktionen".
 
+**Zwei Randfälle** (Review 2026-11-27, N7): ohne eine Initiative mit Beteiligung der Opposition
+zeigt die Kachel K3 einen Strich und den Grund, nicht „0,0 %" bei „0 von 0"; und in der Aufzählung
+der Praxis je Gremienart heißt die Klasse ohne erkanntes Gremium „Gremium unbekannt", nicht
+„unbekannt".
+
 **Der Gast von 28 heißt `abstimmungen`.** Der Abschnitt Konkordanz verlinkt
 `{% if "abstimmungen" in guests %}` auf `#abstimmungen` (Punkt 86), sonst sagt er, dass Beschlüsse
 und Abstimmungen noch fehlen. Der Name folgt dem Bauplan von 28 (§ 7, „ein Abschnitt

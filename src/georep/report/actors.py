@@ -597,8 +597,10 @@ def practice_rows(documents: pl.DataFrame) -> tuple[PracticeRow, ...]:
         .agg(pl.len().alias("n"), (pl.col("funktion") == "kontrolle").mean().alias("share"))
     )
     rows = {str(kind): (int(n), float(share)) for kind, n, share in found.iter_rows()}
+    # Review N7: „unbekannt" allein liest sich in der Aufzählung wie ein Gremium dieses Namens
+    labels = KIND_LABELS | {"unbekannt": "Gremium unbekannt"}
     return tuple(
-        PracticeRow(kind, label, *rows[kind]) for kind, label in KIND_LABELS.items() if kind in rows
+        PracticeRow(kind, labels[kind], *rows[kind]) for kind in KIND_LABELS if kind in rows
     )
 
 
