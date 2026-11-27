@@ -1,7 +1,7 @@
 # Validierung mit zwei KI-Kodierern (Fundament F4)
 
-Stand 2026-11-23 (zweite Runde nach dem Review). Paket `georep.validation`, Befehl
-`georep validate sample|tasks|import|merge|score`.
+Stand 2026-11-27 (F4-Nachzug V3: Modell je Rolle, Labeldateien der Messungen, Positionsspannen).
+Paket `georep.validation`, Befehl `georep validate sample|tasks|import|merge|restate|score`.
 Auftrag: [plan-vorverarbeitung-2026-11.md](plan-vorverarbeitung-2026-11.md), § 2.6 und § 7 (F4);
 Gründe und verworfene Alternativen: [decisions.md](decisions.md), „Validierung mit zwei
 KI-Kodierern". Diese Datei ist das Handbuch für den Supervisor und die Vorlage für die Aufträge an
@@ -28,8 +28,11 @@ mit diesem Modell. Zwei Kodierer desselben Modells teilen dessen Fehler und Vorl
 heißt „das Codebuch ist für dieses Modell eindeutig", nicht „die Labels stimmen". Es liegt
 darum eher über dem, was zwei Menschen mit demselben Codebuch erreichten: ein niedriges α ist ein
 deutlicher Befund (das Codebuch ist unscharf), ein hohes nur eine notwendige Bedingung und kein
-Beleg der Richtigkeit. Die Seite sagt das wörtlich: **„geprüft
-von zwei KI-Kodierern an *n* Dokumenten, nicht von Menschen"** (`satz` in `guete.json`).
+Beleg der Richtigkeit. Die Seite sagt das wörtlich, mit den Modellen: **„geprüft von zwei
+KI-Kodierern desselben Modells (*M*) an *n* Dokumenten, nicht von Menschen"** oder, seit Kodierer B
+ein anderes Modell ist (§ 3), **„geprüft von zwei KI-Kodierern (*A* und *B*) an *n* Dokumenten,
+Schlichtung durch *S*, nicht von Menschen"** (`satz` in `guete.json`, Form in
+[decisions.md](decisions.md), Punkt 71).
 
 Darum ist die KI-Kodierung der **vierte** Weg und nicht der erste (Plan, § 2.6): zuerst
 deterministische Prüfungen (eine Drucksachennummer existiert oder nicht), dann Labels aus den Daten
@@ -173,17 +176,20 @@ liegen die Aufträge unter `<data_root>/kodierung/` (gitignored).
   - Ein zweites Modell macht gemeinsame Fehler sichtbar, die zwei Kodierer desselben Modells teilen
     (§ 1).
 - **Bisherige Labels**: alle bis zum 2026-11-26, je drei Agenten desselben Modells. Sie bleiben, wie
-  sie sind, und werden nicht nachkodiert.
-- **Was die Seite nennt**: je Vorhaben, wie geprüft wurde. README und `guete.json` führen das Modell
-  je Rolle.
-  - Der `satz` nennt beide Kodierer und die Schlichtung, etwa „geprüft von zwei KI-Kodierern
-    (claude-opus-5-5 und claude-sonnet-…), geschlichtet von claude-opus-5-5, an *n* …, nicht von
-    Menschen".
-  - Bei den bisherigen Labels heißt es „von zwei KI-Kodierern desselben Modells (claude-opus-5-5)".
-- **Was noch fehlt**: Heute nimmt `merge` nur ein `--model`, und der Satz nennt kein Modell. Ein
-  `--model` je Rolle und der neue Satz sind Teil des F4-Nachzugs
-  ([plan-zeigen-2026-11.md](plan-zeigen-2026-11.md), V3). Bis dahin trägt der Supervisor das Modell
-  von B in den Bericht der Messung ein.
+  sie sind, und werden nicht nachkodiert. `georep validate restate <V>` hat am 2026-11-27 ihre
+  `guete.json` und READMEs in die Form unten gebracht, aus dem Modell, das `guete.json` schon nannte;
+  Labels und Zahlen blieben bytegleich (F4-Nachzug V3).
+- **Was die Seite nennt**: je Vorhaben, wie geprüft wurde. `merge` nimmt das Modell je Rolle:
+  `--model-a`, `--model-b`, `--model-adjudicator`; `--model` ist die Kurzform für alle drei, eine
+  eigene Angabe geht vor, und fehlt einer Rolle ihr Modell, bricht der Befehl ab. Genannt wird das
+  Modell, mit dem der Agent lief, so wie das Agent-Werkzeug es meldet (etwa `claude-opus-5-5`).
+  README (Zeile **Modelle**) und `guete.json` (`modelle`: `kodierer_a`, `kodierer_b`,
+  `schlichtung`) führen alle drei.
+  - Zwei Modelle: „geprüft von zwei KI-Kodierern (claude-opus-5-5 und *B*) an *n* …, Schlichtung
+    durch claude-opus-5-5, nicht von Menschen"; ohne Uneinigkeit entfällt „Schlichtung durch …".
+  - Ein Modell für alle Rollen (die bisherigen Labels): „geprüft von zwei KI-Kodierern desselben
+    Modells (claude-opus-5-5) an *n* …, nicht von Menschen".
+  - Die genaue Form und warum: [decisions.md](decisions.md), Punkt 71.
 - **Was sich nicht ändert**: Kriterium und Schwelle (α ≥ 0,8) bleiben. Liegt α mit zwei Modellen
   darunter, ist das Codebuch für sie zu unscharf, und das Vorhaben geht zurück in Stufe 1.
 
@@ -193,11 +199,13 @@ uv run georep validate sample $V                     # 1. Stichprobe; stichprobe
 uv run georep validate tasks $V --coder A            # 2. Aufträge, lokal
 uv run georep validate tasks $V --coder B
 #                                                      3. zwei Kodier-Agenten starten (§ 4.1), parallel
-uv run georep validate merge $V --model claude-opus-5-5   # 4. Uneinigkeiten -> Auftrag der Schlichtung
+uv run georep validate merge $V --model-a claude-opus-5-5 --model-b <B> --model-adjudicator claude-opus-5-5
+#                                                      4. Uneinigkeiten -> Auftrag der Schlichtung
 #                                                      5. Schlicht-Agent starten (§ 4.2)
-uv run georep validate merge $V --model claude-opus-5-5   # 6. labels.csv, README.md, guete.json; committen
-#   --model nennt heute ein Modell für alle Rollen; mit dem F4-Nachzug je Rolle (oben, „Welche Modelle")
+uv run georep validate merge $V --model-a claude-opus-5-5 --model-b <B> --model-adjudicator claude-opus-5-5
+#                                                      6. labels.csv, README.md, guete.json; committen
 uv run georep validate score $V [--pred <ausgabe.parquet>]  # 7. Treffer und Güte in guete.json; committen
+uv run georep validate restate $V                    # nur für Labels bis 2026-11-26: Satz und Modellfelder
 ```
 
 1. **Stichprobe.** Einmal je Codebuch-Version; `--force` zieht neu und trennt die vorhandenen
@@ -219,8 +227,9 @@ uv run georep validate score $V [--pred <ausgabe.parquet>]  # 7. Treffer und Gü
    bricht dann ab, `merge --force` setzt `schlichtung/` zurück.
 5. **Schlichten.** Ein dritter frischer Agent mit dem Modell von A und dem Prompt aus § 4.2.
 6. **Labels.** Der zweite `merge` legt `labels.csv` (`id, frage, kodierer_a, kodierer_b,
-   schlichtung, label`), `README.md` und `guete.json` ab und sagt je Frage, ob α die Schwelle
-   erreicht. Liegt es darunter: das Codebuch schärfen, `version` hochzählen, neue Stichprobe.
+   schlichtung, label`), `README.md` und `guete.json` ab, beide mit dem Modell je Rolle, wie die
+   Agenten liefen, und sagt je Frage, ob α die Schwelle erreicht. Liegt es darunter: das Codebuch
+   schärfen, `version` hochzählen, neue Stichprobe.
 7. **Güte.** Ohne `--pred` je Frage mit `positive` der Anteil der Treffer: je Schicht, in der
    Stichprobe und für die Grundgesamtheit (§ 5). Mit `--pred` die Ausgabe eines Verfahrens: `id`,
    `frage`, `label` (bei einem Codebuch mit einer Frage darf `frage` fehlen), bei Rangfolgen
@@ -274,7 +283,10 @@ Was ins Repo kommt und was nicht:
 Platzhalter in spitzen Klammern; `<ordner>` ist `<coding_root>/<NN-name>/<A|B|schlichtung>`.
 **Modelle** (§ 3, „Welche Modelle kodieren"): Kodierer A und der Schlicht-Agent laufen mit
 `model: "opus"`, Kodierer B mit einem anderen Modell (Vorgabe `sonnet`). Beide Kodierer bekommen
-denselben Prompt. Weder der Prompt noch der Ordner nennt das Modell des anderen Kodierers.
+denselben Prompt. Weder der Prompt noch der Ordner nennt das Modell des anderen Kodierers. Der
+Supervisor notiert je Agent das Modell, das das Agent-Werkzeug für den Lauf meldet, und gibt es
+dem zweiten `merge` als `--model-a`, `--model-b` und `--model-adjudicator` mit (§ 3); das Modell
+eines Agenten steht nur dort, im README und in `guete.json`, nie in einem Auftrag.
 
 ### 4.1 Kodier-Agent
 
@@ -351,8 +363,10 @@ zieht es im Messskript per Bootstrap über die Einheiten.
 
 ## 6. Grenzen und Offenes
 
-- Beide Kodierer sind dasselbe Modell; ihre Fehler sind korreliert, α ist darum eine obere
-  Schätzung der Schärfe des Codebuchs (§ 1).
+- Bei allen Labels bis zum 2026-11-26 sind beide Kodierer dasselbe Modell; ihre Fehler sind
+  korreliert, α ist dort eine obere Schätzung der Schärfe des Codebuchs (§ 1). Seit Frage 19
+  kodiert B ein anderes Modell; zwei Modelle teilen weniger Fehler, aber nicht keine, und die
+  Schlichtung bleibt das Modell von A.
 - Die verschiedene Folge der Einheiten je Kodierer mildert Reihenfolgeeffekte, schließt sie nicht
   aus.
 - Offene Antworten werden bis auf zusammengezogenen Leerraum genau verglichen; mit

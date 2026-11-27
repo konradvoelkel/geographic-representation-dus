@@ -4141,3 +4141,53 @@ Quelle, gleiche Forderungen zum selben Haushaltsposten), dazu optional Einbettun
 als zweite Kandidatenquelle und die Musteranträge der kommunalpolitischen Vereinigungen als Korpus,
 um Vorlage und Wiederholung zu trennen (Messdokument, Fragen 23.2, 23.4). Die lokale Ausrichtung
 bleibt als Werkzeug im Messskript, etwa für Vorhaben 25.
+
+## NN. Prüfsatz mit dem Modell je Rolle, die Labels von 12 Runde 2 und 16 im Format von F4, eine Prüfstichprobe der Rückfallregel (F4-Nachzug V3, 2026-11-27)
+
+Vorarbeit V3 des Plans [plan-zeigen-2026-11.md](plan-zeigen-2026-11.md) (§ 3, § 4) nach Konrads
+Antwort auf Frage 19 (2026-11-26): für neue Messungen ist Kodierer B ein anderes Modell als A und
+die Schlichtung, die bisherigen Labels bleiben, und jede Seite nennt, wie geprüft wurde. Die Nummer
+bekommt der Eintrag beim Merge.
+
+**Das Modell je Rolle** (`merge --model-a`, `--model-b`, `--model-adjudicator`; `--model` als
+Kurzform) und die Form des Satzes stehen in Punkt 71 (Nachtrag vom 2026-11-27). `guete.json` führt
+`modelle` an der Stelle von `modell`, das README eine Zeile **Modelle**.
+
+**Die bisherigen Labels bekommen Satz und Modellfelder aus dem, was `guete.json` schon sagt**
+(`georep validate restate`): das eine `modell` gilt für alle drei Rollen, und der Lauf schreibt nur
+`modelle`, `satz` und im README die Zeilen **Kodierer** und **Modelle**; jede andere Zeile und jeder
+andere Schlüssel bleibt an seiner Stelle. Die alte Zeile **Kodierer** muss ohne „Modell `M`," genau
+die sein, die merge aus `uneinig` und `schlichtung_herkunft` schriebe, sonst bricht der Lauf ab.
+Gelaufen über alle 15 Ordner mit `guete.json`; ein Test lässt ihn über den Stand im Repo laufen und
+verlangt Bytegleichheit. Verworfen: Modelle als Argumente des Laufs (er könnte dann Tatsachen
+ändern, nicht nur ihre Form; ein anderes Modell trägt `merge` ein) und das README ganz neu aus
+`guete.json` zu bauen (ältere READMEs stammen aus älteren Fassungen von `readme()` und änderten
+sich an Stellen, die mit den Modellen nichts zu tun haben).
+
+**Positionsspannen im Kodierauftrag** (`docs/todo.md`, Punkt 14 (d)): `tasks` prüft `value` wie
+`check_spans(…, texts=…, positions=…)`, leer nur bei den Abschnitten aus Vorhaben 11; die eigene
+Prüfung bleibt, weil ihre Meldung beide Texte und den Extraktor nennt.
+
+**Die Labels von 12 Runde 2 und von 16 kommen aus den Labeldateien der Messungen im Repo**
+(`validate import` mit `[provisional] labels`: `labels-2.csv`, `labels.csv`, Werte als JSON), nicht
+aus den lokalen Antwortdateien wie bei Runde 1 von 12. So rechnet ein Test in CI die Zahlen der
+Messdokumente aus Dateien im Repo nach (12 § 4.4: Art 360/360, Grenzen 354/357 α 0,939, Norm
+340/357 α 0,952; 16 § 4.1 und § 4.4: `bezug` 195/200 α 0,917 und 99/100 α 0,974, „handelt von"
+hochgerechnet 0,821 und 0,783), und jedes Endlabel gleicht dem der Messung. Ein Objekt mit
+`auswerter` in der Spalte `schlichtung` ist ein Entscheid des Auswerters und zählt als `herkunft`
+(12-2-0001). Die beiden Runden von 16 sind zwei Ordner (`16-ortsbezug-f4`, `16-ortsbezug-2-f4`),
+weil ihre Codebücher verschieden sind (§ 2 von validierung.md); in `12-kennungen-2-f4` tragen die
+Schichten „neu" und „alt" ihre Artgruppe davor, weil derselbe Name in mehreren Arten mit
+verschiedener Größe steht. Verworfen: ein Ordner für beide Runden von 16 (zwei Codebuchfassungen
+in einer Antwortdatei weist `merge` ab, und die Gewichte gehören je Ziehung); die Recall-Dokumente
+von 12 Runde 2 mitzunehmen (F4 wertet Markierungen noch nicht aus, § 6). Was F4 nicht rechnet,
+bleibt in den Messskripten: die Präzision je Art von 12 und das F1 der Regel von 16.
+
+**Die Prüfstichprobe der Rückfallregel von 14** (`14-vorgaenge-3-f4`, Messdokument § 4.3, vorab
+in einem eigenen Commit): 50 starke Kanten der Hauptperiode, proportional nach der Fundstelle
+(Titel 43, Nachtrag 4, Sammelbericht 2, Anlage 1), Codebuch Fassung .2 mit dem Material von F4,
+zu kodieren nach der neuen Regel (A und Schlichtung Opus, B Sonnet). Proportional, weil die Frage
+9.18 das Intervall der ganzen Regel schließen soll; verworfen: gleich viele je Fundstelle (Kishs
+n_eff 17, die untere Grenze bliebe auch ohne Fehler bei 0,817) und alle vier Datensätze in einer
+Stichprobe (`validate tasks` liest die Dokumente eines Profils; die Nachbarperioden heißen auf der
+Seite „explorativ").
