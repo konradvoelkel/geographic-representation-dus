@@ -2,7 +2,8 @@
 
 **Stand 2026-11-26: Urteil bauen mit der Rückfallregel (§ 5.1), Stufe 2 auf `main` (`v0.25.0`,
 Punkt 76); Stufe 3 (`vorgaenge.html`, Haken des Dokumentdialogs) offen, die Zahl 104/106 erst nach dem
-F4-Nachzug (§ 10).** Der Branch ist gemerged und entfernt.
+F4-Nachzug (§ 10).** Der Branch ist gemerged und entfernt. Die Prüfstichprobe der Rückfallregel
+(Frage 9.18) ist am 2026-11-27 vorab festgelegt (§ 4.3); ihre Kodierung steht aus.
 
 Stufe 1 (Messen) vom 2026-11-23 auf dem Branch `feat/14-vorgaenge`. Briefing:
 [../plan-vorverarbeitung-2026-11.md](../plan-vorverarbeitung-2026-11.md), § 11 „14 Vorgänge".
@@ -598,6 +599,85 @@ Nach § 5 (Frage 9.16) gilt damit **ohne weitere Runde die Rückfallregel**: sta
 Titel, Anlage, Nachtragsnummer und Sammelbericht. Ihre Präzision an den Labels beider Stichproben
 steht in § 5.
 
+### 4.3 Prüfstichprobe der Rückfallregel (Frage 9.18; vorab festgelegt am 2026-11-27)
+
+Festgelegt vor Stichprobe und Kodierung, im selben Commit wie Codebuch, Seed und Skript der
+Grundgesamtheit (F4-Nachzug V3, [../plan-zeigen-2026-11.md](../plan-zeigen-2026-11.md), § 4). Sie
+ist **keine Umbau-Runde**: sie ändert keine Regel, sie misst die gebaute (Frage 9.18).
+
+**Frage.** Wie präzise ist die Rückfallregel an Kanten, die nur nach ihr gezogen sind? Die Zahl aus
+§ 5.1 (104 von 106, 0,981, Wilson 0,934 bis 0,995) ruht auf zwei Ziehungen, die die Regel nicht
+zum Ziel hatten, und auf zwei Fassungen des Codebuchs; die Seite zeigt sie darum nicht
+(Synergie § 10, „Validierung auf der Seite nur aus `guete.json`").
+
+**Grundgesamtheit** (`docs/plans/14-vorgaenge-pruefung.py`, nach `georep run` in der Hauptperiode,
+`v0.32.1`): die starken Kanten von `processed/vorgang_kanten.parquet` innerhalb der Periode
+(`nach_periode` leer; die Dokumente der Nachbarperiode liegen nicht im Korpus, aus dem
+`validate tasks` die Ausschnitte liest), ohne die 53 Kanten, die schon in Stichprobe 1 oder 2
+kodiert sind: 1 740 Kanten, als Einheit `pair_with_span` mit Schlüssel `kante` (SHA-1 über
+„von|nach", wie in Abschnitt 10 des Messskripts). Vor dem Ziehen fallen 30 weg, bei denen A oder B
+keinen Text hat (`sample.require_text`); es bleiben **1 710**. Nur die Kanten eines Sammelberichts
+tragen eine Fundstelle im Text (`verweise.parquet`, im Rohtext wörtlich geprüft, 63 von 63); Titel,
+Anlagenname und Nachtrag sieht der Kodierer im Titel und im Kontext. Das Skript schreibt
+`<profil>/interim/vorgang_kanten_rueckfall.parquet` (`sample.population`), zweimal gelaufen und
+bytegleich (SHA-256 `715c21d8…`); `stichprobe.json` hält die Prüfsumme fest.
+
+| Schicht (`quelle`) | Kanten | mit Text | Stichprobe |
+|---|---|---|---|
+| Titel | 1 509 | 1 480 | 43 |
+| Nachtrag über die Nummer (`nummer`) | 125 | 124 | 4 |
+| Sammelbericht | 63 | 63 | 2 |
+| Anlagenname | 43 | 43 | 1 |
+
+**Stichprobe**: 50 Kanten, proportional nach der Fundstelle (`allocation = "proportional"`, jede
+Schicht mindestens eine), Seed 20261127, gezogen von `georep validate sample 14-vorgaenge-3-f4`
+(Rang SHA-256, ohne Zufallsgenerator). Proportional und nicht gleich je Schicht, weil Frage 9.18
+das Intervall der ganzen Regel schließen soll: mit 13 Kanten je Schicht trüge der Titel 87 % des
+Gewichts auf 13 Kanten, Kishs effektives n fiele auf 17, und schon 52 von 52 richtig ergäben
+gewichtet nur 0,817 als untere Grenze; proportional bleibt es bei rund 50. Die Zahl je Fundstelle
+(Anlage 1, Sammelbericht 2) ist darum nur eine Beschreibung, kein Befund.
+
+**Codebuch**: [../../validierung/14-vorgaenge-3-f4/codebuch.toml](../../validierung/14-vorgaenge-3-f4/codebuch.toml),
+Fassung 2026-11-27.1: die drei Fragen von Fassung .2 wörtlich, bis auf einen Satz zu
+`keine_fundstelle` (der Nachtrag steht jetzt im Kontext); neu sind nur die Einheit und das Material
+des Auftrags von F4 (Titel, Anfang des Rohtexts bis 1 500 Zeichen, bei einer Fundstelle im Text B
+als Fenster von 300 Zeichen; Kontext: Nummer, Dokumentart und Datum beider, die Fundstelle).
+Nicht im Auftrag: der Kantentyp des Verfahrens.
+
+**Kodierer** nach der Regel aus Frage 19 ([../validierung.md](../validierung.md), § 3 und § 4):
+Kodierer A und Schlichtung Opus, Kodierer B Sonnet; je ein frischer Agent, kein Fork. Aufträge
+lokal unter `/media/konrad/xtraspace/georep/messdaten/kodierung/14-vorgaenge-3-f4/` (`A/`, `B/`).
+
+**Maße** (nach F4, `georep validate score`): Kantenpräzision = Anteil `selbe_sache = ja` unter ja
+und nein (`unklar` wird gezählt, nicht gewertet), in der Stichprobe (ungewichtet) und für die
+1 710 Kanten (gewichtet mit N_h/n_h, Wilson bei Kishs effektivem n); je Fundstelle mit Wilson;
+Krippendorffs α je Frage. Wilson 95 %: 50/50 → 0,929 bis 1; 49/50 → 0,895 bis 0,996; 48/50 →
+0,865 bis 0,989; 47/50 → 0,838 bis 0,979. **Bei höchstens zwei Fehlern an 50 liegt der Punktwert bei
+mindestens 0,960.** Rollenpräzision je Kantentyp (über `id_a`, `id_b` aus `vorgang_kanten.parquet`)
+rechnet die Auswertung daneben, ohne Einfluss auf das Urteil.
+
+**Kriterium** (wie § 5): Kantenpräzision ≥ 0,95 am Punktwert, ungewichtet und gewichtet, und α der
+Frage `selbe_sache` ≥ 0,8 (`validation.min_alpha`, jetzt zwischen zwei Modellen).
+
+**Nebenmaß, kein Kriterium**: zusammen mit den 104 von 106 aus § 5.1 die untere Wilson-Grenze über
+alle Kanten der Rückfallregel. Das ist das Ziel der Frage 9.18: bei 50 von 50 sind es 154 von 156,
+untere Grenze 0,954; bei einem Fehler 153 von 156, 0,945. Kein Kriterium, weil die drei Stichproben
+verschieden gezogen sind (zwei über alle Kanten aller Datensätze, diese nur über die starken der
+Hauptperiode) und nach drei Fassungen kodiert.
+
+**Was folgt, vorab festgelegt.**
+
+- **Erfüllt**: Stufe 3 von 14 zeigt die Präzision der Rückfallregel aus
+  `validierung/14-vorgaenge-3-f4/guete.json` (gewichteter Punktwert mit Intervall und dem Satz zur
+  Prüfung), für die Hauptperiode gemessen; die Nachbarperioden heißen dort „explorativ"
+  (plan-zeigen-2026-11.md, § 8, Gültigkeitsregel).
+- **Präzision unter 0,95**: das Urteil aus § 5.1 bleibt (die Regel stand vor beiden Kodierungen
+  fest, und diese Prüfung ändert keine). Die Seite zeigt keine Präzision der Kanten; die Fehler
+  gehen in Frage 9.17 (Fassung .3), mit Fundstelle und Typ.
+- **α von `selbe_sache` unter 0,8**: das Codebuch ist für zwei Modelle zu unscharf
+  (validierung.md, § 3); keine Kennzahl auf der Seite, die Uneinigkeiten gehen in Frage 9.17, und an
+  diesen Kanten wird nicht nachkodiert.
+
 ## 5. Urteil gegen das Kriterium: bauen / umbauen / verwerfen
 
 ### 5.1 Endgültiges Urteil (Abschluss der Stufe 1, 2026-11-23): bauen, mit der Rückfallregel
@@ -871,7 +951,7 @@ der Antwortquote als Maß.
 | 9.15 | Zeigt der Dokumentdialog schwache Kanten? | 2 126 Kanten, darunter richtige (Entwurf: 6 von 15 verworfenen) | nein im Vorgang; höchstens als „genannt in einer Aufzählung" ohne Rolle |
 | 9.16 | Was, wenn die Stichprobe 2 das Kriterium verfehlt? | § 8 des Meta-Plans erlaubt eine Runde | Rückfallregel aus § 5 (nur Titel, Anlage, Nummer, Sammelbericht), vorab festgelegt — **eingetreten** (0,850, § 4.2; Rückfallregel 104 / 106, § 5.1) |
 | 9.17 | Eine spätere Fassung .3 für Textverweise, mit den Regeln des Schlichters der Bestätigung? | 11 307 Textkanten liegen schwach in den Daten; .2 trug zu 85 % | **Vorschlag, keine Runde jetzt** (§ 9.1 unten); nur mit neuer Ziehung und vorab festgelegtem Kriterium |
-| 9.18 | Eine eigene Stichprobe nur aus Rückfall-Kanten (rund 50, nach Typ geschichtet), um das Intervall über 0,95 zu heben? | die Präzision 0,981 ruht auf 106 Kanten aus zwei Ziehungen, die untere Grenze ist 0,934 | ja, als Prüfung neben Stufe 2, keine Umbau-Runde (sie ändert keine Regel) |
+| 9.18 | Eine eigene Stichprobe nur aus Rückfall-Kanten (rund 50, nach Typ geschichtet), um das Intervall über 0,95 zu heben? | die Präzision 0,981 ruht auf 106 Kanten aus zwei Ziehungen, die untere Grenze ist 0,934 | ja, als Prüfung neben Stufe 2, keine Umbau-Runde (sie ändert keine Regel) — **vorbereitet** am 2026-11-27: Grundgesamtheit, Seed, Codebuch und Kriterium in § 4.3, Ordner `validierung/14-vorgaenge-3-f4/` |
 
 ### 9.1 Vorschlag für eine Fassung .3 (nicht begonnen)
 

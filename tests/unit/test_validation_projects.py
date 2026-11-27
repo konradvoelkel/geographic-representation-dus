@@ -34,9 +34,14 @@ CONVERTED = sorted(p.parent.name for p in VALIDATION.glob("*-f4/codebuch.toml"))
 
 @pytest.mark.parametrize("folder", CONVERTED, ids=str)
 def test_every_codebook_in_the_repository_is_valid(folder: str) -> None:
-    """Jedes Codebuch unter validierung/ ist im Format von F4 und passt zu seiner Stichprobe."""
+    """Jedes Codebuch unter validierung/ ist im Format von F4 und passt zu seiner Stichprobe.
+
+    Ein Codebuch darf vor seiner Stichprobe im Repo stehen: Codebuch, Seed und Kriterium werden
+    vorab in einem eigenen Commit festgelegt (14-vorgaenge-3-f4, Messdokument 14, § 4.3)."""
     codebook = load_codebook(VALIDATION / folder / "codebuch.toml", folder)
     paths = ValidationPaths(folder, VALIDATION / folder, Path("/nirgends"))
+    if not paths.sample.is_file():
+        return
     sample = read_sample(paths, codebook)
     assert (
         sample.height == codebook.sample.size
