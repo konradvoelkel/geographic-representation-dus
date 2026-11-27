@@ -133,6 +133,10 @@ wenn sich ein Merge schiebt.
   22). So bleibt jede Änderung der Hauptseite einem Merge zuzuordnen.
 - 19 berührt keine Seite, bis seine Stufe 3 kommt.
 
+**Neue Startseite.** Der Plan [plan-startseite-2026-11.md](plan-startseite-2026-11.md) (Startseite mit Karte,
+Zeitregler und Kurzfassung; der heutige Inhalt als `details.html`) ist freigegeben, sein Bau aber
+zurückgestellt (Konrad, 2026-11-27, begrenzte Ressourcen); eingeplant wäre er nach `v0.38.0` und vor 22.
+
 **Haltepunkte.**
 
 - **Z1** nach `v0.35.0` (erledigt am 2026-11-27: Konrad hat `akteure.html` angesehen; auf seinen Wunsch heißt
