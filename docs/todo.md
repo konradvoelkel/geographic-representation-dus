@@ -73,10 +73,12 @@ Aufgenommen am 2026-11-24 aus der Nachprüfung der Runde 2 (Punkt 76); keiner ve
 `flatten_with_offsets`. (b) Die Mini-Läufe lesen die echten Nachbarpakete relativ zum
 Arbeitsverzeichnis. (c) Das README-Gerüst von `pack --attachments` ist das allgemeine. (d) Die
 Stamp-Schlüssel von `compare` sind absolute Pfade unter `data_root`; relativ zu `data_root` liefe
-`compare` nach einem Umzug nicht neu (0,1 s, Kür). (e) `verweise.parquet` hängt vom Rechner ab: lokal
-liegen die Spannen aller Profile auf dem Rohtext, auf Pages nur die der Hauptperiode (die Spalte
-`extractor` sagt es); vor Stufe 3 klären, ob die Tabelle so veröffentlicht wird. (f) Die Maske nimmt
+`compare` nach einem Umzug nicht neu (0,1 s, Kür). (f) Die Maske nimmt
 einmal ein Sachwort mit („Anfrage Dr. …" statt „… Hitzeschutz"); das README des Pakets sagt es.
+(g) Aus der Stufe 3 (2026-11-27): der Dokumentdialog zeigt je Dokument nur die Kanten, die der
+eigene Datensatz kennt; nennt eine Drucksache einer späteren Periode ein Dokument, fehlt das in
+dessen Dialog (Hauptperiode: Kanten aus der laufenden Periode). Abhilfe wäre, dass `procedures` die
+starken Kanten der Nachbarn, die es für den Wald ohnehin rechnet, als eigene Datei schreibt.
 
 ## 13. Zeit und Feeds: Rückstand aus dem Review von Vorhaben 17
 
@@ -305,4 +307,11 @@ Regel für das ganze Register. Entscheiden, bevor weitere Tabellen je Dokument d
 Mit Stufe 3 von 11 und 12 (2026-11-27) kamen in der Hauptperiode `dokumente_kopf.parquet` (204 KB,
 ohne CSV), `kennungen.parquet` (1,25 MB) und `kennungen.csv` (4,6 MB, nur Bauleitplanung und Beträge,
 30 180 Zeilen; davon 2,1 MB die Spalte `id`) dazu; als CSV nur Bauleitplanung wären es 0,33 MB.
+Stand mit Stufe 3 von 14 (2026-11-27): `dokumente_vorgang` (je Dokument), `vorgang_kanten` und
+`antwortzeiten` kommen in allen vier Datensätzen dazu; in der Hauptperiode als CSV 2,80, 1,27 und
+0,42 MB (Parquet 0,08, 0,08, 0,03 MB), über alle vier Datensätze zusammen 10,9 MB, die
+veröffentlichte Seite wuchs damit von 46,9 auf 58,4 MB. Seit dem Nachtrag zum Entscheidungseintrag
+von 14 trägt `dokumente_vorgang.csv` nur die Dokumente in einem Vorgang (7,05 → 0,73 MB über die
+vier Datensätze, `CsvPlan` aus Punkt 89 wie beim Vokabular von 17); offen bleibt die Regel für die
+übrigen Tabellen je Dokument (15: `dokumente_funktion`, `dokumente_antragsteller`).
 

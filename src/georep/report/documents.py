@@ -28,6 +28,15 @@ def _https(url: str) -> str:
     return "https://" + url[len("http://") :] if url.startswith("http://") else url
 
 
+def listed_link(url: str, base: str) -> str:
+    """Der Link eines Dokuments, wie ``dokumente.json`` ihn trägt: als https, ohne das Präfix.
+
+    Review N4: ``report.build.write_dialogs`` vergleicht damit den ersten und letzten Link.
+    """
+    full = _https(url)
+    return full[len(base) :] if base and full.startswith(base) else full
+
+
 def download_base(urls: Sequence[str]) -> str:
     """Das gemeinsame Verzeichnis der Download-URLs, als https; leer, wenn es keines gibt."""
     if not urls:
@@ -67,6 +76,29 @@ def _inputs_complete(
     return has_columns(corpus, *DOCUMENT_COLUMNS) and has_columns(index, TERM, PAPER_IDS, HITS)
 
 
+def _visible(index: pl.DataFrame, hidden: Sequence[str]) -> pl.DataFrame:
+    return index.filter(~pl.col(TERM).is_in(list(hidden)) & (pl.col(HITS) > 0))
+
+
+def _listed(corpus: pl.DataFrame, visible: pl.DataFrame) -> pl.DataFrame:
+    """Die Dokumente des Dialogs in seiner Folge: neueste zuerst, bei gleichem Datum nach ID."""
+    ids = visible.get_column(PAPER_IDS).explode().drop_nulls().unique().to_list()
+    return (
+        corpus.filter(pl.col("id").is_in(ids))
+        .select(DOCUMENT_COLUMNS)
+        .sort(["date", "id"], descending=[True, False])
+    )
+
+
+def document_order(corpus: pl.DataFrame, index: pl.DataFrame, hidden: Sequence[str]) -> list[str]:
+    """Die Korpus-IDs in der Folge von ``dokumente.json``: Index ``i`` dort ist ``result[i]``.
+
+    Vorarbeit V2 (``report.dialog``): die Dateien der Dialog-Haken zeigen mit diesen Indizes auf
+    die Dokumente des Dialogs; ``documents_payload`` baut seine Liste aus derselben Funktion.
+    """
+    return _listed(corpus, _visible(index, hidden)).get_column("id").to_list()
+
+
 @deal.pre(_inputs_complete, message="Korpus-Metadaten und Index mit ihren Pflichtspalten")
 def documents_payload(
     corpus: pl.DataFrame,
@@ -77,19 +109,14 @@ def documents_payload(
     generated_at: dt.datetime,
     originators: Mapping[str, str] = {},
 ) -> dict[str, object]:
-    visible = index.filter(~pl.col(TERM).is_in(list(hidden)) & (pl.col(HITS) > 0))
-    ids = visible.get_column(PAPER_IDS).explode().drop_nulls().unique().to_list()
-    documents = (
-        corpus.filter(pl.col("id").is_in(ids))
-        .select(DOCUMENT_COLUMNS)
-        .sort(["date", "id"], descending=[True, False])
-    )
+    visible = _visible(index, hidden)
+    documents = _listed(corpus, visible)
     position = {paper_id: i for i, paper_id in enumerate(documents.get_column("id").to_list())}
     urls: list[str] = documents.get_column("download_url").to_list()
     base = download_base(urls)
     rows = [
         [
-            _https(url)[len(base) :] if base and _https(url).startswith(base) else _https(url),
+            listed_link(url, base),
             row["date"].isoformat() if row["date"] is not None else "",
             row["reference"] or "",
             row["name"] or "",

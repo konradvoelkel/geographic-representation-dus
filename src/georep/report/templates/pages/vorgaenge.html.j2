@@ -1,0 +1,151 @@
+{#
+  Vorhaben 14, Stufe 3 (docs/plans/14-vorgaenge.md, § 7 und § 10), im Muster von akteure.html
+  (Punkt 88). Das Modell ist ``report.procedures.ProceduresModel``; jede Zahl kommt aus den Daten,
+  jeder Name eines Gremiums oder einer Fraktion aus dem Profil, jede Zahl der Prüfung aus
+  ``guete.json``. Je Fraktion steht nur beobachtet gegen erwartet und die Antwortzeit, nie eine
+  rohe Quote (Frage 14), für jede Fraktion gleich. Ein Datensatz, an dem nicht gemessen ist, heißt
+  in jeder Überschrift „explorativ" (docs/plan-zeigen-2026-11.md, § 8). Der Hinweis auf die
+  Niederschrift weicht, wenn der Abschnitt von Vorhaben 26 auf der Seite steht (``guests``, Punkt 86).
+#}
+{% from "macros.html.j2" import more %}
+{% set m = data.vorgaenge %}
+{% set c = m.check %}
+{% set a = m.answers %}
+{% set v = m.procedures %}
+{% set ex = " (explorativ)" if m.explorative else "" %}
+{% set sitzung = data.session_guest in guests %}
+<section id="ueberblick">
+<p>Diese Seite verbindet die {{ v.documents|num }} Ratsdokumente der {{ model.period.title }}{% if m.first and m.last %} ({{ m.first|date_de }} bis {{ m.last|date_de }}){% endif %} über ihre Drucksachennummern: welche Anfrage eine Antwort im Ratsinformationssystem hat und wie lange sie brauchte, und welche Drucksachen zu einem <em>Vorgang</em> gehören, etwa Antrag und Umsetzung, Vorlage und Änderungsantrag, Original und Nachtrag. Im Dokumentdialog der Hauptseite steht bei jedem Dokument sein Vorgang.</p>
+<ul class="toc">
+<li><a href="#antworten">Antworten je Gremium</a></li>
+<li><a href="#fraktionen">Je Fraktion</a></li>
+<li><a href="#kandidaten">Ohne gefundene Antwort</a></li>
+<li><a href="#vorgaenge">Vorgänge</a></li>
+</ul>
+<div class="pruefung" id="pruefung">
+<h2>Wie geprüft</h2>
+<ul>
+{% if not c.measured %}
+<li><strong>Explorativ</strong>: gemessen ist an {{ c.measured_datasets|join("; ") }}, nicht an diesem Datensatz. Was dort gilt, steht unten; jede Zahl auf dieser Seite ist darum explorativ.</li>
+{% endif %}
+<li><strong>Verbindungen</strong>: eine Drucksache gehört zu einer anderen, wenn sie deren Nummer im Titel oder im Namen einer Anlage nennt, wenn sie ein Nachtrag zu ihr ist (dieselbe Nummer mit Zusatz) oder wenn sie ein Sammelbericht wie eine Beschlusskontrolle ist. Diese Regel ist {{ c.rule.sentence }}: {{ c.rule.hits|num }} von {{ c.rule.judged|num }} Verbindungen als dieselbe Sache bestätigt (95-%-Intervall {{ c.rule.interval[0]|num(3) }}–{{ c.rule.interval[1]|num(3) }}), für die {{ c.rule.population|num }} Verbindungen innerhalb der gemessenen Periode gewichtet {{ c.rule.weighted|num(3) }} ({{ c.rule.weighted_interval[0]|num(3) }}–{{ c.rule.weighted_interval[1]|num(3) }}). Gezogen ist nach der Fundstelle ({% for key, n in c.rule.strata %}{{ data.sources[key] }} {{ n|num }}{{ ", " if not loop.last }}{% endfor %}); je Fundstelle ist das keine Prüfung.</li>
+<li><strong>Nummern nur im Text</strong> zählen nicht. Mit ihnen bestätigten die Kodierer bei der ersten Fassung der Regel {{ c.first.hits|num }} von {{ c.first.judged|num }} Verbindungen ({{ c.first.share|num(3) }}; {{ c.first.sentence }}), bei der zweiten {{ c.second.hits|num }} von {{ c.second.judged|num }} ({{ c.second.share|num(3) }}; {{ c.second.sentence }}); vorab festgelegt waren mindestens {{ c.criterion|num(2) }}.{% if c.first.same_model or c.second.same_model %} Zwei Kodierer desselben Modells sind ein schwacher Beleg; die Prüfung der Regel oben hat zwei Modelle.{% endif %}</li>
+{% if a %}
+<li><strong>Antworten</strong> erkennt die Seite am Namen einer Anlage der Anfrage ({{ a.names|num }} verschiedene Namen in diesem Datensatz, etwa „Antwort der Verwaltung“ oder „Beantwortung“) oder an einer Informationsvorlage, die die Anfrage im Titel nennt. Die Namensregel ist von keinem Kodierer geprüft: die Antwort-PDFs liegen nicht lokal.</li>
+<li><strong>Antwortzeit</strong>: Tage von der Anfrage bis zum Datum der Antwort im System, also seit wann sie öffentlich ist, nicht wann sie geschrieben wurde.{% if a.invalid_dates %} Anlagen vom {% for day in a.invalid_dates %}{{ day|date_de }}{{ ", " if not loop.last }}{% endfor %} tragen das Datum einer Umstellung des Ratsinformationssystems; sie zählen als Antwort ohne Zeit.{% endif %}</li>
+{% endif %}
+</ul>
+<p class="note">Wie gemessen ist, steht im <a href="{{ data.urls.measurement }}">Messdokument</a>; Codebuch, Stichprobe und Labels der Regel im Ordner <a href="{{ data.urls.rule }}">{{ data.urls.rule_folder }}</a>, die beiden ersten Stichproben unter <a href="{{ data.urls.first }}">Stichprobe 1</a> und <a href="{{ data.urls.second }}">Stichprobe 2</a>.</p>
+{% if m.missing %}
+<p class="note">In diesem Profil fehlt:</p>
+<ul class="note">
+{% for line in m.missing %}
+<li>{{ line }}</li>
+{% endfor %}
+</ul>
+{% endif %}
+</div>
+</section>
+
+<section id="antworten">
+<h2>Antworten je Gremium{{ ex }}</h2>
+{% if a %}
+<p>{{ a.questions|num }} Anfragen; bei {{ a.answered|num }} ({{ a.share|pct(1) }}) steht eine Antwort im Ratsinformationssystem, bei {{ a.by_attachment|num }} als Anlage an der Anfrage, bei {{ a.by_paper_only|num }} nur als eigene Drucksache. <strong>Ein fehlender Anhang ist keine fehlende Antwort</strong>: ob die Antwort als Anlage kommt, ist Praxis des Gremiums, nicht Verhalten der Verwaltung gegenüber den Fragenden.{% if a.session_bodies %} {{ a.session_bodies|length|num }} der Gremien unten liegen unter {{ m.session_practice|pct(0) }}; dort wird in der Sitzung geantwortet{% if sitzung %}, und wie oft, steht unter <a href="#{{ data.session_guest }}">In der Sitzung beantwortet</a>.{% else %}, und die Antwort steht in der Niederschrift, die dieser Datensatz nicht liest (†).{% endif %}{% endif %}</p>
+{% if a.times.dated %}
+<p>Antwortzeit, wo gültig datiert (n = {{ a.times.dated|num }}): Median {{ a.times.median|num }} Tage, Q1 {{ a.times.q1|num }}, Q3 {{ a.times.q3|num }}, P90 {{ a.times.p90|num }}.{% if a.undated == 1 %} Eine Antwort trägt keine gültige Antwortzeit.{% elif a.undated %} {{ a.undated|num }} Antworten tragen keine gültige Antwortzeit.{% endif %}</p>
+{% endif %}
+{% if a.bodies %}
+<div class="scroll"><table id="antworten-gremien">
+<thead><tr><th scope="col" data-sort="text">Gremium</th><th scope="col" class="num" data-sort="num">Anfragen</th><th scope="col" class="num" data-sort="num">Antwort gefunden</th><th scope="col" class="num" data-sort="num">Anteil</th><th scope="col" class="num" data-sort="num">Median Tage</th><th scope="col" class="num" data-sort="num">Q3 Tage</th><th scope="col" class="num" data-sort="num">datiert</th></tr></thead>
+<tbody>
+{% for b in a.bodies %}
+<tr><th scope="row">{{ b.name }}{% if b.in_session and not sitzung %} †{% endif %}</th><td class="num" data-value="{{ b.questions }}">{{ b.questions|num }}</td><td class="num" data-value="{{ b.answered }}">{{ b.answered|num }}</td><td class="num" data-value="{{ b.share }}">{{ b.share|pct(1) }}</td>{% if b.times.median is not none %}<td class="num" data-value="{{ b.times.median }}">{{ b.times.median|num }}</td><td class="num" data-value="{{ b.times.q3 }}">{{ b.times.q3|num }}</td>{% else %}<td class="num" data-value="-1"><span class="note">unter {{ m.min_dated }}</span></td><td class="num" data-value="-1">–</td>{% endif %}<td class="num" data-value="{{ b.times.dated }}">{{ b.times.dated|num }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+{% endif %}
+<p class="note">Eine Zeile je Gremium mit mindestens {{ m.min_questions }} Anfragen{% if a.small_bodies %}; {{ a.small_bodies|num }} Gremien mit zusammen {{ a.small_questions|num }} Anfragen stehen nicht einzeln da{% endif %}. Median und Q3 nur über die gültig datierten Antworten, deren Zahl daneben steht, und erst ab {{ m.min_dated }} davon, wie je Fraktion.{% if a.session_bodies and not sitzung %} † unter {{ m.session_practice|pct(0) }}: Antwort in der Sitzung, nicht als Anlage.{% endif %}</p>
+{% else %}
+<p>Dieser Datensatz hat keine Anfragen: das Profil kennt keine Dokumentart mit der Rolle Anfrage. Antworten und Antwortzeiten fehlen darum.</p>
+{% endif %}
+</section>
+
+<section id="fraktionen">
+<h2>Je Fraktion (explorativ)</h2>
+{% if m.fractions %}
+<p>Ob eine Anfrage eine Antwort im System hat, hängt fast nur daran, in welchem Gremium sie gestellt ist. Darum steht hier keine rohe Quote, sondern <em>beobachtet gegen erwartet</em>: erwartet ist, wie viele Antworten eine Fraktion hätte, wenn jede ihrer Anfragen so oft eine bekäme wie alle Anfragen ihres Gremiums. Über 1 heißt mehr als die Praxis ihrer Gremien. Eine gemeinsame Anfrage zählt für jede beteiligte Fraktion. Explorativ heißt: das Verhältnis ist nach dem Ansehen der Daten gerechnet und prüft keine vorab festgelegte Hypothese; wer daraus eine These macht, legt sie vorher fest, mit dem Gremium als Schicht. Die Antwortzeit steht daneben, wie sie ist, und sortiert nicht, denn auch sie hängt an den Gremien. Unter {{ m.min_questions }} Anfragen oder unter {{ m.min_expected }} erwarteten Antworten steht kein Verhältnis: fragt eine Fraktion fast nur dort, wo in der Sitzung geantwortet wird, ändert eine einzige Antwort es stark. Unter {{ m.min_dated }} datierten Antworten steht kein Median.</p>
+<div class="scroll"><table id="fraktionen-tabelle">
+<thead><tr><th scope="col" data-sort="text">Fraktion</th><th scope="col" class="num" data-sort="num">Anfragen</th><th scope="col" class="num">beob./erw. (95 %)</th><th scope="col" class="num">Median Tage</th><th scope="col" class="num">datiert</th></tr></thead>
+<tbody>
+{% for f in m.fractions %}
+<tr><th scope="row">{{ f.label }}</th><td class="num" data-value="{{ f.questions }}">{{ f.questions|num }}</td>{% if f.ratio is not none %}<td class="num">{{ f.ratio|num(2) }} <span class="note">({{ f.interval[0]|num(2) }}–{{ f.interval[1]|num(2) }})</span></td>{% else %}<td class="num" data-value="-1"><span class="note">{% if f.questions < m.min_questions %}unter {{ m.min_questions }}{% else %}erwartet unter {{ m.min_expected }}{% endif %}</span></td>{% endif %}<td class="num">{% if f.times.median is not none %}{{ f.times.median|num }}{% else %}<span class="note">unter {{ m.min_dated }}</span>{% endif %}</td><td class="num">{{ f.times.dated|num }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+{% for split in m.split %}
+<p class="note">{{ split.alone }} und {{ split.joint }} stehen in zwei Zeilen: die Fraktion {{ split.joint }} gibt es ab {{ split.since|date_de }}; die Anfragen von {{ split.alone }} allein sind älter und stammen von der Fraktion des Rates davor.</p>
+{% endfor %}
+<p class="note">Sortiert nach Anfragen; nur der Spaltenkopf „Anfragen“ sortiert um. Eine Rangfolge nach dem Verhältnis wäre keine: in Klammern steht das exakte 95-%-Intervall nach Poisson für die beobachtete Zahl der Antworten, und wo es 1 enthält, unterscheidet sich die Fraktion nicht von der Praxis ihrer Gremien. Die Fraktionen kommen aus den Antragstellern der Seite <a href="akteure.html">Akteure</a>.</p>
+{% elif a %}
+<p>{% if m.with_fractions %}Keine Anfrage dieses Datensatzes nennt eine Fraktion.{% else %}Die Antragsteller (Vorhaben 15) laufen in diesem Profil nicht; ohne sie gibt es keine Zeile je Fraktion.{% endif %}</p>
+{% else %}
+<p>Ohne Anfragen gibt es nichts je Fraktion.</p>
+{% endif %}
+</section>
+
+<section id="kandidaten">
+<h2>Ohne gefundene Antwort: Kandidaten{{ ex }}</h2>
+{% if a and a.times.p90 is not none %}
+<p>Eine Anfrage ohne Antwort im System ist nicht unbeantwortet. <em>Kandidaten</em> für eine offene Anfrage sind hier nur Anfragen in Gremien, die in dieser Periode sonst fast immer als Anlage antworten (Anteil mindestens {{ m.candidate_practice|pct(0) }} bei mindestens {{ m.min_questions }} Anfragen{% if m.candidate_bodies %}: {{ m.candidate_bodies|join(", ") }}{% endif %}), und die beim Abruf älter waren als 90 % der datierten Antworten ({{ a.times.p90|num }} Tage).{% if a.young %} {{ a.young|num }} Anfragen ohne Antwort waren beim Abruf höchstens so alt.{% endif %} Ob eine Antwort fehlt, sagt erst die Niederschrift; in Gremien mit seltenerer Anlage steht keine Liste.</p>
+{% if m.candidates %}
+{{ more("kandidaten-liste", m.candidates|length, model.preview_rows) }}
+<div class="scroll"><table id="kandidaten-liste" class="preview">
+<thead><tr><th scope="col" data-sort="text">Drucksache</th><th scope="col" data-sort="num">Datum</th><th scope="col" data-sort="text">Gremium</th><th scope="col" data-sort="text">Urheber</th><th scope="col" class="num" data-sort="num">Tage beim Abruf</th></tr></thead>
+<tbody>
+{% for k in m.candidates %}
+<tr><td>{% if k.url %}<a href="{{ k.url }}">{{ k.reference }}</a>{% else %}{{ k.reference }}{% endif %}</td><td class="num" data-value="{{ k.date.strftime('%Y%m%d') if k.date else 0 }}">{% if k.date %}{{ k.date|date_de }}{% endif %}</td><td>{{ k.body }}</td><td>{{ k.authors }}</td><td class="num" data-value="{{ k.age }}">{{ k.age|num }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+{% else %}
+<p class="note">Keine Anfrage erfüllt beide Bedingungen.</p>
+{% endif %}
+{% if m.running %}
+<p class="note">Die Periode läuft noch, die Daten reichen bis {% if m.last %}{{ m.last|date_de }}{% else %}heute{% endif %}: viele Anfragen sind beim Abruf jung, und die Praxis eines Gremiums ist an wenigen Anfragen gemessen.</p>
+{% endif %}
+{% elif a %}
+<p>Keine Antwort dieses Datensatzes ist gültig datiert; ohne Antwortzeit gibt es keine Grenze für „älter als üblich“ und darum keine Liste.</p>
+{% else %}
+<p>Ohne Anfragen gibt es keine Kandidaten.</p>
+{% endif %}
+</section>
+
+<section id="vorgaenge">
+<h2>Vorgänge{{ ex }}</h2>
+<p>Ein Vorgang ist ein Baum: jede Drucksache hängt am ältesten Dokument, das sie über eine Verbindung mit Typ nennt, und die Wurzel ist der Vorgang. So verschmelzen zwei Vorgänge nicht, nur weil ein drittes Dokument beide nennt; ein Sammelbericht und ein Bezug ohne Typ verbinden, bilden aber keinen Vorgang. In diesem Datensatz sind es {{ v.procedures|num }} Vorgänge mit {{ v.members|num }} Dokumenten ({{ (v.members / v.documents if v.documents else 0)|pct(1) }} des Korpus){% if v.procedures %}, {{ v.pairs|num }} davon Paare, der größte mit {{ v.largest|num }} Dokumenten{% endif %}.{% if v.across %} {{ v.across|num }} beginnen in einer Nachbarperiode; ein Vorgang endet nicht an der Wahl.{% endif %}</p>
+{% if v.sizes %}
+<div class="scroll"><table id="vorgaenge-groessen" class="groessen">
+<thead><tr><th scope="col" class="num">Dokumente im Vorgang</th><th scope="col" class="num">Vorgänge</th><th scope="col"><span class="vh">Anteil als Balken</span></th></tr></thead>
+<tbody>
+{% for size, n in v.sizes %}
+<tr><td class="num">{{ size|num }}</td><td class="num">{{ n|num }}</td><td class="balken"><svg viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true"><rect x="0" y="0" width="{{ '%.2f'|format([100 * n / v.top, 0.5]|max) }}" height="10"></rect></svg></td></tr>
+{% endfor %}
+</tbody></table></div>
+{% endif %}
+<h3>Verbindungen</h3>
+<p>{{ v.strong|num }} von {{ v.edges|num }} Verbindungen, die Dokumente dieses Datensatzes nennen, zählen{% if v.strong_across %}, {{ v.strong_across|num }} davon in eine Nachbarperiode{% endif %}. Die übrigen {{ v.weak|num }} stehen nur im Text; sie liegen in den Daten (<code>vorgang_kanten</code> mit <code>stark</code> falsch), zählen aber für keinen Vorgang und keine Antwort, weil Nummern im Text an den ersten beiden Stichproben nicht trugen (siehe <a href="#pruefung">Wie geprüft</a>).</p>
+<div class="zwei">
+<div class="scroll"><table id="vorgaenge-typen">
+<thead><tr><th scope="col">Typ: was die nennende Drucksache ist</th><th scope="col" class="num">Verbindungen</th></tr></thead>
+<tbody>
+{% for key, label, n in v.by_type %}
+<tr><td>{{ label }}</td><td class="num">{{ n|num }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+<div class="scroll"><table id="vorgaenge-fundstellen">
+<thead><tr><th scope="col">Fundstelle</th><th scope="col" class="num">Verbindungen</th></tr></thead>
+<tbody>
+{% for key, label, n in v.by_source %}
+<tr><td>{{ label }}</td><td class="num">{{ n|num }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+</div>
+<p class="note">Eine Verbindung hat die stärkste ihrer Fundstellen in dieser Folge: Titel, Nachtragsnummer, Anlagenname, Sammelbericht. Im Dokumentdialog der Hauptseite stehen bei jedem Dokument seine Verbindungen in beide Richtungen; wird es von einer Drucksache einer späteren Periode genannt, steht das nur im Dialog jener Periode. Kanten, Vorgang je Dokument und Antwort je Anfrage stehen auf der Hauptseite unter den Downloads (<code>vorgang_kanten</code>, <code>dokumente_vorgang</code>, <code>antwortzeiten</code>).</p>
+</section>

@@ -116,6 +116,7 @@ from georep.report.build import (
     current_commit,
     report_fingerprint,
 )
+from georep.report.dialog import contributed_dialog_files
 from georep.report.geometry import district_shapes
 from georep.report.pages import Page, build_page, page_inputs, pages_for, sections_for
 from georep.report.tables import contributed_check_files, contributed_table_files
@@ -1536,7 +1537,15 @@ def build_steps(
             + contributed_table_files(layout, settings, optional=False)
             # Vorhaben 11 und 12, Stufe 3: guete.json und stichprobe.json der Prüfsätze unter
             # den Downloads; sie liegen im Repo wie die Eingaben von page_akteure
-            + contributed_check_files(settings),
+            + contributed_check_files(settings)
+            # Vorarbeit V2: was die Dialog-Haken lesen; ``report`` schreibt ihre ``data/<name>.json``.
+            # Eine Datei, die schon als Tabelle oder Prüfsatz dasteht (14: die Kanten), nur einmal.
+            + tuple(
+                path
+                for path in contributed_dialog_files(layout, settings)
+                if path not in contributed_table_files(layout, settings, optional=False)
+                and path not in contributed_check_files(settings)
+            ),
             (layout.site_index, layout.site_data / SCHEMA_NAME, layout.site / MAP_NAME),
             report,
             # Punkt 53: der eine Schritt mit einem Zusatz im Stamp. Die Vorlagen des Pakets und

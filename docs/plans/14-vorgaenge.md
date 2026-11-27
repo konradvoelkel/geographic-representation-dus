@@ -1,8 +1,11 @@
 # Vorhaben 14: Vorgänge
 
-**Stand 2026-11-26: Urteil bauen mit der Rückfallregel (§ 5.1), Stufe 2 auf `main` (`v0.25.0`,
-Punkt 76); Stufe 3 (`vorgaenge.html`, Haken des Dokumentdialogs) offen, die Zahl 104/106 erst nach dem
-F4-Nachzug (§ 10).** Der Branch ist gemerged und entfernt. Die Prüfstichprobe der Rückfallregel
+**Stand 2026-11-27: Urteil bauen mit der Rückfallregel (§ 5.1), Stufe 2 auf `main` (`v0.25.0`,
+Punkt 76); Stufe 3 (`vorgaenge.html`, der Haken des Dokumentdialogs als Vorarbeit V2, die Downloads
+`vorgang_kanten`, `dokumente_vorgang`, `antwortzeiten`) gebaut auf `feat/14-vorgaenge-seite`, wartet
+auf Review und Merge (Entscheidungseintrag „Die Unterseite `vorgaenge.html` und der allgemeine
+Dialog-Haken"). Die Seite trägt die Prüfstichprobe aus `guete.json` (50 von 50), nicht die 104/106;
+gemessen heißt dort nur die Hauptperiode, `verweise.parquet` ist kein Download.** Der Branch ist gemerged und entfernt. Die Prüfstichprobe der Rückfallregel
 (Frage 9.18) ist am 2026-11-27 vorab festgelegt und kodiert (§ 4.3): 50 von 50, Kriterium
 erfüllt, zusammen mit § 5.1 154 von 156 (Wilson ab 0,954).
 

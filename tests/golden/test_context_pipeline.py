@@ -11,6 +11,7 @@ from georep.bootstrap import bootstrap_from_settings
 from georep.io import digest
 from georep.layout import Layout
 from georep.pipeline import build_steps, freshness, run_pipeline
+from georep.report.dialog import dialogs_for
 from georep.report.tables import published
 from georep.settings import Settings, load_settings
 from tests.conftest import within_budget
@@ -121,9 +122,11 @@ def test_the_whole_chain_on_the_reference_publishes_both_sections(
     # Punkt 50: 0 schaltet die Prüfung ab, darum über den Helfer
     assert within_budget(layout.site_index.stat().st_size, settings.report.page_budget_bytes)
     # Je Tabelle Parquet und CSV, dazu GeoJSON, Schema, Dokumentliste, summary.json (Option 01);
-    # Vorhaben 11 und 12: der Kopf ohne CSV, beide nur mit den Settings (gemessen, mit Rohtext)
+    # Vorhaben 11 und 12: der Kopf ohne CSV, beide nur mit den Settings (gemessen, mit Rohtext);
+    # dazu je Dialog-Haken seine Datei (Vorarbeit V2)
     files = [n for t in published(layout, settings) for n in t.download_names(layout)]
-    assert len(list(layout.site_data.iterdir())) == len(files) + 5
+    hooks = len(dialogs_for(settings))
+    assert len(list(layout.site_data.iterdir())) == len(files) + 5 + hooks
     assert '<section id="kontrollvariablen">' in page and "Modell C" in page
     assert '<section id="abgeleitete-daten">' in page
     assert settings.context.dataset.license in page  # Namensnennung aus den Settings

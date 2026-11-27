@@ -1,3 +1,8 @@
+{#
+  Review N1: der Dialog-Haken (Vorarbeit V2) steht nur auf Seiten, deren Dialog data-extras trägt,
+  heute nur auf der Hauptseite mit einem Haken; eine Unterseite (PageFrame) hat kein Feld dialogs.
+#}
+{% set hooks = model.dialogs if model.dialogs is defined else () %}
 (function () {
   "use strict";
   var DOCUMENTS = "data/dokumente.json";
@@ -10,6 +15,10 @@
     if (cls && cls !== "strong") el.className = cls;
     el.textContent = text;
     parent.appendChild(el);
+    {# Vorarbeit V2: der Haken des Dialogs (frame/dialog.js.j2) baut seine Zeilen damit #}
+    {% if hooks %}
+    return el;
+    {% endif %}
   }
   function showTooltip(el, x, y) {
     var d = el.dataset;
@@ -171,6 +180,9 @@
     var p = iso.split("-");
     return p.length === 3 ? p[2] + "." + p[1] + "." + p[0] : iso;
   }
+{% if hooks %}
+{% include "frame/dialog.js.j2" +%}
+{% endif %}
   /* Zeigt die Dokumente eines oder mehrerer Begriffe (Array) im Dialog; die Indizes werden vereinigt
      und aufsteigend sortiert, die Liste ist neueste zuerst. title ist die Ueberschrift des Dialogs. */
   function showDocuments(terms, title) {
@@ -187,6 +199,9 @@
       });
       ids.sort(function (a, b) { return a - b; });
       note.textContent = ids.length + " Dokumente mit " + (list.length > 1 ? "diesen Begriffen" : "diesem Begriff") + ", neueste zuerst.";
+      {% if hooks %}
+      var items = [];
+      {% endif %}
       ids.forEach(function (i) {
         var doc = data.documents[i];
         var li = document.createElement("li");
@@ -202,7 +217,14 @@
         ref.textContent = doc[2] + (doc[4] ? ", " + doc[4] : "") + (doc[5] ? " \u2014 " + doc[5] : "");
         li.appendChild(when); li.appendChild(a); li.appendChild(ref);
         ol.appendChild(li);
+        {% if hooks %}
+        items.push([i, li]);
+        {% endif %}
       });
+      {% if hooks %}
+      {# Vorarbeit V2: die Zeilen der Dialog-Haken #}
+      extras(items, data.documents);
+      {% endif %}
     }).catch(function () {
       forget(DOCUMENTS);  /* ein zweiter Klick darf es noch einmal versuchen */
       note.textContent = offlineNote("Die Dokumentliste", DOCUMENTS);

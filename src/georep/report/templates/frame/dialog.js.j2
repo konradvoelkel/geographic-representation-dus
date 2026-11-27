@@ -1,0 +1,55 @@
+{#
+  Vorarbeit V2 (docs/plan-zeigen-2026-11.md, § 4; report/dialog.py): der allgemeine Haken des
+  Dokumentdialogs. data-extras am <dialog> nennt die Dateien data/<name>.json der Beiträge; jede
+  wird beim ersten Öffnen einmal geholt (loadJson, Punkt 49).
+
+  Review K3: unter jedem Dokument steht je Haken ein Platzhalter (it[2][h]) in der Folge von
+  data-extras, angelegt, bevor eine Datei ankommt; so bleibt die Registerfolge, auch wenn die zweite
+  Datei schneller ist (a). Die Sätze der Dateien (note) stehen je Haken in einem Platzhalter hinter
+  <ol>, also unter der Liste, und jedes Öffnen räumt sie weg (.extra) (b). Das Wort eines Eintrags
+  steht nur, wenn es sich gegen den vorigen ändert (c). Der Text eines Links sind die Felder aus
+  show (1 Datum, 2 Drucksache, 3 Titel); der Titel steht immer auch als title daran (d).
+
+  Ein Eintrag e ist [label] oder [label, ziel]: ein Ziel >= 0 ist der Index in dokumente.json,
+  eins < 0 das Dokument documents[-1 - ziel] der Datei selbst (in JavaScript ~e[1]). Der Link ist
+  relativ zu base oder schon vollständig (new URL; ohne gemeinsames Präfix ist base leer und jeder
+  Link vollständig); ein Ziel ohne Link ist ein <a> ohne href, also Text. Fehlt eine Datei, bleibt
+  die Liste, wie sie ist, und ein zweites Öffnen versucht es noch einmal (forget).
+
+  Review N3: jedes Öffnen zählt opened hoch; kommt eine Datei erst an, wenn der Dialog schon für
+  einen anderen Begriff offen ist (call !== opened), schreibt sie nichts mehr, sonst hinge ihre Zeile
+  an Platzhaltern einer alten Liste und ihr Satz unter der neuen. Ein Link, den new URL nicht lesen
+  kann, wird Text; die übrigen Einträge und Zeilen bleiben.
+
+  Die Erklärung steht als Jinja-Kommentar hier, damit sie die Seite nicht größer macht; gemessen in
+  tests/unit/test_report_dialog.py.
+#}
+  var EXTRAS = (dialog.dataset.extras || "").match(/\S+/g) || [], opened = 0;
+  function extra(x, docs, div, row) {
+    div.append(x.title + ": ");
+    row.forEach(function (e, k) {
+      var d = 1 in e && (e[1] < 0 ? x.documents[~e[1]] : docs[e[1]]);
+      var same = k && e[0] === row[k - 1][0];
+      div.append((k ? (same ? ", " : "; ") : "") + (same ? "" : x.labels[e[0]] + (d ? " " : "")));
+      if (!d) return;
+      var a = document.createElement("a");
+      try { if (d[0]) a.href = new URL(d[0], x.base || location); } catch (err) {}
+      a.textContent = x.show.map(function (i) { return i === 1 ? germanDate(d[i]) : d[i]; }).filter(Boolean).join(", ");
+      a.title = d[3];
+      div.append(a);
+    });
+  }
+  function extras(items, docs) {
+    var call = ++opened;
+    dialog.querySelectorAll(".extra").forEach(function (n) { n.remove(); });
+    var notes = EXTRAS.map(function () { return line(dialog, "", "note extra"); });
+    items.forEach(function (it) { it.push(EXTRAS.map(function () { return line(it[1], "", "ref"); })); });
+    EXTRAS.forEach(function (name, h) {
+      var path = "data/" + name + ".json";
+      loadJson(path).then(function (x) {
+        if (call !== opened) return;
+        items.forEach(function (it) { if (x.rows[it[0]]) extra(x, docs, it[2][h], x.rows[it[0]]); });
+        notes[h].textContent = x.note || "";
+      }).catch(function () { forget(path); });
+    });
+  }

@@ -788,6 +788,9 @@ class ReportModel:
     # Vorhaben 11 und 12, Stufe 3: die Prüfsätze der Downloads, die einen tragen; leer heißt
     # „kein Absatz unter den Downloads", und die Seite bleibt bytegleich
     table_checks: tuple[TableCheckLine, ...] = ()
+    # Vorarbeit V2: die Dateien der Dialog-Haken (``report.dialog``), als ``data-extras`` am
+    # Dokumentdialog; leer heißt kein Attribut, und die Seite bleibt bytegleich.
+    dialogs: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
