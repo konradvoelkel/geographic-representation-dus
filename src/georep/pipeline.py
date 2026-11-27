@@ -116,6 +116,7 @@ from georep.report.build import (
     current_commit,
     report_fingerprint,
 )
+from georep.report.dialog import contributed_dialog_files
 from georep.report.geometry import district_shapes
 from georep.report.pages import Page, build_page, page_inputs, pages_for, sections_for
 from georep.report.tables import contributed_table_files
@@ -1533,7 +1534,9 @@ def build_steps(
             # Extraktor je Text (der Rohtextstore steht unten unter ``optional``)
             + (layout.texts,)
             # Vorhaben 15, Review N10: die Pflichttabellen der Beiträge (die optionalen unten)
-            + contributed_table_files(layout, settings, optional=False),
+            + contributed_table_files(layout, settings, optional=False)
+            # Vorarbeit V2: was die Dialog-Haken lesen; ``report`` schreibt ihre ``data/<name>.json``
+            + contributed_dialog_files(layout, settings),
             (layout.site_index, layout.site_data / SCHEMA_NAME, layout.site / MAP_NAME),
             report,
             # Punkt 53: der eine Schritt mit einem Zusatz im Stamp. Die Vorlagen des Pakets und

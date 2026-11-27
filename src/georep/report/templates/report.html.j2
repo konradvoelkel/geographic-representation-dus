@@ -41,7 +41,7 @@
 &nbsp;Ratsdokumente aus dem Ratsinformationssystem der {{ model.city.publisher }}; die Seite nennt nur ihre Kennungen.</p>
 <p>Erzeugt am {{ model.generated_at|datetime_de }} mit georep {{ model.version }}{% if model.commit %}, Commit {{ model.commit }}{% endif %}.</p>
 </footer>
-<dialog id="docs" aria-labelledby="docs-title"><form method="dialog"><button type="submit">Schließen</button></form><h3 id="docs-title"></h3><p class="note"></p><ol></ol></dialog>
+<dialog id="docs" aria-labelledby="docs-title"{% if model.dialogs %} data-extras="{{ model.dialogs|join(' ') }}"{% endif %}><form method="dialog"><button type="submit">Schließen</button></form><h3 id="docs-title"></h3><p class="note"></p><ol></ol></dialog>
 <div id="tooltip" role="tooltip" hidden></div>
 <script>
 {% include "frame/script.js.j2" +%}

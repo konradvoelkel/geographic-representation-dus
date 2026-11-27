@@ -1,0 +1,41 @@
+{#
+  Vorarbeit V2 (docs/plan-zeigen-2026-11.md, § 4; report/dialog.py): der allgemeine Haken des
+  Dokumentdialogs. data-extras am <dialog> nennt die Dateien data/<name>.json der Beiträge; jede
+  wird beim ersten Öffnen einmal geholt (loadJson, Punkt 49) und hängt unter jedes Dokument mit
+  einer Zeile „<title>: <label> <Drucksache>; …“ an.
+
+  Ein Eintrag e ist [label] oder [label, ziel]: ein Ziel >= 0 ist der Index in dokumente.json,
+  eins < 0 das Dokument documents[-1 - ziel] der Datei selbst (in JavaScript ~e[1]). Der Link ist
+  relativ zu base oder schon vollständig (new URL; ohne gemeinsames Präfix ist
+  base leer und jeder Link vollständig); ein Ziel ohne Link ist ein <a> ohne href, also
+  Text, und der Titel des Ziels steht als title daran. Der Satz einer Datei (note) kommt hinter
+  den Hinweis oben im Dialog, den showDocuments bei jedem Öffnen neu setzt; so bleibt nichts
+  stehen. Fehlt eine Datei, bleibt die Liste, wie sie ist, und ein zweites Öffnen versucht es noch
+  einmal (forget).
+
+  Die Erklärung steht als Jinja-Kommentar hier, damit sie die Seite nicht größer macht: der Haken
+  soll unter rund 1 KB auf index.html bleiben (Plan § 5), gemessen in tests/unit/test_report_dialog.py.
+#}
+  var EXTRAS = (dialog.dataset.extras || "").match(/\S+/g) || [];
+  function extra(x, docs, li, row) {
+    var div = line(li, x.title + ": ", "ref");
+    row.forEach(function (e, k) {
+      var d = 1 in e && (e[1] < 0 ? x.documents[~e[1]] : docs[e[1]]);
+      div.append((k ? "; " : "") + x.labels[e[0]] + (d ? " " : ""));
+      if (!d) return;
+      var a = document.createElement("a");
+      if (d[0]) a.href = new URL(d[0], x.base || location);
+      a.textContent = d[2] || d[3];
+      a.title = d[3];
+      div.append(a);
+    });
+  }
+  function extras(items, docs, note) {
+    EXTRAS.forEach(function (name) {
+      var path = "data/" + name + ".json";
+      loadJson(path).then(function (x) {
+        items.forEach(function (it) { if (x.rows[it[0]]) extra(x, docs, it[1], x.rows[it[0]]); });
+        if (x.note) note.append(" " + x.note);
+      }).catch(function () { forget(path); });
+    });
+  }

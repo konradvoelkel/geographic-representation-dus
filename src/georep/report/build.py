@@ -24,6 +24,7 @@ import polars as pl
 
 from georep.analysis.hits import DISTRICT
 from georep.analysis.ols import CONSTANT, model_frame, partial_residuals
+from georep.errors import SchemaError
 from georep.export import write_csv
 from georep.geo import LONLAT, read_canonical_precincts, transformer
 from georep.io import atomic_path, digest, write_json, write_text
@@ -52,7 +53,13 @@ from georep.report.charts import (
     scatter,
     turnout_label,
 )
-from georep.report.documents import DOCUMENT_COLUMNS, documents_payload, originator_labels
+from georep.report.dialog import all_dialogs, dialog_names, dialog_payload, dialogs_for
+from georep.report.documents import (
+    DOCUMENT_COLUMNS,
+    document_order,
+    documents_payload,
+    originator_labels,
+)
 from georep.report.geometry import (
     SIMPLIFY_M,
     bounds_of,
@@ -246,6 +253,50 @@ def write_documents(layout: Layout, model: ReportModel, settings: Settings) -> D
     )
 
 
+def write_dialogs(layout: Layout, model: ReportModel, settings: Settings) -> list[Download]:
+    """``data/<name>.json`` je Dialog-Haken (Vorarbeit V2, ``report.dialog``), nach ``dokumente.json``.
+
+    Die Indizes zeigen in ``dokumente.json``; seine Folge kommt aus derselben Funktion wie dort
+    (``document_order``), das Präfix der Links aus der eben geschriebenen Datei, und deren Länge
+    muss zur Folge passen. Die Datei eines Hakens, der in diesem Profil aus ist, fliegt aus
+    ``site/data/``, damit nichts Altes mitfährt (wie ``_remove_unpublished``).
+    """
+    hooks = dialogs_for(settings)
+    wanted = {hook.name for hook in hooks}
+    for hook in all_dialogs():
+        stale = layout.site_data / hook.file_name
+        if hook.name not in wanted and stale.is_file():
+            stale.unlink()
+    if not hooks:
+        return []
+    order = document_order(
+        pl.read_parquet(layout.corpus, columns=DOCUMENT_COLUMNS),
+        pl.read_parquet(layout.index),
+        model.hidden_terms,
+    )
+    listed = json.loads((layout.site_data / DOCUMENTS_NAME).read_text(encoding="utf-8"))
+    if len(listed["documents"]) != len(order):
+        raise SchemaError(
+            f"{DOCUMENTS_NAME}: {len(listed['documents'])} Dokumente, die Folge kennt {len(order)}"
+        )
+    downloads = []
+    for hook in hooks:
+        payload = dialog_payload(
+            hook.rows(layout, settings),
+            order,
+            str(listed["base"]),
+            title=hook.title,
+            version=model.version,
+            generated_at=model.generated_at,
+        )
+        target = layout.guard_writable(layout.site_data / hook.file_name)
+        write_json(target, payload, indent=None)
+        rows = payload["rows"]
+        assert isinstance(rows, dict)
+        downloads.append(_download(target, "JSON", len(rows), hook.description))
+    return downloads
+
+
 def write_terms(layout: Layout, model: ReportModel) -> Download:
     """``begriffe.json``: je Wahlbezirk seine Begriffe mit Treffer (Punkt 49).
 
@@ -433,8 +484,9 @@ def build_site(
     shapes = district_shapes(precincts, SIMPLIFY_M)
     model = build_report_model(layout, settings, now=now, commit=commit)
     # Fundament F2: der Abschnitt „Weitere Auswertungen" nennt die Unterseiten der Beiträge
-    model = replace(model, pages=page_links(settings))
+    model = replace(model, pages=page_links(settings), dialogs=dialog_names(settings))
     downloads.append(write_documents(layout, model, settings))
+    downloads.extend(write_dialogs(layout, model, settings))  # Vorarbeit V2
     downloads.append(write_terms(layout, model))  # Punkt 49
 
     geojson = wahlbezirke_geojson(

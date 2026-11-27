@@ -30,6 +30,9 @@ Wo die Beiträge landen:
   Seite zeigt sie nach ihrem eigenen Inhalt, nach Rang, nie nach der Folge hier; ihr Schritt
   ``page_<name>`` liest ihre Eingaben mit. Wird die Zielseite in einem Profil nicht gebaut, entfällt
   der Abschnitt mit einer Zeile im Log.
+* ``dialogs`` — Zeilen je Dokument im Dokumentdialog der Hauptseite (``report.dialog.DialogHook``;
+  Vorarbeit V2): ``report`` schreibt ``data/<name>.json``, das Skript des Rahmens lädt die Datei
+  beim ersten Öffnen des Dialogs nach; ``dokumente.json`` wächst nicht.
 
 ``pipeline`` und ``report.tables`` lesen das Register erst beim Aufruf (Import in der Funktion):
 die Beiträge bauen ``pipeline.Step`` und ``report.tables.PublishedTable``, und ein Import auf
@@ -51,6 +54,7 @@ if TYPE_CHECKING:
     from georep.http import Transport
     from georep.layout import Layout
     from georep.pipeline import Step
+    from georep.report.dialog import DialogHook
     from georep.report.pages import Page, PageSection
     from georep.report.tables import PublishedTable
     from georep.settings import Settings
@@ -87,6 +91,9 @@ class Contribution:
     # Vorarbeit V1 (docs/plan-zeigen-2026-11.md, § 4): Abschnitte auf der Unterseite eines anderen
     # Beitrags. Am Ende aus demselben Grund wie ``early_steps``.
     sections: tuple[PageSection, ...] = ()
+    # Vorarbeit V2 (docs/plan-zeigen-2026-11.md, § 4): Zeilen je Dokument im Dokumentdialog, aus
+    # ``data/<name>.json`` nachgeladen. Am Ende aus demselben Grund wie ``early_steps``.
+    dialogs: tuple[DialogHook, ...] = ()
 
 
 # Je Vorhaben eine Zeile, in der Reihenfolge der Abhängigkeiten (Plan, § 3). Die Importe stehen hier

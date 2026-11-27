@@ -10,6 +10,8 @@
     if (cls && cls !== "strong") el.className = cls;
     el.textContent = text;
     parent.appendChild(el);
+    {# Vorarbeit V2: der Haken des Dialogs (frame/dialog.js.j2) baut seine Zeilen damit #}
+    return el;
   }
   function showTooltip(el, x, y) {
     var d = el.dataset;
@@ -171,6 +173,7 @@
     var p = iso.split("-");
     return p.length === 3 ? p[2] + "." + p[1] + "." + p[0] : iso;
   }
+{% include "frame/dialog.js.j2" %}
   /* Zeigt die Dokumente eines oder mehrerer Begriffe (Array) im Dialog; die Indizes werden vereinigt
      und aufsteigend sortiert, die Liste ist neueste zuerst. title ist die Ueberschrift des Dialogs. */
   function showDocuments(terms, title) {
@@ -187,6 +190,7 @@
       });
       ids.sort(function (a, b) { return a - b; });
       note.textContent = ids.length + " Dokumente mit " + (list.length > 1 ? "diesen Begriffen" : "diesem Begriff") + ", neueste zuerst.";
+      var items = [];
       ids.forEach(function (i) {
         var doc = data.documents[i];
         var li = document.createElement("li");
@@ -202,7 +206,10 @@
         ref.textContent = doc[2] + (doc[4] ? ", " + doc[4] : "") + (doc[5] ? " \u2014 " + doc[5] : "");
         li.appendChild(when); li.appendChild(a); li.appendChild(ref);
         ol.appendChild(li);
+        items.push([i, li]);
       });
+      {# Vorarbeit V2: die Zeilen der Dialog-Haken #}
+      extras(items, data.documents, note);
     }).catch(function () {
       forget(DOCUMENTS);  /* ein zweiter Klick darf es noch einmal versuchen */
       note.textContent = offlineNote("Die Dokumentliste", DOCUMENTS);

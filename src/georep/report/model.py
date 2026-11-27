@@ -777,6 +777,9 @@ class ReportModel:
     # docs/todo.md, Punkt 7, und Fundament F1: Extraktor je Text und die Zahl der Rohtexte für
     # „Methode und Grenzen"; None ohne Textstore oder mit einem leeren
     extraction: Extraction | None = None
+    # Vorarbeit V2: die Dateien der Dialog-Haken (``report.dialog``), als ``data-extras`` am
+    # Dokumentdialog; leer heißt kein Attribut, und die Seite bleibt bytegleich.
+    dialogs: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
