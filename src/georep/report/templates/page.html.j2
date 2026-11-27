@@ -16,7 +16,7 @@
 <header>
 <h1>{{ page.title }}</h1>
 <p class="lead">{{ page.lead }}</p>
-<p class="meta"><a href="index.html">Zur Hauptseite: Ratsdokumente {{ model.city.genitive }}, {{ model.period.title }}</a>. Gebaut mit georep {{ model.version }}; Quelltext und Daten im <a href="{{ links.repository }}">Repository</a>.</p>
+<p class="meta"><a href="index.html">Zur Startseite: Ratsdokumente {{ model.city.genitive }}, {{ model.period.title }}</a>. Gebaut mit georep {{ model.version }}; Quelltext und Daten im <a href="{{ links.repository }}">Repository</a>.</p>
 </header>
 <main>
 {% include page.template %}
@@ -31,7 +31,7 @@
 {% endfor %}
 </main>
 <footer>
-<p>Ergebnisse: <a href="{{ links.cc0 }}">CC0 1.0</a>; Quelltext: <a href="{{ links.gpl }}">GPL-3.0-or-later</a>. Quellen und Lizenzen der Daten nennt die <a href="index.html">Hauptseite</a>.</p>
+<p>Ergebnisse: <a href="{{ links.cc0 }}">CC0 1.0</a>; Quelltext: <a href="{{ links.gpl }}">GPL-3.0-or-later</a>. Quellen und Lizenzen der Daten nennen die <a href="details.html">Details</a>.</p>
 <p>Erzeugt am {{ model.generated_at|datetime_de }} mit georep {{ model.version }}{% if model.commit %}, Commit {{ model.commit }}{% endif %}.</p>
 </footer>
 <dialog id="docs" aria-labelledby="docs-title"><form method="dialog"><button type="submit">Schließen</button></form><h3 id="docs-title"></h3><p class="note"></p><ol></ol></dialog>

@@ -56,7 +56,10 @@ def test_die_unterseite_steht_im_rahmen_der_hauptseite(default_settings: Setting
     )
     assert "<h1>Probe</h1>" in html
     assert '<p id="probe">3</p>' in html
-    assert 'href="index.html"' in html
+    assert 'href="index.html">Zur Startseite: ' in html  # plan-startseite, § 3
+    # Quellen und Lizenzen stehen seit dem Umzug auf details.html (plan-startseite, § 3)
+    assert 'nennen die <a href="details.html">Details</a>' in html
+    assert "Hauptseite</a>" not in html
     assert "--accent:" in html  # Farbtokens aus frame/style.css.j2
     assert "showDocuments: showDocuments" in html  # Basis-JavaScript aus frame/script.js.j2
     assert "Commit abc1234" in html

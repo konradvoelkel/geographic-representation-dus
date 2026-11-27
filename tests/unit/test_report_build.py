@@ -141,7 +141,9 @@ def test_the_publish_line_names_a_page_over_the_budget() -> None:
 
 def test_map_page_embeds_districts_and_places(mini_run: Layout) -> None:
     page = (mini_run.site / MAP_NAME).read_text(encoding="utf-8")
-    assert page.startswith("<!doctype html>") and 'href="index.html"' in page
+    # Der Rückweg führt zur Auswertung, die seit dem Umzug auf details.html steht (plan-startseite)
+    assert page.startswith("<!doctype html>") and 'href="details.html"' in page
+    assert 'href="index.html"' not in page
     assert page.count("leaflet@1.9.4") == 2 and page.count('integrity="sha256-') == 2
     districts = json.loads(
         page.split('<script id="districts" type="application/json">')[1].split("</script>")[0]
