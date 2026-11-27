@@ -145,13 +145,15 @@ def test_the_published_copy_leaves_the_stamps_in_the_data_root(
     )
 
 
+@pytest.mark.parametrize("name", ["index.html", "details.html"])
 def test_publish_writes_the_neighbour_line_into_both_pages(
-    both_cities: tuple[Path, Settings],
+    both_cities: tuple[Path, Settings], name: str
 ) -> None:
+    """Die Zeile steht auf der Startseite und auf ``details.html`` (plan-startseite, § 3)."""
     root, settings = both_cities
     site, _ = _publish(root, settings)
-    first = (site / "index.html").read_text(encoding="utf-8")
-    second = (site / "moenchengladbach" / "index.html").read_text(encoding="utf-8")
+    first = (site / name).read_text(encoding="utf-8")
+    second = (site / "moenchengladbach" / name).read_text(encoding="utf-8")
     assert 'Weitere Städte: <a href="moenchengladbach/">Mönchengladbach</a>' in first
     assert '<a href="vergleich.html">Städtevergleich</a>' in first
     assert 'Weitere Städte: <a href="../">Düsseldorf</a>' in second
@@ -388,6 +390,22 @@ def test_the_summary_line_counts_cities_megabytes_and_names_what_is_missing() ->
     assert two.line() == "2 Städte, 1 Vergleich, 100 Dateien, 2,0 MB"
     assert "; kein Lauf: c" in _summary(missing=("c",)).line()
     assert "; über dem Budget: b/index.html" in _summary(over_budget=("b/index.html",)).line()
+
+
+def test_the_budget_is_checked_per_file(tmp_path: Path) -> None:
+    """``_over_budget`` nimmt je Dateiname eine eigene Grenze (plan-startseite, § 3): in Stufe B
+    die Startseite gegen ``report.start_budget_bytes``, alles andere gegen ``page_budget_bytes``."""
+    from georep.report.publish import _over_budget
+
+    for folder in (tmp_path, tmp_path / "b"):
+        folder.mkdir(exist_ok=True)
+        for name in ("index.html", "details.html"):
+            (folder / name).write_text("x" * 50, encoding="utf-8")
+    assert _over_budget(tmp_path, 100) == ()
+    assert _over_budget(tmp_path, 100, {"index.html": 10}) == ("b/index.html", "index.html")
+    assert _over_budget(tmp_path, 10, {"index.html": 100}) == ("b/details.html", "details.html")
+    assert _over_budget(tmp_path, 10, {"index.html": 0}) == ("b/details.html", "details.html")
+    assert _over_budget(tmp_path, 0, {"index.html": 10}) == ("b/index.html", "index.html")
 
 
 def test_a_budget_of_zero_leaves_no_page_over_it(both_cities: tuple[Path, Settings]) -> None:

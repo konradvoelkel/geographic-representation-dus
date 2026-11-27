@@ -24,7 +24,7 @@ import html
 import re
 import shutil
 import tempfile
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, replace
 from pathlib import Path
 
@@ -193,14 +193,25 @@ def _replacement(text: str) -> Callable[[re.Match[str]], str]:
     return lambda _: text
 
 
+# plan-startseite, § 3: beide Rahmen tragen die Marke, die Startseite und die ganze Auswertung
+NEIGHBOUR_PAGES = ("index.html", "details.html")
+
+
 def write_neighbours(cities: Sequence[CitySite], root: Path) -> None:
-    """Setzt die Zeile in jede veröffentlichte Stadtseite und räumt die Marke weg."""
+    """Setzt die Zeile in jede veröffentlichte Stadtseite und räumt die Marke weg.
+
+    Je Stadt in die Startseite und in ``details.html`` (``NEIGHBOUR_PAGES``); eine Seite, die
+    fehlt, bleibt aus, denn ``publish`` prüft nur die Startseite auf einen Lauf.
+    """
     for index, city in enumerate(cities):
-        page = root / city.href / "index.html"
-        text = page.read_text(encoding="utf-8")
         # Ersatz als Funktion, damit Backslashes und Gruppenzeichen im Text nichts bedeuten
         filled = neighbour_line(cities, index) + NEIGHBOURS_MARKER
-        write_text(page, _NEIGHBOURS.sub(_replacement(filled), text, count=1))
+        for name in NEIGHBOUR_PAGES:
+            page = root / city.href / name
+            if not page.is_file():
+                continue
+            text = page.read_text(encoding="utf-8")
+            write_text(page, _NEIGHBOURS.sub(_replacement(filled), text, count=1))
 
 
 def _tree_size(folder: Path) -> tuple[int, int]:
@@ -221,16 +232,21 @@ def render_comparison(model: ComparisonModel) -> str:
     )
 
 
-def _over_budget(root: Path, budget: int) -> tuple[str, ...]:
+def _over_budget(
+    root: Path, budget: int, by_name: Mapping[str, int] | None = None
+) -> tuple[str, ...]:
     """Die veröffentlichten HTML-Seiten über dem Budget, als Pfad unter der Wurzel (Punkt 50).
 
-    ``budget`` von 0 schaltet die Prüfung ab, wie überall. Geprüft werden die Seiten und nicht die
-    Downloads: das Budget ist eine Verabredung über die Seite, die ein Leser lädt.
+    Je Datei: ``by_name`` setzt für einen Dateinamen eine eigene Grenze, jede andere Seite gilt
+    gegen ``budget`` (plan-startseite, § 3). Eine Grenze von 0 schaltet die Prüfung dieser
+    Seiten ab, wie überall. Geprüft werden die Seiten und nicht die Downloads: das Budget ist eine
+    Verabredung über die Seite, die ein Leser lädt.
     """
-    if not budget:
-        return ()
+    limits = by_name or {}
     found = sorted(
-        str(path.relative_to(root)) for path in root.rglob("*.html") if path.stat().st_size > budget
+        str(path.relative_to(root))
+        for path in root.rglob("*.html")
+        if (limit := limits.get(path.name, budget)) and path.stat().st_size > limit
     )
     return tuple(found)
 
