@@ -4652,5 +4652,26 @@ Prüfsatz nicht. Das Ziel der Phase (höchstens 30 KB über dem Bau vor `v0.33.0
   `test_der_bericht_liest_die_pruefung_mit`, `test_der_pruefsatz_steht_unter_den_downloads`
   (die übrigen brauchen Namen, die es dort nicht gibt: Exit 2 beim Sammeln). Slow:
   `test_structure_numbers.py` und `test_identifiers_labels.py` binden die Konstanten an die Labels,
-  `test_published_page.py` die Größen der drei Dateien und der fünf Zeilen auf der Seite.
-- A/B-Bau aller Seiten gegen `main` `f27473f`: steht im nächsten Commit.
+  `test_published_page.py` die Größen der drei Dateien und der fünf Zeilen auf der Seite. Drei
+  slow-Tests der vollen Kette zählten zwei Dateien je Tabelle und lasen `published` ohne Settings
+  (rot nach `f755777`, etwa `assert 52 == ((2 * 22) + 5)`); sie zählen jetzt über
+  `PublishedTable.download_names` (`76b327c`, die Ausgabe von `report` bleibt gleich).
+- A/B-Bau aller Seiten aus den Datenpaketen wie in Punkt 66 (`scripts/ab_bau.sh`,
+  `scripts/ab_vergleich.py`), `POLARS_MAX_THREADS=4 OMP_NUM_THREADS=2`, A aus `main` `f27473f`
+  (`git archive`), B aus `f755777`, Wurzeln `ab/1112-a` und `ab/1112-b` auf xtraspace, die fünf
+  Profile in der Folge von `pages.yml`, dann `publish --strict-budget`. Unter `site/` 255 Dateien in
+  A, 258 in B, 5 Abweichungen, alle erwartet: neu `data/dokumente_kopf.parquet`,
+  `data/kennungen.parquet` und `data/kennungen.csv` der Hauptperiode, anders deren `index.html`
+  (die drei Downloadzeilen, die Zahl der Zeilen im Knopf, 60 statt 57, die Größe von
+  `schema.json`, die zwei Prüfsätze, zwei Einträge im Spaltenschema; sonst bytegleich bis auf die
+  Prüfsummen, die an `generated_at` hängen) und `schema.json` (die beiden Tabellen). Die Seiten von
+  2014–2020, der laufenden Periode und Mönchengladbach, `vergleich.html`, `akteure.html` und jede
+  `summary.json` sind gleich, bis auf Zeitstempel. Über die ganzen Datenwurzeln 988 und 994
+  Dateien, 133 Abweichungen: dieselben Seiten und Downloads im Ordner der Hauptperiode, kein Parquet
+  unter `processed/` und `interim/`, 123 Stamps (109 nur in `written`, der Settings-Fingerprint ist
+  gleich; 6 von `index.html` in `extra` und den neuen Eingaben, 6 von `akteure.html` in `extra`, weil
+  der Vorlagen-Hash `70-downloads` mitzählt; 2 nur in der Wurzel der absoluten Pfade).
+- Größen, veröffentlicht (`publish`): `index.html` der Hauptperiode 941 988 → 948 839 Byte (+6 851;
+  seit dem Bau vor `v0.33.0` +11 448, Ziel der Phase höchstens +30 KB), `schema.json` 40 717 →
+  45 663; die anderen Seiten gleich groß. Die veröffentlichte Seite wächst um 6,1 MB (46,9 → 53,0
+  MB), fast nur `kennungen.csv`.
