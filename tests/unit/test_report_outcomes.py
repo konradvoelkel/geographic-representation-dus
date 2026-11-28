@@ -525,3 +525,29 @@ def test_die_vorlagen_nennen_keine_partei() -> None:
 def _render(name: str, data: dict[str, object]) -> str:
     data = {"urls": {"measurement": "m", "check": "c", "check_folder": "f"}, **data}
     return environment().get_template(f"pages/vorgaenge/{name}.html.j2").render(data=data)
+
+
+# --- Nach den Fotos (2026-11-28) ------------------------------------------------------------------
+def test_die_koepfe_der_zehn_spalten_brechen_um(mini_run: Layout) -> None:
+    """Bei 1280 Pixeln schob die Tabelle „ohne Ergebnis" und den Median aus dem Bild."""
+    page = (mini_run.site / "vorgaenge.html").read_text(encoding="utf-8")
+    assert "#beschlusslage-gremien th.num { white-space: normal;" in page
+
+
+def test_die_praxiszellen_stehen_als_aufzaehlung_mit_und() -> None:
+    settings = _settings()
+    rows: list[Row] = []
+    for body, prefix in (("BV1", "b"), ("RAT", "r")):
+        rows += [(f"{prefix}{i:02d}", "antrag", "erledigt", body, 1, 3, False) for i in range(10)]
+    ids = [row[0] for row in rows]
+    model = build_outcomes(_outcomes(rows), _progress([]), _bodies(ids), settings, None)
+    assert [(c.body, c.year, c.done) for c in model.cells] == [
+        ("Bezirksvertretung 1", 2015, 10),
+        ("Rat", 2015, 10),
+    ]
+    html = _render(SECTION_OUTCOMES, {"beschlusslage": model, "check_sentence": ""})
+    assert "Bezirksvertretung 1 2015 (10 von 10) und Rat 2015 (10 von 10) sind" in html
+    success = _render(
+        SECTION_SUCCESS, {"antragserfolg": build_success(_success([]), settings, None)}
+    )
+    assert "(*, oben)" not in success

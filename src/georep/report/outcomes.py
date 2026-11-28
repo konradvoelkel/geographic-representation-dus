@@ -529,9 +529,12 @@ def build_outcomes(
                 duration_of(group.filter(pl.col("beratungen") > 1).get_column("tage")),
             )
         )
-    verlauf = code_names(settings, progress.get_column("gremium").to_list())
     cells = practice_cells(
         outcomes, settings.outcomes.practice_share, settings.outcomes.practice_min
+    )
+    verlauf = code_names(
+        settings,
+        [*progress.get_column("gremium").to_list(), *cells.get_column("gremium").to_list()],
     )
     return OutcomesModel(
         on=True,
