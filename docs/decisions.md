@@ -5644,3 +5644,171 @@ im Download); Vektoren oder eine freie Suche auf der Seite (Fragen 9.1, 9.3, 9.7
   ähnliche Dokumente, ohne Meldung in der Konsole und ohne Abruf von `aehnlich.json`. Die Zeilen
   „Vorgang" sind in A (Format 2) und B (Format 3) für denselben Begriff gleich, in der Hauptperiode
   (acht) und in 2014 bis 2020 (vier).
+
+## NN. Abstimmungen nur aus dem Eintrag der Sitzungsleitung: die Wortregel neben 26, H28.2 bestätigt, ein Gast auf `akteure.html` (Vorhaben 28, Stufe 2 und 3, 2026-11-28)
+
+Vorhaben 28 nach `docs/plans/28-abstimmungen.md`, § 5.1 (nur Ebene A), § 6 bis § 9 und § 10 (Supervisor,
+2026-11-28), in einem Bau (Plan der Phase „Zeigen“, § 5). Gebaut auf `feat/28-abstimmungen` ab `main`
+`6accc37`, vor den Abschlussprüfungen mit `main` `5869f2c` (`v0.43.0`, Vorhaben 18) zusammengeführt.
+Die Nummer bekommt der Eintrag beim Merge.
+
+**Was gebaut ist.** Der Beitrag `28-abstimmungen` (`georep.enrich.votes`) steht am Ende von
+`CONTRIBUTIONS` und bringt einen Offline-Schritt `votes` hinter `council_results`, nur mit
+`votes.enabled` und `outcomes.enabled` (die drei Düsseldorfer Perioden; Mönchengladbach bleibt aus wie
+26, Frage 9.9). Die Regeln stehen rein in `analysis/votes.py`:
+
+- `processed/abstimmungen.parquet`: je Tagesordnungspunkt mit Beratung eine Zeile, `top`, `paper`,
+  `sitzung`, `datum`, `gremium`, `gremium_art`, `nummer`, `result` (wörtlich), `ergebnis`, `geaendert`,
+  `form`, `form_quelle`; sortiert nach `top`. Ohne die Felder der Ebene B (§ 10, Punkt 3).
+- `processed/abstimmungen_gremien.parquet`: je Gremienart Punkte, mit Eintrag, Beschlüsse, angenommen,
+  abgelehnt, einstimmig, mehrheitlich, ohne Angabe, geändert; die Periode wie in `antragserfolg`.
+- `processed/abstimmungen_hypothesen.parquet`: der Kern aus `analysis.hypotheses` (Punkt 78), dazu
+  `rechnung`, `partei`, `entscheidung`, `grund`, `angenommen`, `anteil`, `schwelle`, `ci_unten`,
+  `ci_oben`, `von`, `bis`; `check_hypotheses` mit `strict=True` und m = 3 als Nachbedingung.
+- Downloads `abstimmungen` (nur Parquet, `docs/todo.md`, Punkt 35), `abstimmungen_gremien` und
+  `abstimmungen_hypothesen` (Parquet und CSV; die Hypothesen nur in einer Periode mit einem Zeitraum der
+  Prüfungen, `votes_tested`), alle drei `optional` wie die Tabellen von 15 (ohne den Schritt fehlt die
+  Datei, nicht die Seite); die Spalten auf `spalten.html`.
+- Der Gast `abstimmungen` auf `akteure.html` (`report/votes.py`,
+  `templates/pages/akteure/abstimmungen.html.j2`), der erste Abschnitt eines Beitrags auf einer fremden
+  Seite nach Punkt 86; der Gastgeber nennt ihn im Verzeichnis oben (`{% if "abstimmungen" in guests %}`)
+  und verlinkt ihn wie vorgesehen aus der Konkordanz.
+
+**Die Eingabe ist der Beratungsverlauf von 26** (§ 10, Punkt 1). `council_results` schreibt ihn aus
+genau der Tabelle `AGENDA_SCHEMA` (Netzlauf, sonst das Paket `snapshots/duesseldorf-beschluesse/`), mit
+dem Gremium nach `[bodies.organizations]`; 28 liest ihn statt der Rohtabelle, damit Gremium und Kürzel
+nicht ein zweites Mal entstehen. Einheit ist eine Zeile mit `top`; ein Punkt, den zwei Beratungen nennen,
+bräche ab (`SchemaError`), kommt in keinem der drei Pakete vor. `sitzung` ist wie bei 26 der Beginn mit
+Uhrzeit, nicht die ID der Sitzung (§ 6 nannte sie; das Paket trägt sie nicht). Die Gremienart folgt dem
+Kürzel der **ersten** Organisation der Sitzung, wie im Messskript (`prep.bodies.kind_of_code`, die Regel
+von `_from_code`); 106 Punkte der Hauptperiode haben mehrere Organisationen.
+
+**Die Wortregel bleibt das Verfahren** (§ 10, Punkt 2). Sie steht in `defaults.toml` (`[[votes.results]]`,
+die Sprache der Sitzungsleitung, keine Stadt, wie Punkt 75 und 79), und ein Test hält sie wörtlich gleich
+der des Messskripts (`ERGEBNIS_REGELN`, `form_aus_result`, `geaendert`, an jedem Wert des Wortschatzes).
+Neben dem Wortschatz von 26 lesen genau zwei Werte verschieden, gezählt je Punkt und nicht angeglichen
+(`analysis.votes.outcome_mismatches`; slow-Test `tests/golden/test_votes_numbers.py`):
+
+| Wert | 28 | 26 | Hauptperiode | 2014–2020 | seit 2025 | Beispiel |
+|---|---|---|---|---|---|---|
+| „passieren lassen“ | angenommen | erledigt (Stufe `stand`) | 455 | 405 | 81 | `…/agendaitems/285742`, `…/190609`, `…/379214` |
+| „zurückgewiesen“ | sonstiges | abgelehnt | 5 | 0 | 21 | `…/agendaitems/360107`, `…/379689` |
+| **zusammen** | | | **460** | **405** | **102** | |
+
+Beide stehen in § 3.1 als Befund der Messung („passieren lassen“ ist dort angenommen ohne Form,
+„zurückgewiesen“ sonstiges); die Regel ist festgelegt und gemessen, darum bleiben sie. Kein Antrag von
+H28.2 hat einen der beiden Werte als maßgeblichen Eintrag (slow-Test), die Prüfung hängt also nicht daran.
+
+**Die Messung, nachgerechnet an der gebauten Tabelle.** Gegen `validierung/28-abstimmungen/labels.csv`
+ergibt die Tabelle der Hauptperiode A1 = 90 von 92, gewichtet 0,982 (Wilson 0,928–0,995 bei n_eff 90,1),
+genau § 4.1; jeder der 150 Punkte der Stichprobe steht in ihr, und seine Form ist die Schicht, nach der er
+gezogen wurde. Das steht als `RULE_CHECK` in `report/votes.py` (wie Punkt 88), `read_check` bricht ab, wenn
+`guete.json` eine andere Kodierung beschreibt. Die Seite nennt den Satz aus `guete.json` und von der
+Übereinstimmung der Kodierer nur `ergebnis` (129 von 132, α 0,91) und `form` (128 von 129, α 0,99), beide
+mit `alpha_genuegt` (§ 10, Punkt 6); dazu, dass die Einheit ein Tagesordnungspunkt ist (der Satz sagt
+„Dokumenten“, die Vorgabe von F4).
+
+**Beschlüsse je Periode** zählen die Punkte zu den Dokumenten des Profils, auch Sitzungen nach dem Ende
+der Periode; das Messskript zählte nach dem Datum der Sitzung:
+
+| Periode | Punkte | Beschlüsse | mit Form | Rat | Messung § 3.2 |
+|---|---|---|---|---|---|
+| 2014–2020 | 28 092 | 12 687 | 11 685 (92,1 %) | 1 462 | 12 546, 92,1 %, Rat 1 455 |
+| 2020–2025 | 25 439 | 12 573 | 10 863 (86,4 %) | 1 646 | 12 570, 86,4 %, Rat 1 633 |
+| seit 2025 | 4 979 | 2 513 | 2 250 (89,5 %) | 348 | 2 848, 89,4 %, Rat 396 |
+
+Seit 2025 fehlen damit die Punkte, die Dokumente der Hauptperiode nach der Wahl noch bekommen; sie stehen
+bei der Hauptperiode. Die Abdeckung von A (Kriterium 50 %) bleibt in jeder Periode weit darüber.
+
+**H28.2 ist bestätigt** (§ 8.6, vorab festgelegt im Commit `97ebb52`). Einheit: ein Antrag (Dokumentart
+mit „antrag“, ohne „anfrage“) allein von Fraktionen der Opposition nach Option 04, ohne AfD (H28.3), mit
+seinem letzten entschiedenen Ratsbeschluss in Sitzungen vom 2021-01-01 bis 2025-09-14: **41 von 389
+angenommen (10,5 %; obere einseitige 95-%-Grenze nach Clopper-Pearson 13,5 %), p = 5,5 · 10⁻¹³, p nach
+Holm über drei Hypothesen 1,6 · 10⁻¹²**. n ist das aus § 3.7. Die Nebenrechnungen, die nichts
+entscheiden: R1 Ausschüsse 159 von 446 (35,7 %); R3 mit vertagten, verwiesenen, erledigten und
+zurückgezogenen Anträgen im Nenner 41 von 481 (8,5 %); R4 je Fraktion SPD 21/84, FDP 7/57, Linke 9/131,
+T/FW 0/66, PARTEI 6/57 (ein gemeinsamer Antrag zählt bei beiden); R2 seit dem 2025-12-01 (Profil
+`duesseldorf-2025`) 0 von 47. H28.1 und H28.3 stehen als `nicht entscheidbar` mit dem Grund
+`ebene_b_verworfen` da, ohne p und n, und zählen für Holm mit (m = 3, Punkt 78). In 2014–2020 liegt keiner
+der Zeiträume; die Tabelle ist dort leer und wird nicht veröffentlicht, der Abschnitt sagt, wo die
+Prüfungen rechnen.
+
+*Wie die Wörter des Kerns und § 8.6 zusammengehen.* Der Kern kennt `bestätigt`, `nicht bestätigt` und
+`vorläufig`; § 8.6 entscheidet dreiwertig (bestätigt, widerlegt, nicht entscheidbar). `ergebnis` bleibt
+das Wort von Holm, die Entscheidung nach § 8.6 steht in `entscheidung`, nur beim Haupttest. Ein Haupttest
+unter 30 Anträgen oder ohne Mehrheit steht wie eine Hypothese ohne Eingabe außerhalb der Familie (p darf
+dastehen) und heißt `nicht entscheidbar` mit Grund. `widerlegt` heißt: die untere einseitige Grenze liegt
+über der Schwelle.
+
+*Die Zeiträume stehen im Stadtprofil* (`[[votes.windows]]`), ab dem Monat der Vereinbarung wie § 8.4,
+nicht ab der Wahlperiode des Rates wie `[majorities]` (Punkt 75); die Parteien der Mehrheit kommen aus
+`majorities.on(start)`. Ein Zeitraum rechnet nur in dem Profil, in dessen Periode er ganz liegt
+(`VoteWindow.within`): der Haupttest in der Hauptperiode (und im Vergleichsprofil, das in ihrem Ordner
+rechnet), R2 in der laufenden Periode. Der Tag der Festlegung ist Anzeige (nicht im Fingerprint, aber im
+Zusatz von `report`, wie bei 22), der Commit zählt.
+
+**Sitze** braucht nur H28.3 (WZB-Schwelle); ohne Ebene B ist sie nicht entscheidbar, `[majorities]`
+bekommt darum keine Sitze.
+
+**Je Profil** (Plan § 6): Hauptperiode alles; 2014–2020 Zählung und Prüfsatz, „explorativ“ (die
+Stichprobe ist aus der Hauptperiode), keine Prüfung; seit 2025 Zählung und R2, „explorativ“;
+Mönchengladbach ohne den Schritt: der Gast steht da und sagt in einem Satz, was fehlt (Punkt 86, N1).
+Größe des Gasts rund 9 KB in der Hauptperiode.
+
+**Gremium unbekannt.** 192 Beschlüsse der Hauptperiode und 126 seit 2025 tragen eine Organisation ohne
+Kürzel im Profil, fast alle `gr/400224` (137 und 122) und `gr/65` (43 und 3): die beiden Kürzel aus
+Frage 9.17 von 26, die erst mit dessen Stufe 3 eingetragen werden (Punkt 79). Die Seite zeigt sie als
+„Gremium unbekannt"; H28.2 zählt nur den Rat und hängt nicht daran.
+
+**Verworfen.** Die Rohtabelle `raw/tagesordnungspunkte.parquet` noch einmal lesen und Gremium und Kürzel
+selbst bilden (dieselbe Regel zweimal; der Beratungsverlauf ist genau sie); den Wortschatz von 26 statt
+der Wortregel (§ 10, Punkt 2: gemessen ist die Wortregel); die Abweichungen angleichen; eine eigene
+Tabelle der Werte im Profil; die Zeiträume aus `[majorities]` ableiten (dort gilt die Wahlperiode, § 8.4
+legt den Monat der Vereinbarung fest); R2 entscheiden lassen (§ 8.6: Nebenrechnungen entscheiden nicht);
+Sitze ins Profil (keine Prüfung braucht sie); der Gast ohne Eintrag im Verzeichnis des Gastgebers.
+
+**Geprüft.**
+
+- Tests: `tests/unit/test_votes.py` (Wortregel an jedem Wert und gegen das Messskript, die zwei
+  Abweichungen von 26 je Wert, Tabelle je Punkt, Zählung je Gremienart, Anträge der Opposition, letzter
+  Beschluss im Zeitraum, Binomialtest und Grenzen gegen scipy, Holm mit m = 3, widerlegt, nicht
+  entscheidbar unter 30 und ohne Mehrheit, Nebenrechnungen, R2), `tests/unit/test_votes_steps.py`
+  (Settings, Profile, Register, Mini-Fixture), `tests/unit/test_report_votes.py` (Prüfsatz aus
+  `guete.json`, nur Fragen mit `alpha_genuegt`, `RULE_CHECK` gegen eine andere Kodierung, die vier
+  Profilfälle, keine Partei in Vorlage und Spaltendoku, Gast mit Anker und Verzeichnis auf der echten
+  Seite, Downloads und Spalten), `tests/property/test_votes_props.py` (hypothesis: eine Klasse je Text,
+  Form genau bei Entscheidung, Tabelle und Zählung unabhängig von der Zeilenfolge, der letzte Beschluss ist
+  der späteste im Zeitraum, die Grenzen umschließen den Anteil); slow `tests/golden/test_votes_numbers.py`
+  an den drei Paketen (A1 aus den Labels, Beschlüsse je Periode, die Abweichungen je Punkt, H28.2 mit
+  Nebenrechnungen, R2, leere Tabelle 2014–2020). Zwei Tests von 15 lasen `templates/pages/akteure*` mit
+  `rglob` und stolperten über den neuen Ordner `akteure/`; sie lesen jetzt dessen Dateien mit.
+- A/B-Bau aller fünf Profile wie `pages.yml` (`scripts/ab_bau.sh`, `POLARS_MAX_THREADS=4
+  OMP_NUM_THREADS=2`), A aus `main` `6accc37` (`ab/28a-a`), B aus `b5daca7` (`ab/28a-b`; danach kamen
+  nur der Wortlaut des Gasts nach den Fotos, `f4360cd`, und `main` mit Vorhaben 18). `publish
+  --strict-budget` lief in beiden durch. Unter `site/` 340 Dateien in A, 353 in B, 26 Abweichungen, alle
+  erwartet: neu die 13 Downloads (Hauptperiode 5, 2014–2020 3 ohne Hypothesen, seit 2025 5), anders je
+  Düsseldorfer Stadtseite `akteure.html` (Gast, Verzeichnis, der Satz der Konkordanz verlinkt ihn),
+  `details.html` (fünf beziehungsweise drei neue Downloadzeilen, ihre Zahl, die Größe von
+  `schema.json`, Prüfsummen), `spalten.html` und `schema.json` (die drei beziehungsweise zwei Tabellen),
+  und Mönchengladbachs `akteure.html` (nur der Eintrag im Verzeichnis und der Satz, was fehlt, +499
+  Byte). Gleich sind alle `index.html`, `vergleich.html`, die übrigen Unterseiten und in
+  Mönchengladbach `details.html`, `spalten.html` und `schema.json`. Über die Datenwurzeln 1 219 und 1 265
+  Dateien, 217 Abweichungen: dieselben Seiten und Downloads in den Ordnern der Profile, neu je
+  Düsseldorfer Ordner die drei Tabellen unter `processed/` mit Stamp; **kein bestehendes Parquet unter
+  `processed/` oder `interim/` ist anders**. Von den 137 anders lautenden Stamps tragen 109 nur einen
+  anderen Settings-Fingerprint (der neue Block `[votes]`) und die Schreibzeit, 14 dazu den Zusatz von
+  `report` (die neue Vorlage und der Tag der Festlegung zählen in `report_fingerprint`; `vorgaenge.html`,
+  `zeit.html`, `bedarf.html`), 12 dazu die Eingaben (`akteure.html` liest die Tabellen des Gasts,
+  `index.html` als `report` die drei optionalen Tabellen), 2 nur die Wurzel der absoluten Pfade
+  (`wahlbezirke_vergleich`, `zeit_hypothesen`).
+- Größen, veröffentlicht (B): `akteure.html` Hauptperiode 106 519 → 116 133 Byte (+9 614), 2014–2020
+  103 455 → 110 643, seit 2025 68 119 → 76 609, Mönchengladbach 59 154 → 59 653; `details.html`
+  923 125 → 925 386 (+2 261), 810 574 → 811 850, 708 924 → 711 181, Mönchengladbach gleich;
+  `spalten.html` +7 489, +4 416, +7 489; `schema.json` +7 467, +4 308, +7 467. Die Downloads: je Punkt
+  253 689 (Hauptperiode), 226 956 und 54 259 Byte Parquet; je Gremienart rund 4 KB Parquet und 0,4 KB CSV;
+  die Hypothesen 6 378 und 5 471 Byte Parquet, 1 427 und 338 Byte CSV. Zusammen rund 0,57 MB.
+- Bildschirmfotos mit headless Chrome über `http://127.0.0.1:8781` an Kopien der Seite, die mit dem Gast
+  beginnen, bei 1280 und 390 Pixeln, hell und dunkel (`--blink-settings=preferredColorScheme=0`), ohne
+  Skripte, in allen vier Fällen (Hauptperiode, seit 2025 mit R2, 2014–2020 ohne Prüfung, zweite Stadt).
+  Bei 390 px scrollen beide Tabellen waagrecht wie jede breite Tabelle der Seiten.
+
