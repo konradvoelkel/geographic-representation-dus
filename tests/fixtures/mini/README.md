@@ -37,6 +37,12 @@ Band von 20 m um die 22 Stimmbezirke, 463 Gitterzellen und 14 Schulen mit Punkt 
 `quellen.json` unverändert (Herkunft, Lizenz und Prüfsummen der Archive im README des Pakets). Die
 Mini-Kette liest sie statt des Pakets, wie die Beratungsfolge; `expected/` kennt sie nicht.
 
+`external/adressen/` (seit 2026-11-28, Vorhaben 16): das Adresspaket für die 22 Stimmbezirke, aus
+`snapshots/duesseldorf-adressen/` gefiltert (`make_mini.write_addresses`): 5 920 Hausnummern mit
+Stimm- und Wahlbezirk, keine Koordinate, dazu `quellen.json` unverändert (Herkunft, Lizenz und
+Prüfsumme des Archivs im README des Pakets). Die Mini-Kette liest es statt des Pakets, wie die
+Bedarfsdaten; ohne Rohtext schlägt sie darin nichts nach. `expected/` kennt es nicht.
+
 `expected/`: die sieben Ausgaben des Altcodes der Arbeit (pandas, FlashText) auf genau diesen
 Eingaben, erzeugt am 2026-10-11 auf dem Stand des Tags `v0.2.0`. Sie sind der Golden Master für
 die Polars-Kette und werden nicht neu erzeugt.
