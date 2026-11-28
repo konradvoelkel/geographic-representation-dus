@@ -21,11 +21,25 @@ Vorab festgelegt (Messdokument § 8.3): `xlm-roberta-large`, Länge 256, Lernrat
 zwei Epochen, 10 % Aufwärmen, Seed 0; der Prüfpunkt mit dem höchsten Makro-F1 auf den
 zurückgehaltenen 10 % der CAP-Daten (nie auf Ratsdokumenten). Die Testmenge sieht das Training
 nie: ihre Zeilen in `ratsdokumente.parquet` werden nur vorhergesagt.
+
+**Vorhersage für Stufe 2** (Messdokument § 6 und § 10, Punkt 1): mit `--vorhersage <eingabe> …` sagt
+das Skript mit den Gewichten `training-3b/beste` für jede Eingabe aus `georep policy-areas export
+<profil>` (je Korpus-ID `id`, `text`, `mit_text`, `gekuerzt`) ein Hauptthema voraus und schreibt
+`politikfelder.parquet` neben die Eingabe: `id`, `politikfeld`, `quelle` (`klassifikator`),
+`modell` (`xlm-roberta-large@` und die ersten acht Ziffern des SHA-256 der Gewichte), `prompt`
+(leer), `wahrscheinlichkeit` (die Softmax des gewählten Themas) und `abgeschnitten` (der Rohtext war
+länger als die 1 500 Zeichen der Eingabe, oder die Eingabe länger als 256 Token). Eine Zeile je
+Korpus-ID; ohne Rohtext (`mit_text` falsch) ist die Zeile leer. Vorher prüft es den SHA-256 der
+Gewichte und dass torch die GPU nimmt, mit einem gemessenen Probestapel; auf der CPU bricht es ab.
+
+    flock /media/konrad/xtraspace/georep/gpu-queue/gpu.lock timeout 1800 \\
+        $V/bin/python -I docs/plans/19-politikfelder-training.py --vorhersage <eingabe> …
 """
 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import random
@@ -49,6 +63,11 @@ CODES = ("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "12", "13", "14", "1
 CODES += ("18", "19", "20", "21", "23", "99")
 SILBER_ANTEIL = 0.25  # 3b: Silberlabels stellen rund ein Viertel der Beispiele je Epoche
 SILBER_HOECHSTENS = 20  # ... höchstens 20-fach wiederholt
+# Stufe 2: die Gewichte von 3b (Messdokument § 3.4: `80ca2a82…09`, vollständig nachgerechnet am
+# 2026-11-28) und die Spalten der Eingabe aus `georep policy-areas export`
+GEWICHTE_SHA256 = "80ca2a823bd191c26f6f8c4be0f425ed90c1507c657e78468391ea57f9cab309"
+EINGABE_SPALTEN = ("id", "text", "mit_text", "gekuerzt")
+PROBE = 64  # Dokumente im Probestapel vor der Vorhersage
 
 
 def makro_f1(gold: list[str], vorhersage: list[str]) -> float:
@@ -146,9 +165,116 @@ def trocken(args: argparse.Namespace, tok: object, train: pl.DataFrame, silber: 
     print(f"ein Schritt auf der CPU: Verlust {out.loss.item():.3f}")
 
 
+def sha256_datei(pfad: Path) -> str:
+    h = hashlib.sha256()
+    with pfad.open("rb") as f:
+        for block in iter(lambda: f.read(1 << 24), b""):
+            h.update(block)
+    return h.hexdigest()
+
+
+def vorhersage_profile(args: argparse.Namespace) -> None:
+    """Stufe 2: je Eingabe `politikfelder.parquet` daneben; Prüfsumme und GPU vorher geprüft."""
+    gewichte = args.gewichte
+    start = time.time()
+    summe = sha256_datei(gewichte / "model.safetensors")
+    if summe != GEWICHTE_SHA256:
+        raise SystemExit(f"Gewichte {gewichte}: SHA-256 {summe}, erwartet {GEWICHTE_SHA256}")
+    print(f"SHA-256 der Gewichte geprüft ({time.time() - start:.1f} s): {summe}", flush=True)
+    if not torch.cuda.is_available():
+        raise SystemExit("torch sieht keine GPU; auf der CPU wird nicht vorhergesagt")
+    modell_id = f"xlm-roberta-large@{GEWICHTE_SHA256[:8]}"
+    tok = AutoTokenizer.from_pretrained(gewichte)
+    model = AutoModelForSequenceClassification.from_pretrained(gewichte, use_safetensors=True)
+    model = model.cuda().eval()
+    if next(model.parameters()).device.type != "cuda" or model.config.num_labels != len(CODES):
+        raise SystemExit("Modell nicht auf der GPU oder mit anderer Zahl der Klassen")
+    print(f"geladen in {time.time() - start:.1f} s auf {torch.cuda.get_device_name(0)}", flush=True)
+    for eingabe in args.vorhersage:
+        frame = pl.read_parquet(eingabe)
+        if (
+            tuple(frame.columns) != EINGABE_SPALTEN
+            or frame.get_column("id").n_unique() != frame.height
+        ):
+            raise SystemExit(f"{eingabe}: Spalten {frame.columns} oder doppelte IDs")
+        mit = frame.filter(pl.col("mit_text"))
+        texte = mit.get_column("text").to_list()
+        # der Probestapel: Tempo messen, bevor alles läuft (ein Lauf auf der CPU bräche hier ab)
+        probe = time.time()
+        vorhersage(model, tok, texte[:PROBE], args.laenge)
+        torch.cuda.synchronize()
+        tempo = min(PROBE, len(texte)) / max(time.time() - probe, 1e-9)
+        print(
+            f"{eingabe}: Probestapel {min(PROBE, len(texte))} Dokumente, {tempo:.0f} je s",
+            flush=True,
+        )
+        beginn = time.time()
+        labels, wahrsch = vorhersage(model, tok, texte, args.laenge)
+        torch.cuda.synchronize()
+        sekunden = time.time() - beginn
+        token = [len(ids) for ids in tok(texte)["input_ids"]]  # type: ignore[operator]
+        lang = [n > args.laenge for n in token]
+        vorher = mit.select("id", "gekuerzt").with_columns(
+            pl.Series("politikfeld", labels),
+            pl.Series("wahrscheinlichkeit", wahrsch, dtype=pl.Float64),
+            (pl.col("gekuerzt") | pl.Series(lang)).alias("abgeschnitten"),
+        )
+        ergebnis = (
+            frame.select("id")
+            .join(vorher.drop("gekuerzt"), on="id", how="left")
+            .with_columns(
+                pl.col("politikfeld").fill_null(""),
+                pl.when(pl.col("politikfeld").is_not_null())
+                .then(pl.lit("klassifikator"))
+                .otherwise(pl.lit(""))
+                .alias("quelle"),
+                pl.when(pl.col("politikfeld").is_not_null())
+                .then(pl.lit(modell_id))
+                .otherwise(pl.lit(""))
+                .alias("modell"),
+                pl.lit("").alias("prompt"),
+            )
+            .select(
+                "id", "politikfeld", "quelle", "modell", "prompt", "wahrscheinlichkeit",
+                "abgeschnitten",
+            )
+            .sort("id")
+        )  # fmt: skip
+        ziel = eingabe.with_name("politikfelder.parquet")
+        ergebnis.write_parquet(ziel, compression="zstd")
+        lauf = {
+            "eingabe": str(eingabe),
+            "ziel": str(ziel),
+            "dokumente": frame.height,
+            "mit_text": len(texte),
+            "sekunden": round(sekunden, 1),
+            "je_sekunde": round(len(texte) / sekunden, 1) if sekunden else None,
+            "probestapel_je_sekunde": round(tempo, 1),
+            "ueber_256_token": sum(lang),
+            "abgeschnitten": int(ergebnis.get_column("abgeschnitten").sum()),
+            "modell": modell_id,
+            "torch": torch.__version__,
+            "gpu": torch.cuda.get_device_name(0),
+            "gpu_speicher_gb": round(torch.cuda.max_memory_allocated() / 1e9, 2),
+            "uptime": subprocess.run(["uptime"], capture_output=True, text=True).stdout.strip(),
+            "zeit": time.strftime("%Y-%m-%d %H:%M:%S"),
+        }
+        ziel.with_name("politikfelder_lauf.json").write_text(json.dumps(lauf, indent=1))
+        print(json.dumps(lauf, ensure_ascii=False), flush=True)
+    print(f"zusammen {time.time() - start:.1f} s", flush=True)
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--variante", choices=["3a", "3b"], required=True)
+    ap.add_argument("--variante", choices=["3a", "3b"])
+    ap.add_argument(
+        "--vorhersage",
+        type=Path,
+        nargs="+",
+        metavar="EINGABE",
+        help="Stufe 2: Eingaben aus `georep policy-areas export`; schreibt politikfelder.parquet daneben",
+    )
+    ap.add_argument("--gewichte", type=Path, default=AUSGABE / "training-3b" / "beste")
     ap.add_argument("--modell", default="FacebookAI/xlm-roberta-large")
     ap.add_argument("--laenge", type=int, default=256)
     ap.add_argument("--lr", type=float, default=1e-5)
@@ -159,6 +285,11 @@ def main() -> None:
     ap.add_argument("--trocken", action="store_true", help="Daten, ein Schritt auf der CPU, Ende")
     ap.add_argument("--block-minuten", type=float, default=25.0)
     args = ap.parse_args()
+    if args.vorhersage:
+        vorhersage_profile(args)
+        return
+    if args.variante is None:
+        ap.error("--variante oder --vorhersage")
 
     random.seed(args.seed)
     torch.manual_seed(args.seed)
