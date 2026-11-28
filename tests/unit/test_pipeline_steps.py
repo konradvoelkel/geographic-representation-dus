@@ -460,6 +460,9 @@ SCHEMA_CONSTANTS_WITHOUT_A_STEP = {
     # Vorhaben 16: die Version des Adresspakets, das ``georep pack --addresses`` schreibt; wie bei
     # 26 gehört sie zu einem Befehl, und ``places`` nennt die Version seiner eigenen Ausgaben.
     "georep.prep.addresses.ADDRESS_SCHEMA_VERSION",
+    # Vorhaben 19: die Eingabe des Klassifikators, die ``georep policy-areas export`` schreibt; sie
+    # gehört zu einem Befehl, und der Klassifikator läuft außerhalb des Pakets.
+    "georep.enrich.policy_areas.INPUT_SCHEMA_VERSION",
 }
 
 

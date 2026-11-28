@@ -1,4 +1,4 @@
-"""Kommandozeile: ``georep run|fetch|steps|status|profiles|publish|paths|bootstrap|pack|export|regress|profile|learn-bodies|validate|ml|search|summary``.
+"""Kommandozeile: ``georep run|fetch|steps|status|profiles|publish|paths|bootstrap|pack|export|regress|profile|learn-bodies|validate|ml|search|summary|policy-areas``.
 
 ``main(argv)`` ist testbar ohne Prozess; Exit-Codes: 0 gut, 1 Domänenfehler (eine Zeile auf
 stderr), 2 Bedienfehler (argparse).
@@ -19,7 +19,10 @@ from georep import __version__
 from georep.analysis.regression import regress
 from georep.bootstrap import bootstrap_from_settings
 from georep.contracts import configure as configure_contracts
-from georep.enrich import summary_command  # Vorhaben 20
+from georep.enrich import (
+    policy_areas_command,  # Vorhaben 19
+    summary_command,  # Vorhaben 20
+)
 from georep.errors import GeorepError, MissingInputError, ModelError
 from georep.export import export_csv
 from georep.layout import Layout
@@ -256,6 +259,7 @@ def build_parser() -> argparse.ArgumentParser:
     ml_commands.add_parser(sub)  # Fundament F5: `georep ml status|bench`
     search_command.add_parser(sub)  # Vorhaben 18: `georep search`
     summary_command.add_parser(sub)  # Vorhaben 20: `georep summary`, nur lokal
+    policy_areas_command.add_parser(sub)  # Vorhaben 19: `georep policy-areas export <profil>`
     return parser
 
 
@@ -603,8 +607,17 @@ def _cmd_regress(args: argparse.Namespace, settings: Settings, layout: Layout) -
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+    profile = args.profile
+    if args.command == policy_areas_command.COMMAND:  # Vorhaben 19: das Profil ist ein Argument
+        profile = policy_areas_command.profile_of(args)
+        if profile is None:
+            print(
+                f"Fehler: --profile {args.profile} widerspricht {args.areas_profile}",
+                file=sys.stderr,
+            )
+            return 2
     try:
-        settings = load_settings(explicit=args.settings, profile=args.profile)
+        settings = load_settings(explicit=args.settings, profile=profile)
         _setup_logging(settings.log_level)
         configure_contracts(settings.contracts)
         layout = Layout.from_settings(settings)
@@ -640,6 +653,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return search_command.run(args, settings, layout)  # Vorhaben 18
         if args.command == "summary":
             return summary_command.run(args, settings, layout)  # Vorhaben 20
+        if args.command == policy_areas_command.COMMAND:
+            return policy_areas_command.run(args, settings, layout)  # Vorhaben 19
     except (GeorepError, FileNotFoundError) as error:
         print(f"Fehler: {error}", file=sys.stderr)
         return 1
