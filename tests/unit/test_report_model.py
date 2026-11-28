@@ -122,11 +122,13 @@ def test_data_stand_comes_from_settings_and_stamps(model: ReportModel) -> None:
     assert model.stand.streets_fetched is None and model.stand.pois_fetched is None
 
 
-def test_column_docs_cover_every_published_column(model: ReportModel, mini_run: Layout) -> None:
+def test_column_docs_cover_every_published_column(
+    model: ReportModel, mini_run: Layout, default_settings: Settings
+) -> None:
     tables = published(mini_run)
     documented = {(d.table, d.column) for d in model.columns}
-    for table in tables:
-        for column in pl.read_parquet_schema(table.path(mini_run)):
+    for table in tables:  # die veröffentlichte Sicht, wo es eine gibt (Vorhaben 26)
+        for column in table.published_schema(table.path(mini_run), default_settings):
             assert (table.name, column) in documented
     assert all(d.description for d in model.columns)
     assert {d.table for d in model.columns} == {t.name for t in tables} | {"wahlbezirke"}

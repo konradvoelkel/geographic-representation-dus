@@ -332,7 +332,13 @@ def test_der_pruefsatz_steht_unter_den_downloads(raw_run: Layout) -> None:
     for project in ("12-kennungen-f4", "12-kennungen-2-f4"):
         assert _quality(project)["satz"] in downloads
     notes = [line for line in downloads.splitlines() if line.startswith('<p class="note"><code>')]
-    assert len(notes) == 2 and all(len(n.encode("utf-8")) < LINE_BUDGET for n in notes)
+    # dazu der Prüfsatz der Beschlusslage (Vorhaben 26), in jedem Düsseldorfer Datensatz
+    assert [n.split("</code>")[0] for n in notes] == [
+        '<p class="note"><code>beschlusslage',
+        '<p class="note"><code>dokumente_kopf',
+        '<p class="note"><code>kennungen',
+    ]
+    assert all(len(n.encode("utf-8")) < LINE_BUDGET for n in notes)
     # Punkt 36: der Prüfsatz betrifft den Download und bleibt dort; das Spaltenschema der beiden
     # Tabellen steht auf spalten.html, und ihre Downloadzeilen verlinken es
     columns = (raw_run.site / "spalten.html").read_text(encoding="utf-8")

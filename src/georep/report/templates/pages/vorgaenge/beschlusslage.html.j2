@@ -1,0 +1,49 @@
+{% if data.beschlusslage %}
+{#
+  Vorhaben 26, Stufe 3 (docs/plans/26-beschluesse.md, § 7 mit § 5, Rückfall 1): ein Gast auf
+  vorgaenge.html. Das Modell ist ``report.outcomes.OutcomesModel``; jede Zahl kommt aus der
+  Beschlusslage, jeder Name eines Gremiums aus dem Profil, jede Zahl der Prüfung aus guete.json
+  oder OUTCOMES_CHECK. Beschlossen und geändert stehen als „angenommen“, geändert als Unterzahl
+  (Frage 9.4); ein Antrag in einer Praxiszelle zählt in keinem Anteil (§ 5). Kein Prüfauftrag.
+#}
+{% set b = data.beschlusslage %}
+{% set c = b.check %}
+{% set ex = " (explorativ)" if b.explorative else "" %}
+<h2>Beschlusslage je Gremium{{ ex }}</h2>
+{% if not b.on %}
+<p>Was aus den Anträgen wurde, liest dieser Abschnitt aus dem Eintrag der Sitzungsleitung an jedem Tagesordnungspunkt. Für diesen Datensatz fehlt das:</p>
+<ul class="note">
+{% for line in b.missing %}
+<li>{{ line }}</li>
+{% endfor %}
+</ul>
+{% else %}
+{% set t = b.total %}
+<p>Was wurde aus einem Antrag? An jedem Tagesordnungspunkt trägt die Sitzungsleitung ein kurzes Ergebnis ein („einstimmig beschlossen“, „vertagt“, „zurückgezogen“). Maßgeblich ist hier die <em>letzte Entscheidung in der Sache</em> über alle Beratungen eines Antrags: eine spätere Entscheidung ersetzt eine frühere, eine Vertagung oder Kenntnisnahme ersetzt keine. Von {{ t.motions|num }} Anträgen der {{ b.period }} wurden {{ t.share(t.accepted)|pct(1) }} angenommen (davon {{ t.share(t.changed)|pct(1) }} mit Änderungen), {{ t.share(t.rejected)|pct(1) }} abgelehnt und {{ t.share(t.withdrawn)|pct(1) }} zurückgezogen.{% if t.practice %} {{ t.practice|num }} Anträge zählen in keinem Anteil (*, unten).{% endif %}</p>
+<p><strong>Ohne Ergebnis</strong> heißt: der Tagesordnungspunkt des Antrags trägt keinen Eintrag der Sitzungsleitung, oder der Antrag hat keinen Punkt im Datensatz; was beschlossen wurde, steht dann nur in der Niederschrift. So steht es bei {{ t.missing|num }} Anträgen ({{ t.share(t.missing)|pct(1) }}){% if b.session %}, bei {{ b.session.motions|num }} davon in einer einzigen Sitzung ({{ b.session.body }}, {{ b.session.day|date_de }}){% endif %}. „Ohne Abstimmung erledigt“ heißt: das Gremium hat den Antrag behandelt, ohne über ihn abzustimmen, etwa zur Kenntnis genommen oder an ein anderes Gremium weitergegeben; „offen“: zuletzt vertagt oder verwiesen, ohne späteren Eintrag.</p>
+{% if b.several.n %}
+<p>Ein Antrag wird meist in der nächsten Sitzung entschieden{% if b.single.median is not none %}: mit einer Beratung im Median nach {{ b.single.median|num }} Tagen (n = {{ b.single.n|num }}){% endif %}. Mit mehr als einer Beratung (vertagt, verwiesen, vorberaten){% if b.several.median is not none %} dauerte es im Median {{ b.several.median|num }} Tage (n = {{ b.several.n|num }}){% else %} sind es {{ b.several.n|num }} Anträge, zu wenige für einen Median{% endif %}.</p>
+{% endif %}
+<div class="pruefung" id="beschlusslage-pruefung">
+<h3>Wie geprüft</h3>
+<p>{{ data.check_sentence }}</p>
+<p class="note">Wie gemessen ist, steht im <a href="{{ data.urls.measurement }}">Messdokument</a>; Codebuch, Stichprobe und Labels im Ordner <a href="{{ data.urls.check }}">{{ data.urls.check_folder }}</a>. Ob ein angenommener Antrag nur eine Prüfung verlangt, steht hier nicht: die Regel dafür verfehlte die vorab festgelegte Präzision.</p>
+</div>
+{% if b.rows %}
+<div class="scroll"><table id="beschlusslage-gremien">
+<thead><tr><th scope="col" data-sort="text">Gremium</th><th scope="col" class="num" data-sort="num">Anträge</th><th scope="col" class="num" data-sort="num">angenommen</th><th scope="col" class="num">davon mit Änderungen</th><th scope="col" class="num" data-sort="num">abgelehnt</th><th scope="col" class="num">zurückgezogen</th><th scope="col" class="num">ohne Abstimmung erledigt</th><th scope="col" class="num">offen</th><th scope="col" class="num" data-sort="num">ohne Ergebnis</th><th scope="col" class="num" data-sort="num">Median Tage, mehr als eine Beratung</th></tr></thead>
+<tbody>
+{% for r in b.rows %}
+{% set k = r.counts %}
+<tr><th scope="row">{{ r.name }}{% if k.practice %} *{% endif %}</th><td class="num" data-value="{{ k.motions }}">{{ k.motions|num }}</td><td class="num" data-value="{{ k.share(k.accepted)|round(4) }}">{{ k.share(k.accepted)|pct(1) }}</td><td class="num">{{ k.share(k.changed)|pct(1) }}</td><td class="num" data-value="{{ k.share(k.rejected)|round(4) }}">{{ k.share(k.rejected)|pct(1) }}</td><td class="num">{{ k.share(k.withdrawn)|pct(1) }}</td><td class="num">{{ k.share(k.done)|pct(1) }}</td><td class="num">{{ k.share(k.pending)|pct(1) }}</td><td class="num" data-value="{{ k.share(k.missing)|round(4) }}">{{ k.share(k.missing)|pct(1) }}</td>{% if r.duration.median is not none %}<td class="num" data-value="{{ r.duration.median }}">{{ r.duration.median|num }} <span class="note">(n {{ r.duration.n|num }})</span></td>{% elif r.duration.n %}<td class="num" data-value="-1"><span class="note">n {{ r.duration.n|num }}</span></td>{% else %}<td class="num" data-value="-1">–</td>{% endif %}</tr>
+{% endfor %}
+</tbody>
+<tfoot><tr><th scope="row">alle Gremien</th><td class="num">{{ t.motions|num }}</td><td class="num">{{ t.share(t.accepted)|pct(1) }}</td><td class="num">{{ t.share(t.changed)|pct(1) }}</td><td class="num">{{ t.share(t.rejected)|pct(1) }}</td><td class="num">{{ t.share(t.withdrawn)|pct(1) }}</td><td class="num">{{ t.share(t.done)|pct(1) }}</td><td class="num">{{ t.share(t.pending)|pct(1) }}</td><td class="num">{{ t.share(t.missing)|pct(1) }}</td><td class="num">{% if b.several.median is not none %}{{ b.several.median|num }} <span class="note">(n {{ b.several.n|num }})</span>{% else %}–{% endif %}</td></tr></tfoot>
+</table></div>
+{% endif %}
+<p class="note">Das Gremium ist das der Drucksache. Eine Zeile je Gremium mit mindestens {{ b.min_motions }} Anträgen{% if b.small_bodies %}; {{ b.small_bodies|num }} Gremien mit zusammen {{ b.small_motions|num }} Anträgen stehen nur in der Summe{% endif %}. Die Anteile beziehen sich auf die Anträge der Zeile{% if t.practice %}, ohne die einer Praxiszelle (*){% endif %}; ein Median erst ab {{ b.min_duration }} Anträgen mit mehr als einer Beratung, darunter steht nur ihre Zahl. Je Antrag stehen Klasse, Gremium und Tag der Entscheidung im Dokumentdialog der <a href="index.html">Startseite</a> und der <a href="details.html">Details</a>, alle Anträge auf den Details unter den <a href="details.html#downloads">Downloads</a> (<code>beschlusslage</code>, <code>beratungsverlauf</code>), ihre Spalten auf der Seite <a href="spalten.html#beschlusslage">Spalten</a>.</p>
+{% if b.cells %}
+<p class="note">* In {% for cell in b.cells %}{{ cell.body }} {{ cell.year }} ({{ cell.done|num }} von {{ cell.motions|num }}){{ ", " if not loop.last }}{% endfor %} sind so viele Anträge ohne Abstimmung erledigt, dass das eine Praxis der Sitzungsleitung ist, kein Ergebnis: dass ein Gremium ein Jahr lang fast jeden Antrag nur zur Kenntnis nimmt, ist ein Eintrag, kein Verhalten. Diese {{ t.practice|num }} Anträge zählen in keinem Anteil und im Erfolg je Fraktion nicht. Die Grenze, ab der ein Gremium-Jahr so heißt, ist nach dem Ansehen der Daten gesetzt; die Kodierung misst sie nicht.</p>
+{% endif %}
+{% endif %}
+{% endif %}

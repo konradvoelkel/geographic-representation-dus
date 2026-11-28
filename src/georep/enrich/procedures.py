@@ -468,8 +468,11 @@ TABLES = (
                 "",
             ),
             "rolle": (
-                "wurzel, ohne (allein, Vorgang aus einem Dokument) oder der Typ der Verbindung zum "
-                "Vorgänger (antwort, nachfrage, umsetzung, aenderung, nachtrag, bau, fortsetzung)",
+                "die Stellung im Vorgang: wurzel, ohne (allein, Vorgang aus einem Dokument) oder "
+                "der Typ der Verbindung zum Vorgänger (antwort, nachfrage, umsetzung, aenderung, "
+                "nachtrag, bau, fortsetzung); nicht die Rolle des Dokuments "
+                "(beschlusslage.dokument_rolle) und nicht die einer Beratung "
+                "(beratungsverlauf.beratung_rolle)",
                 "",
             ),
             "tiefe": ("Schritte bis zur Wurzel; 0 bei Wurzel und allein", "Schritte"),

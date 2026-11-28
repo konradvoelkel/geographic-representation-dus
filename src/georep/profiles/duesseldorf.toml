@@ -916,6 +916,8 @@ instrument_types = { zanfrage = "anfrage", zantrag = "antrag" }  # S1.5: die Dok
 [outcomes]
 enabled = true                 # alle drei Perioden; der Wortschatz ist derselbe (21 Werte in jedem Netzlauf, die laufende Periode kennt 20)
 package = "snapshots/duesseldorf-beschluesse/raw/tagesordnungspunkte-duesseldorf.parquet"  # Netzlauf vom 2026-11-23 (README dort); ein Periodenprofil nennt seine eigene Datei
+answered = ["beantwortet", "schriftlich beantwortet"]  # § 3.9: im Rat tragen 834 von 857 Anfragen einen der beiden (Hauptperiode und laufende Periode)
+answered_written = ["schriftlich beantwortet"]
 
 [outcomes.results]
 "einstimmig beschlossen" = ["sache", "beschlossen"]               # 10 433

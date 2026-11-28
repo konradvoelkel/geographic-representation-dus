@@ -417,6 +417,8 @@ practice_share = 0.4           # ein Gremium-Jahr, in dem mindestens dieser Ante
 practice_min = 10              # und mindestens so viele „erledigt"; sonst träfe die Regel ein Gremium mit fünf Anträgen im Jahr
 followup_roles = ["vorlage", "information", "bedarf", "af"]  # Rollen der Drucksachen (Vorhaben 14), die als Folgevorlage der Verwaltung zählen, wenn sie den Antrag über eine starke Kante nennen (§ 3.7)
 results = {}                   # Wert von result -> [stufe, klasse]: stufe "sache" (beschlossen, geaendert, abgelehnt, zurueckgezogen) oder "stand" (erledigt, vertagt, offen); im Stadtprofil. Ein Wert, der fehlt, bricht den Schritt mit seinem Wortlaut ab
+answered = []                  # Stufe 3: die Werte aus results, mit denen die Sitzungsleitung einträgt, dass eine Anfrage beantwortet ist (in der Sitzung oder schriftlich zur Niederschrift, Messdokument § 3.9); vorgaenge.html zählt sie je Gremium neben den Antwortanlagen von 14. Wortlaut, keine geprüfte Klasse; leer: kein Abschnitt
+answered_written = []          # davon die schriftlichen; eine Teilmenge von answered
 
 # Der beantragte Prüfauftrag (§ 3.4): verlangt ein Antrag von der Verwaltung **nur**, etwas zu prüfen,
 # zu berichten oder vorzulegen? Gelesen wird der Beschlusstext im kleingeschriebenen Textstore vom

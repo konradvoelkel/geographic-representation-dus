@@ -277,3 +277,79 @@ def test_the_labels_of_the_coders_are_met(periods: dict[str, Period]) -> None:
     }
     wrong = {rows[i]["reference"]: (rule[i], asked[i]) for i in asked if rule[i] != asked[i]}
     assert wrong == ERRORS
+
+
+def _wilson(k: float, n: float, z: float = 1.959964) -> tuple[float, float]:
+    """Wilson bei nicht ganzzahligem n, wie im Messskript (``wilson``)."""
+    p = k / n
+    d = 1 + z * z / n
+    c = p + z * z / (2 * n)
+    h = z * (p * (1 - p) / n + z * z / (4 * n * n)) ** 0.5
+    return (c - h) / d, (c + h) / d
+
+
+def test_outcomes_check_follows_from_the_labels_and_the_progress(
+    periods: dict[str, Period],
+) -> None:
+    """``OUTCOMES_CHECK`` (Stufe 3) aus Labels, Stichprobe und gebautem Verlauf, wie ``--auswertung``.
+
+    Nach Rückfall 1 zählt ``ergebnis``: ungewichtet an den 150, gewichtet mit den Schichtgrößen
+    (Wilson bei Kishs n_eff), und die Fälle, deren Folge mehr verlangte als das Nachschlagen eines
+    Eintrags (mehrere Einträge, mehrere Beratungen, Verweisung, Empfehlung, Vertagung mit späterem
+    Eintrag, maßgeblich nicht der letzte; § 4.1: 17 von 17).
+    """
+    from georep.report.outcomes import OUTCOMES_CHECK
+
+    labels = _labels()
+    with (VALIDATION / "stichprobe.csv").open(encoding="utf-8", newline="") as handle:
+        sample = list(csv.DictReader(handle))
+    outcomes = pl.concat([p.outcomes for p in periods.values()])
+    klasse = dict(outcomes.select("id", "klasse").iter_rows())
+    results = {k: v for p in periods.values() for k, v in p.settings.outcomes.results.items()}
+    steps = (
+        pl.concat([p.progress for p in periods.values()])
+        .filter(pl.col("top").is_not_null())
+        .with_columns(pl.col("ordnung").fill_null(0))
+    )
+    by_id = {
+        doc: group.sort("sitzung", "ordnung", "top", nulls_last=False)
+        for (doc,), group in steps.group_by("id")
+    }
+    units: list[tuple[str, int, bool]] = []
+    hard = hard_ok = 0
+    for row in sample:
+        doc = row["id"]
+        ok = klasse[doc] == labels[doc]["ergebnis"]
+        units.append((row["schicht"], int(row["schicht_n"]), ok))
+        mine = by_id.get(doc, steps.clear())
+        entered = mine.filter(pl.col("result").is_not_null())
+        values = entered.get_column("result").to_list()
+        features = {
+            len(values) >= 2,
+            mine.get_column("beratung").n_unique() >= 2,
+            "verwiesen" in values,
+            any(v.startswith("Empfehlung") for v in values),
+            any(v in ("vertagt", "zurückgestellt") for v in values) and len(values) >= 2,
+            bool(values) and results[values[-1]][1] != klasse[doc],
+        }
+        if True in features:
+            hard += 1
+            hard_ok += ok
+    rule = OUTCOMES_CHECK
+    assert (sum(ok for *_, ok in units), len(units)) == (rule.hits, rule.basis)
+    sizes = {stratum: size for stratum, size, _ in units}
+    total = sum(sizes.values())
+    estimate = sum(
+        sizes[h]
+        / total
+        * sum(ok for s, _, ok in units if s == h)
+        / sum(1 for s, *_ in units if s == h)
+        for h in sizes
+    )
+    weights = [sizes[s] / sum(1 for t, *_ in units if t == s) for s, *_ in units]
+    n_eff = sum(weights) ** 2 / sum(w * w for w in weights)
+    low, high = _wilson(estimate * n_eff, n_eff)
+    assert round(estimate, 3) == rule.weighted
+    assert (round(low, 3), round(high, 3)) == rule.weighted_interval
+    assert round(n_eff, 1) == rule.n_eff
+    assert (hard_ok, hard) == (rule.hard_hits, rule.hard_basis)

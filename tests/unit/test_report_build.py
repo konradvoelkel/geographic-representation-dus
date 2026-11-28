@@ -43,8 +43,8 @@ def test_site_has_index_map_and_every_download_file(
     )
     # Je Tabelle Parquet und CSV (Vorhaben 11: der Kopf ohne CSV), dazu GeoJSON, Schema,
     # Dokumentliste, summary.json (Option 01), die Begriffe je Wahlbezirk (Punkt 49) und je
-    # Dialog-Haken seine Datei (Vorarbeit V2)
-    assert hooks == ["vorgaenge.json"]
+    # Dialog-Haken seine Datei (Vorarbeit V2; 14, dann 26)
+    assert hooks == ["vorgaenge.json", "beschluesse.json"]
     assert names == expected
     assert mini_run.site_index.with_name("index.html.stamp.json").is_file()
 
@@ -56,10 +56,17 @@ def test_page_lists_every_file_with_its_checksum(mini_run: Layout) -> None:
         assert digest(path) in page
 
 
-def test_parquet_copies_are_byte_identical(mini_run: Layout) -> None:
+def test_parquet_copies_are_byte_identical(mini_run: Layout, default_settings: Settings) -> None:
+    """Eine Tabelle mit Sicht (``view``; Vorhaben 26: die Beschlusslage ohne den Prüfauftrag)
+    trägt die Zeilen und Spalten ihrer Sicht, jede andere die Bytes der Datei."""
     for table in published(mini_run):
         parquet = table.path(mini_run)
-        assert (mini_run.site_data / parquet.name).read_bytes() == parquet.read_bytes()
+        copy = mini_run.site_data / parquet.name
+        if table.view is None:
+            assert copy.read_bytes() == parquet.read_bytes()
+        else:
+            expected = table.published_frame(pl.read_parquet(parquet), default_settings)
+            assert pl.read_parquet(copy).equals(expected)
 
 
 def test_csv_downloads_follow_the_export_rules(mini_run: Layout, tmp_path: Path) -> None:
@@ -86,7 +93,9 @@ def test_csv_downloads_follow_the_export_rules(mini_run: Layout, tmp_path: Path)
         assert frame.columns == table.csv.rows(empty).columns
 
 
-def test_geojson_and_schema_are_consistent_with_the_tables(mini_run: Layout) -> None:
+def test_geojson_and_schema_are_consistent_with_the_tables(
+    mini_run: Layout, default_settings: Settings
+) -> None:
     geojson = json.loads((mini_run.site_data / GEOJSON_NAME).read_text(encoding="utf-8"))
     assert [f["properties"]["wahlkreis_id"] for f in geojson["features"]] == [1, 10, 38]
     assert set(geojson["features"][0]["properties"]) == set(GEOJSON_COLUMNS)
@@ -95,7 +104,7 @@ def test_geojson_and_schema_are_consistent_with_the_tables(mini_run: Layout) -> 
     assert set(schema["tables"]) == {t.name for t in tables} | {"wahlbezirke"}
     for table in tables:
         assert [c["column"] for c in schema["tables"][table.name]] == list(
-            pl.read_parquet_schema(table.path(mini_run))
+            table.published_schema(table.path(mini_run), default_settings)
         )
         assert all(c["description"] for c in schema["tables"][table.name])
     assert schema["version"] and schema["generated_at"]
