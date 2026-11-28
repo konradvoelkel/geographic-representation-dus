@@ -21,7 +21,7 @@ from georep.report.build import (
     SiteSummary,
     current_commit,
 )
-from georep.report.dialog import dialogs_for
+from georep.report.dialog import shown_dialogs
 from georep.report.startkarte import KARTE_NAME
 from georep.report.tables import GEOJSON_COLUMNS, all_rows, csv_plan, published
 from georep.settings import Settings
@@ -34,7 +34,8 @@ def test_site_has_index_map_and_every_download_file(
     assert mini_run.site_index.is_file() and (mini_run.site / MAP_NAME).is_file()
     names = sorted(p.name for p in mini_run.site_data.iterdir())
     tables = published(mini_run)
-    hooks = [hook.file_name for hook in dialogs_for(default_settings)]
+    # Vorhaben 18: an ist auch ``aehnlich``, aber die Mini-Kette hat kein Nachbarpaket ihrer IDs
+    hooks = [hook.file_name for hook in shown_dialogs(mini_run, default_settings)]
     expected = sorted(
         [name for t in tables for name in t.download_names(mini_run)]
         + [GEOJSON_NAME, SCHEMA_NAME, DOCUMENTS_NAME, SUMMARY_NAME, TERMS_NAME, KARTE_NAME]

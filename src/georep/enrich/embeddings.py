@@ -14,8 +14,12 @@ Zwei Schritte hinter allen Kernschritten (``docs/plans/18-einbettungen.md``, § 
   (``[embeddings].neighbors_package``), und ohne beides eine leere Tabelle mit demselben Schema.
 
 Beide fehlen ohne ``embeddings.enabled``. Die Pfade gehören diesem Modul (Synergien 2026-11, § 2.1):
-wer sie liest -- ``georep search``, ``georep pack --neighbors``, später der Dokumentdialog --,
-nimmt sie aus ``embedding_files``.
+wer sie liest -- ``georep search``, ``georep pack --neighbors``, der Dokumentdialog --, nimmt sie
+aus ``embedding_files``.
+
+Stufe 3 (``report.similar``): der Download ``aehnliche_dokumente`` (nur Parquet) und der
+Dialog-Haken ``aehnlich`` mit den ersten fünf je Dokument, beide nur, wo das Profil das
+Nachbarpaket nennt, der Datensatz gemessen ist und die Tabelle Zeilen hat.
 
 Die Prompt-Version ist ``18-stuecke-1`` (Stücke) und ``18-anfrage-1`` (Suchfragen), solange
 Präfix und Zuschnitt die gemessenen sind; sonst hängt ein kurzer Hash daran. So kann eine Änderung
@@ -44,6 +48,23 @@ from georep.ml.batch import embed_texts, progress_log
 from georep.ml.cache import ModelCache
 from georep.ml.ollama import OllamaEmbedder, client_from_settings, embedder_from_settings
 from georep.pipeline import Step
+from georep.report.dialog import DialogHook
+from georep.report.similar import (
+    COLUMNS,
+    DIALOG_DESCRIPTION,
+    DIALOG_NAME,
+    DIALOG_TITLE,
+    TABLE_DESCRIPTION,
+    TABLE_NAME,
+    dialog_inputs,
+    dialog_rows,
+    dialog_shown,
+    similar_check_files,
+    similar_enabled,
+    table_sentence,
+    table_shown,
+)
+from georep.report.tables import PublishedTable, TableCheck
 from georep.search.units import build_units, raw_frame, unit_chunks
 from georep.search.vectors import (
     EMBEDDINGS_SCHEMA_VERSION,
@@ -314,4 +335,32 @@ def _document_frame(
     )
 
 
-CONTRIBUTION = Contribution("18-einbettungen", steps=embeddings_steps)
+# --- Stufe 3: ähnliche Dokumente als Download und im Dokumentdialog (Messdokument § 7) ----------
+TABLES = (
+    PublishedTable(
+        TABLE_NAME,
+        lambda layout: embedding_files(layout).neighbors,
+        TABLE_DESCRIPTION,
+        COLUMNS,
+        enabled=similar_enabled,
+        csv=None,  # zehn Zeilen je Dokument, zwei OParl-URLs je Zeile (docs/todo.md, Punkt 35)
+        shown=table_shown,
+        check=TableCheck(similar_check_files, table_sentence),
+    ),
+)
+
+DIALOG = DialogHook(
+    DIALOG_NAME,
+    DIALOG_TITLE,
+    DIALOG_DESCRIPTION,
+    inputs=dialog_inputs,
+    rows=dialog_rows,
+    enabled=similar_enabled,
+    show=("drucksache", "datum", "titel"),
+    listed=True,
+    shown=dialog_shown,
+)
+
+CONTRIBUTION = Contribution(
+    "18-einbettungen", steps=embeddings_steps, tables=TABLES, dialogs=(DIALOG,)
+)

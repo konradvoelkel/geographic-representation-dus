@@ -56,7 +56,7 @@ from georep.report.charts import (
     scatter,
     turnout_label,
 )
-from georep.report.dialog import all_dialogs, dialog_names, dialog_payload, dialogs_for
+from georep.report.dialog import all_dialogs, dialog_names, dialog_payload, shown_dialogs
 from georep.report.documents import (
     DOCUMENT_COLUMNS,
     document_order,
@@ -313,10 +313,11 @@ def write_dialogs(layout: Layout, model: ReportModel, settings: Settings) -> lis
 
     Die Indizes zeigen in ``dokumente.json``; seine Folge kommt aus derselben Funktion wie dort
     (``document_order``), das Präfix der Links aus der eben geschriebenen Datei, und deren Länge
-    muss zur Folge passen. Die Datei eines Hakens, der in diesem Profil aus ist, fliegt aus
-    ``site/data/``, damit nichts Altes mitfährt (wie ``_remove_unpublished``).
+    muss zur Folge passen. Die Datei eines Hakens, der in diesem Profil aus ist oder hier nichts
+    zeigt (``DialogHook.shown``, Vorhaben 18), fliegt aus ``site/data/``, damit nichts Altes
+    mitfährt (wie ``_remove_unpublished``).
     """
-    hooks = dialogs_for(settings)
+    hooks = shown_dialogs(layout, settings)
     wanted = {hook.name for hook in hooks}
     for hook in all_dialogs():
         stale = layout.site_data / hook.file_name
@@ -351,6 +352,7 @@ def write_dialogs(layout: Layout, model: ReportModel, settings: Settings) -> lis
             version=model.version,
             generated_at=model.generated_at,
             show=hook.show,
+            listed=hook.listed,
         )
         target = layout.guard_writable(layout.site_data / hook.file_name)
         # Ohne Leerzeichen nach Komma und Doppelpunkt: die Datei besteht fast nur aus kurzen
@@ -599,7 +601,7 @@ def build_site(
     shapes = district_shapes(precincts, SIMPLIFY_M)
     model = build_report_model(layout, settings, now=now, commit=commit)
     # Fundament F2: der Abschnitt „Weitere Auswertungen" nennt die Unterseiten der Beiträge
-    model = replace(model, pages=page_links(settings), dialogs=dialog_names(settings))
+    model = replace(model, pages=page_links(settings), dialogs=dialog_names(settings, layout))
     downloads.append(write_documents(layout, model, settings))
     downloads.extend(write_dialogs(layout, model, settings))  # Vorarbeit V2
     downloads.append(write_terms(layout, model))  # Punkt 49
