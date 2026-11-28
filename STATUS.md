@@ -51,6 +51,9 @@ Stand 2026-11-26, `main` auf `v0.32.0`.
 - **Ortsbezug** (`v0.44.0`, Punkt 97): der frühe Schritt `places` rechnet die Stelle je Treffer und die
   Hausnummern (92,3 % verortet); die Gewichtungen `ortsbezug` (Nebenregel C) und `stelle` (explorativ)
   stehen in der Hauptperiode in „Was ändert die Gewichtung?“. Mit ihnen sind es 28 Gewichtungen.
+- **Abstimmungen** (`v0.45.0`, Punkt 98): Ergebnis und Mehrheitsform je Tagesordnungspunkt aus dem Eintrag der
+  Sitzungsleitung (Ebene A), als Abschnitt auf `akteure.html`; H28.2 bestätigt (Anträge der Opposition im Rat
+  zu 10,5 % angenommen), H28.1 und H28.3 ohne Ebene B nicht entscheidbar.
 - **`vorgaenge.html`** (`v0.38.0`): Antworten auf Anfragen, Kandidaten, Vorgänge; dazu der Dialog-Haken der
   Hauptseite, der Zeilen je Dokument beim Öffnen nachlädt. Die Hauptseite liegt damit bei 966 522 Byte,
   rund 29 KB über dem Stand vor der Phase (Ziel höchstens 30 KB, `docs/todo.md`, Punkt 36).

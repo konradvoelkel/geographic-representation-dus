@@ -1,6 +1,6 @@
 # Vorhaben 28: Abstimmungen und Kooperation
 
-**Stand 2026-11-26: Urteil Ebene A bauen, Ebene B verwerfen (§ 5.1), gemessen, nicht gebaut.**
+**Stand 2026-11-28: Ebene A mit Stufe 2 und 3 auf `main` (`v0.45.0`, Punkt 98), nach § 10; Ebene B verworfen (§ 5.1).**
 Ebene A braucht kein Netz; Ebene B nur mit Frage 40. Mönchengladbach ist seit dem Netzlauf vom
 2026-11-23/24 abgerufen (anders als in Frage 9.9 notiert), seine Niederschriften sind nicht gemessen.
 **§ 10 vor dem Bau durch den Supervisor.**

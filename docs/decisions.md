@@ -5763,7 +5763,7 @@ ganze Tabelle dasteht) bei 1280 und 390 Pixeln, hell und dunkel: die Zeile `orts
 Halbsatz bei 1280 in sechs Zeilen unter der Beschriftung, die Zahlen stehen in der ersten; dunkel
 tragen beide Zeilen die Farben des Rahmens.
 
-## NN. Abstimmungen nur aus dem Eintrag der Sitzungsleitung: die Wortregel neben 26, H28.2 bestätigt, ein Gast auf `akteure.html` (Vorhaben 28, Stufe 2 und 3, 2026-11-28)
+## 98. Abstimmungen nur aus dem Eintrag der Sitzungsleitung: die Wortregel neben 26, H28.2 bestätigt, ein Gast auf `akteure.html` (Vorhaben 28, Stufe 2 und 3, 2026-11-28)
 
 Vorhaben 28 nach `docs/plans/28-abstimmungen.md`, § 5.1 (nur Ebene A), § 6 bis § 9 und § 10 (Supervisor,
 2026-11-28), in einem Bau (Plan der Phase „Zeigen“, § 5). Gebaut auf `feat/28-abstimmungen` ab `main`

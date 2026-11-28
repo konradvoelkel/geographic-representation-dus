@@ -2,6 +2,15 @@
 
 Ein Eintrag je Version, die Änderungen aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
+## 0.45.0 (2026-11-28), Abstimmungen
+
+- **Abstimmungen** (Vorhaben 28, nur Ebene A, Stufe 2 und 3, `docs/decisions.md`, Punkt 98): je
+  Tagesordnungspunkt mit Beratung Ergebnis, Änderung und Mehrheitsform (einstimmig, mehrheitlich) aus dem
+  Eintrag der Sitzungsleitung, nach der vorab festgelegten Wortregel. Neuer Abschnitt „Abstimmungen" auf
+  `akteure.html`: Einstimmigkeit je Gremienart und die drei vorab festgelegten Prüfungen (H28.2 bestätigt,
+  H28.1 und H28.3 nicht entscheidbar, weil die Positionen der Fraktionen die Prüfung verfehlt haben).
+- Neue Downloads `abstimmungen` (nur Parquet), `abstimmungen_gremien` und `abstimmungen_hypothesen`.
+
 ## 0.44.0 (2026-11-28), Ortsbezug
 
 - **Ortsbezug** (Vorhaben 16, Stufe 2 und kleine Stufe 3, `docs/decisions.md`, Punkt 97): ein früher Schritt
