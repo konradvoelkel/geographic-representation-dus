@@ -6222,7 +6222,11 @@ Ergebnisse: CC0 1.0“); jede andere Unterseite und `spalten.html` behalten ihre
 Downloads `politikfelder` (je Dokument, nur Parquet, Rückstand 35) und `politikfelder_anteile`
 (Parquet und CSV) tragen die Lizenz in ihrer Beschreibung, also in jeder Downloadzeile und auf
 `spalten.html` (`schema.json` trägt keine Beschreibung je Tabelle), und `politikfelder` dazu einen
-Prüfsatz unter den Downloads, der beide nennt. Ein Test sucht in jeder anderen Datei unter `site/data/` die Spalte `politikfeld`
+Prüfsatz unter den Downloads, der beide nennt. Nach dem Review (2026-11-28) nennt auch der Fuß von
+`details.html` und der Startseite die Ausnahme, in jedem Profil mit Politikfeldern: „Ergebnisse: CC0
+1.0, außer den Politikfeldern (CC BY-NC-SA 4.0, siehe Themen)“, mit Link auf die Lizenz und auf
+`themen.html`. Sie kommt aus `Page.license` (`scope`, `label`) über `PageLink` in `model.pages`;
+ohne eine solche Seite bleibt der Fuß bytegleich. Ein Test sucht in jeder anderen Datei unter `site/data/` die Spalte `politikfeld`
 und findet sie nicht.
 
 **Bewusst anders als § 6 und § 7.**
@@ -6292,7 +6296,6 @@ andere Stadt; das tut `themen.html`).
   Tabelle, und bei 390 Pixeln gilt die Mindestbreite der Feldnamen nicht mehr. Die breiten
   Tabellen je Fraktion und je Wahlbezirk scrollen waagrecht wie jede breite Tabelle der Seiten.
 
-**Offen.** Der Fuß von `details.html` sagt weiter „Ergebnisse: CC0 1.0“; die Ausnahme steht in den
-beiden Downloadzeilen, im Prüfsatz darunter und auf `themen.html`. Die kleine Stichprobe je Periode
+**Offen.** Die kleine Stichprobe je Periode
 aus Frage 9.17 (rund 2 GPU-Minuten) ist nicht gezogen; 2014–2020 und ab 2025 sind angenommen, nicht
 gemessen.
