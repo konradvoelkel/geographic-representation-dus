@@ -573,7 +573,7 @@ class Bodies(_Strict):
 
 # Namen, die die festen Varianten der gewichteten Trefferquote tragen; ein Regelsatz darf keinen
 # davon tragen und nicht wie ein Thema heißen (``thema_NN``).
-FIXED_VARIANTS = ("einheit", "bezirke", "idf", "kombiniert")
+FIXED_VARIANTS = ("einheit", "bezirke", "idf", "kombiniert", "ortsbezug", "stelle")
 TOPIC_PREFIX = "thema_"
 _VARIANT_NAME = re.compile(r"[a-z][a-z0-9_]*")
 

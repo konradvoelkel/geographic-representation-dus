@@ -584,6 +584,7 @@ def _cmd_regress(args: argparse.Namespace, settings: Settings, layout: Layout) -
             settings.weights,
             exclude,
             settings.topics.k > 0,
+            places=settings.places,
         )
         width = max((len(row.name) for row in rows), default=0)
         for row in rows:

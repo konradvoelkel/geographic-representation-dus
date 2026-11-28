@@ -53,7 +53,7 @@
                -> dokumente_abschnitte.parquet, dokumente_kopf.parquet
   places       <- papers.parquet, rohtexte.parquet, dokumente_abschnitte.parquet, combined_searchdict.parquet, inverted_index.parquet, wahlbezirke_strassen.parquet, adressen.parquet
                -> treffer_stellen.parquet, dokumente_wahlbezirke_stelle.parquet, adressen_wahlbezirke.parquet
-  weights      <- combined_searchdict.parquet, inverted_index.parquet, papers.parquet, wahlbezirke_waehler.parquet, themen_anteile.parquet
+  weights      <- combined_searchdict.parquet, inverted_index.parquet, papers.parquet, wahlbezirke_waehler.parquet, themen_anteile.parquet, treffer_stellen.parquet (optional)
                -> wahlbezirke_gewichtet.parquet, gewichte_begriffe.parquet
   controls     <- wahlbezirke_auswertung.parquet, wahlbezirke_kontext.parquet
                -> regression_kontrollen.parquet

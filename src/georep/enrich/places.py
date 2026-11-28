@@ -274,6 +274,23 @@ def _raw_texts(path: Path) -> pl.DataFrame:
     return pl.DataFrame(rows, schema=schema, orient="row")
 
 
+def position_table(layout: Layout) -> pl.DataFrame | None:
+    """Je (Dokument, Begriff) mit Stelle die beste Stelle und Nebenregel C, für ``weights``.
+
+    ``None`` ohne die Datei oder ohne eine Spanne (ein Profil ohne Rohtext): dann rechnet
+    ``weights`` keine Variante nach Stelle, denn beide wären Kopien von ``einheit``.
+    """
+    path = places_files(layout).spans
+    if not path.is_file():
+        return None
+    spans = pl.read_parquet(
+        path, columns=["id", "norm", "stelle", "im_titel", "listenzeile", "hausnummer"]
+    )
+    if spans.is_empty():
+        return None
+    return term_positions(spans).select("id", "suchbegriffe", "stelle", "handelt_von")
+
+
 def street_terms(streets_by_district: pl.DataFrame) -> frozenset[str]:
     """Die Straßenbegriffe des Wörterbuchs, wie ``search.dictionary`` sie bildet (mit ``str.``)."""
     found = streets_by_district.select(normalise_terms(pl.col(TERMS)).alias(TERMS)).explode(TERMS)

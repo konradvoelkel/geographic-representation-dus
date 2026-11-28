@@ -1027,6 +1027,7 @@ def build_steps(
     # --- Option 06: Gewichtete Trefferquoten
     def weights() -> str:
         from georep.analysis.weights import TypeRules, term_weights, variants
+        from georep.enrich.places import position_table  # Vorhaben 16, Punkt 74
 
         with_text = int(
             pl.scan_parquet(layout.corpus).select((pl.col("text") != "").sum()).collect().item()
@@ -1050,6 +1051,9 @@ def build_steps(
             ],
             settings.weights.combined,
             pl.read_parquet(layout.topic_shares) if settings.topics.k > 0 else None,
+            # Vorhaben 16: ortsbezug und stelle, nur wo ``places`` Stellen gefunden hat
+            positions=position_table(layout) if settings.places.enabled else None,
+            position_weights=settings.places.position_weights,
         )
         write_parquet(frame, layout.weighted, schema_version=1)
         write_parquet(
@@ -1163,6 +1167,11 @@ def build_steps(
 
     contributed_http = http if http is not None else DeferredTransport(transport)
     contributed_early = contributed_early_steps(settings, layout, contributed_http)
+    # Vorhaben 16: ``weights`` liest die Stellen des frühen Schritts ``places`` als optionale
+    # Eingabe (Punkt 74); ohne Rohtext ist die Datei leer, und die beiden Varianten fehlen
+    from georep.enrich.places import places_files
+
+    place_spans = (places_files(layout).spans,) if settings.places.enabled else ()
     contributed = contributed_steps(settings, layout, contributed_http)
 
     attached = sections_for(settings)  # Vorarbeit V1: Abschnitte fremder Beiträge je Seite
@@ -1507,6 +1516,7 @@ def build_steps(
             + ((layout.topic_shares,) if with_topics else ()),
             (layout.weighted, layout.term_weights),
             weights,
+            optional=place_spans,
         ),
         # --- Option 03
         *(
