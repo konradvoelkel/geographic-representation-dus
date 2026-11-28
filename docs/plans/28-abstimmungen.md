@@ -1,6 +1,6 @@
 # Vorhaben 28: Abstimmungen und Kooperation
 
-**Stand 2026-11-28: Ebene A mit Stufe 2 und 3 auf `main` (`v0.45.0`, Punkt 98), nach § 10; Ebene B verworfen (§ 5.1).**
+**Stand 2026-11-28: Ebene A mit Stufe 2 und 3 auf `main` (`v0.45.0`, Punkt 98), nach § 10; Ebene B verworfen (§ 5.1).** Seit `v0.46.0` (Punkt 99, Kürzel `gr/400224` und `gr/65`) rechnet H28.2 41 von 458 Anträgen statt 41 von 389, weiter bestätigt (Nachtrag zu Punkt 98).
 Ebene A braucht kein Netz; Ebene B nur mit Frage 40. Mönchengladbach ist seit dem Netzlauf vom
 2026-11-23/24 abgerufen (anders als in Frage 9.9 notiert), seine Niederschriften sind nicht gemessen.
 **§ 10 vor dem Bau durch den Supervisor.**

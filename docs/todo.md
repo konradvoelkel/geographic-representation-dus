@@ -123,10 +123,7 @@ eine Untergrenze: die Kanten von 14 tragen nur Drucksachen des eigenen Korpus, 1
 haben ihre Folgevorlage nur in der Nachbarperiode — soll 14 Kanten aus den Nachbarperioden
 mitschreiben? (b) Ein Wortschatz für Mönchengladbach ist eine eigene Messung (48 Werte, darunter
 „Siehe Niederschrift", „Ohne Abstimmung", „Die Bezirksvertretung wurde angehört"). (c) Das Messskript
-von 26 bricht ab, sobald Dateien Mönchengladbachs im Datenordner liegen. (d) `rolle` bedeutet in
-`beratungsverlauf`, `beschlusslage` und `dokumente_vorgang` dreierlei; vor Stufe 3 umbenennen oder in
-`schema.json` sagen. (e) `[bodies.organizations]` braucht vor Stufe 3 die Kürzel `gr/400224` und `gr/65`
-mit Beleg und A/B-Bau (Frage 9.17 dort).
+von 26 bricht ab, sobald Dateien Mönchengladbachs im Datenordner liegen.
 
 ## 16. Fingerprint je Schritt statt global
 

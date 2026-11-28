@@ -5932,7 +5932,16 @@ Sitze ins Profil (keine Prüfung braucht sie); der Gast ohne Eintrag im Verzeich
   Bei 390 px scrollen beide Tabellen waagrecht wie jede breite Tabelle der Seiten.
 
 
-## NN. Die Beschlusslage auf `vorgaenge.html`: drei Gäste, ein Wort je Antrag im Dialog, die Kürzel aus Frage 9.17 belegt, `rolle` dreimal benannt (Vorhaben 26, Stufe 3, 2026-11-28)
+
+**Nachtrag (Supervisor, 2026-11-28, mit Punkt 99).** Die Kürzel `gr/400224` (RAT, Sitzungen der
+Haushaltsanträge) und `gr/65` (GLA) stehen seit `v0.46.0` mit Beleg im Stadtprofil. Damit ändern sich die
+Zahlen dieses Eintrags: „Gremium unbekannt“ 192 → 12 (Hauptperiode) und 126 → 1 (seit 2025); H28.2
+rechnet 41 von 458 statt 41 von 389 Anträgen (9,0 % statt 10,5 %, p nach Holm 4,1·10⁻¹⁸) und bleibt
+bestätigt. Die 69 neuen Einheiten sind Haushaltsanträge allein der Opposition, alle abgelehnt; die vorab
+festgelegte Einheit (letzter entschiedener Beschluss im Rat) verlangt sie. Der Satz oben, H28.2 hänge an
+den beiden Kürzeln nicht, gilt damit nicht mehr.
+
+## 99. Die Beschlusslage auf `vorgaenge.html`: drei Gäste, ein Wort je Antrag im Dialog, die Kürzel aus Frage 9.17 belegt, `rolle` dreimal benannt (Vorhaben 26, Stufe 3, 2026-11-28)
 
 Stufe 3 von Vorhaben 26 nach `docs/plans/26-beschluesse.md` (§ 7, § 10, mit Rückfall 1 aus § 5) und
 `docs/plan-zeigen-2026-11.md` (§ 4 V5, § 6), im Muster von 28 auf `akteure.html` (Punkt 98). Davor

@@ -2,6 +2,17 @@
 
 Ein Eintrag je Version, die Änderungen aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
+## 0.46.0 (2026-11-28), Beschlusslage
+
+- **Beschlusslage auf `vorgaenge.html` und im Dialog** (Vorhaben 26, Stufe 3, `docs/decisions.md`, Punkt 99):
+  drei neue Abschnitte (Beschlusslage je Gremium, Erfolg der Anträge je Fraktion explorativ und ohne
+  Rangfolge, Anfragen „in der Sitzung beantwortet"); im Dokumentdialog je Antrag Klasse, Gremium und Tag der
+  Entscheidung. Neue Downloads `beschlusslage`, `beratungsverlauf` (nur Parquet) und `antragserfolg`.
+- Die Gremienkürzel `gr/400224` (Rat, Haushaltsanträge) und `gr/65` (Ausschuss für Gleichstellung) stehen mit
+  Beleg im Stadtprofil. Bei den Abstimmungen (28) sinkt „Gremium unbekannt" von 192 auf 12; H28.2 rechnet 41
+  von 458 Anträgen (9,0 %) und bleibt bestätigt.
+- Die Spalte `rolle` heißt in den Tabellen von 26 `beratung_rolle` und `dokument_rolle`.
+
 ## 0.45.0 (2026-11-28), Abstimmungen
 
 - **Abstimmungen** (Vorhaben 28, nur Ebene A, Stufe 2 und 3, `docs/decisions.md`, Punkt 98): je
