@@ -81,6 +81,8 @@ def model_links(model: ReportModel) -> frozenset[str]:
     found |= {link for entry in model.literature for link in entry.links}
     if model.derived is not None:
         found |= {model.derived.url, model.derived.license_url}
+    # Vorhaben 19: die Lizenz einer Unterseite, deren Ergebnisse nicht CC0 sind (Fuß, Review 2026-11-28)
+    found |= {page.license_url for page in model.pages}
     return frozenset(u for u in found if u)
 
 

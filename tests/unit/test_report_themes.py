@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import re
 import shutil
+from dataclasses import replace
 from pathlib import Path
 
 import polars as pl
@@ -19,6 +20,8 @@ import pytest
 from georep.enrich.policy_areas import CODES, NO_AREA, TABLES
 from georep.errors import SchemaError
 from georep.layout import Layout
+from georep.report.model import ReportModel
+from georep.report.render import CC0, Visuals, render_report
 from georep.report.themes import (
     BUNDESTAG_QUERIES,
     BUNDESTAG_TOTAL,
@@ -246,3 +249,25 @@ def test_no_other_published_file_carries_the_codes(mini_run: Layout) -> None:
             assert "politikfeld" not in pl.read_parquet_schema(path), path.name
         elif path.suffix in {".csv", ".json", ".geojson"} and path.name != "schema.json":
             assert "politikfeld" not in path.read_text(encoding="utf-8"), path.name
+
+
+# --- Review 2026-11-28: der Fuß von details.html und der Startseite nennt die Ausnahme --------------
+EXCEPTION = (
+    f'<p>Ergebnisse: <a href="{CC0}">CC0 1.0</a>, außer den Politikfeldern (<a href="{LICENSE}">'
+    'CC BY-NC-SA 4.0</a>, siehe <a href="themen.html">Themen</a>); Quelltext:'
+)
+
+
+def test_the_footer_of_details_and_start_names_the_exception(mini_run: Layout) -> None:
+    for page in (mini_run.site_details, mini_run.site / "index.html"):
+        footer = page.read_text(encoding="utf-8").split("<footer>")[1]
+        assert footer.startswith(f"\n{EXCEPTION}"), page.name
+
+
+def test_without_policy_areas_the_footer_stays_as_it_was(
+    mini_model: ReportModel, mini_visuals: Visuals
+) -> None:
+    pages = tuple(p for p in mini_model.pages if p.href != "themen.html")
+    footer = render_report(replace(mini_model, pages=pages), mini_visuals).split("<footer>")[1]
+    assert footer.startswith(f'\n<p>Ergebnisse: <a href="{CC0}">CC0 1.0</a>; Quelltext:')
+    assert "BY-NC-SA" not in footer

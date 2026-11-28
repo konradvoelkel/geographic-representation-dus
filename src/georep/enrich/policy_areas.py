@@ -485,6 +485,8 @@ PAGE = Page(
         url=CC_BY_NC_SA,
         attribution="Codes nach dem Comparative Agendas Project; German Policy Agendas Project, "
         "Breunig, Guinaudeau und Schnatterer 2021",
+        scope="den Politikfeldern",
+        label="Themen",
     ),
 )
 
