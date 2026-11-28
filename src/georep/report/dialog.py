@@ -11,28 +11,41 @@ Dialogs einmal nach (``loadJson``, Punkt 49) und hängt unter jedes Dokument, da
 ``<dialog>`` der Hauptseite. Ein zweiter Beitrag (18 ``aehnlich.json``, 26 ``beschluesse.json``)
 hängt sich nur mit Daten an: ein ``DialogHook`` im eigenen Modul, kein JavaScript.
 
-**Format 2 von ``data/<name>.json``** (2 seit Review K3: ``show``)::
+**Format 3 von ``data/<name>.json``** (2 seit Review K3: ``show``; 3 seit Vorhaben 18: kurze
+Einträge und ``list``)::
 
-    {"format": 2, "version": …, "generated_at": …,
+    {"format": 3, "version": …, "generated_at": …,
      "title": "Vorgang",              # Vorspann der Zeile je Dokument
      "note": "…",                     # ein Satz unter der Liste: woher, wie geprüft (darf leer sein)
      "show": [2],                     # Felder eines Ziels als Text des Links (1 Datum, 2 Nr., 3 Titel)
      "labels": ["Antwort auf", …],    # die Wörter der Einträge, je einmal
      "base": "https://…/",            # dasselbe Präfix wie in dokumente.json
      "documents": [[link, datum, drucksache, titel], …],   # Ziele außerhalb von dokumente.json
-     "rows": {"<Index in dokumente.json>": [[label], [label, ziel], …], …}}
+     "rows": {"<Index in dokumente.json>": [[label], [label, ziel], ziel, …], …},
+     "list": true}                    # nur, wenn der Haken es will (Vorhaben 18), sonst fehlt er
 
 Unter jedem Dokument steht je Haken eine Zeile in der Folge von ``data-extras`` (der Registerfolge),
 gleich in welcher Folge die Dateien ankommen; das Wort eines Eintrags steht nur, wenn es sich gegen
 den vorigen ändert („umgesetzt in A, B; geändert durch C"). Die Sätze der Dateien stehen unter der
 Liste, je Haken einer, ebenfalls in Registerfolge.
 
-Ein Eintrag ist ``[label]`` (nur das Wort, etwa „angenommen im Rat am 12.03.2024") oder
-``[label, ziel]``: ``ziel >= 0`` ist der Index eines Dokuments in ``dokumente.json``, ``ziel < 0``
-das Dokument ``documents[-1 - ziel]`` dieser Datei. Indizes statt Kennungen, weil
+Ein Eintrag ist ``[label]`` (nur das Wort, etwa „angenommen im Rat am 12.03.2024"),
+``[label, ziel]`` oder, mit dem ersten Wort (``label`` 0), nur ``ziel`` als Zahl (Format 3):
+``ziel >= 0`` ist der Index eines Dokuments in ``dokumente.json``, ``ziel < 0`` das Dokument
+``documents[-1 - ziel]`` dieser Datei. Die kurze Form halbiert die Zeilen von 18 (fünf Ziele mit
+demselben leeren Wort je Dokument: rund 30 statt 54 Byte, in der Hauptperiode rund 270 KB). Indizes statt Kennungen, weil
 ``dokumente.json`` keine Kennungen trägt und fünf Ziffern kürzer sind als eine OParl-URL; beide
 Dateien schreibt derselbe Schritt aus derselben Folge (``documents.document_order``), sie können
 also nicht auseinanderlaufen. Zeilen gibt es nur für Dokumente, die der Dialog zeigen kann.
+
+Mit ``list`` (Vorhaben 18, ``DialogHook.listed``) stehen die Einträge eines Dokuments nicht in einer
+Zeile, sondern aufklappbar unter dem Titel, je Eintrag ein Listenpunkt: fünf ähnliche Dokumente mit
+Titel wären als Zeile ein Absatz unter jedem Dokument. Ohne den Schlüssel steht die Zeile wie in
+Format 2.
+
+Ein Haken kann an sein und in einer Datenwurzel trotzdem nichts zeigen (``DialogHook.shown``, etwa
+18 mit leerer Nachbartabelle): seine Eingaben stehen dann im Stamp von ``report``, aber er fehlt in
+``data-extras``, und seine Datei fährt nicht mit (``dialog_names`` mit Layout, ``write_dialogs``).
 
 Ohne JavaScript gibt es keinen Dialog; die Seite bleibt lesbar, wie sie war.
 """
@@ -50,7 +63,9 @@ import deal
 from georep.layout import Layout
 from georep.settings import Settings
 
-DIALOG_FORMAT = 2  # 2 seit Review K3: ``show`` wählt die Felder eines Ziels
+# 2 seit Review K3: ``show`` wählt die Felder eines Ziels; 3 seit Vorhaben 18: ein Eintrag mit dem
+# ersten Wort und einem Ziel ist nur dessen Zahl, dazu ``list``
+DIALOG_FORMAT = 3
 DIALOG_NAME = re.compile(r"^[a-z][a-z0-9-]*$")
 # Dateien, die es unter ``data/`` schon als JSON gibt (``report.build``)
 RESERVED = frozenset({"dokumente", "begriffe", "schema", "summary"})
@@ -100,6 +115,10 @@ class DialogHook:
     # Drucksache, Datum und Titel (Plan 18, § 7), 14 nur die Drucksache. Der Titel steht immer auch
     # als ``title`` am Link.
     show: tuple[str, ...] = ("drucksache",)
+    # Vorhaben 18: die Einträge als aufklappbare Liste unter dem Titel statt in einer Zeile
+    listed: bool = False
+    # Vorhaben 18: ob der Haken in dieser Datenwurzel etwas zeigt; None: immer, wenn er an ist
+    shown: Callable[[Layout, Settings], bool] | None = None
 
     def __post_init__(self) -> None:
         if not DIALOG_NAME.fullmatch(self.name) or self.name in RESERVED:
@@ -134,9 +153,20 @@ def dialogs_for(settings: Settings) -> list[DialogHook]:
     return [hook for hook in all_dialogs() if hook.enabled is None or hook.enabled(settings)]
 
 
-def dialog_names(settings: Settings) -> tuple[str, ...]:
-    """Was am ``<dialog>`` der Hauptseite als ``data-extras`` steht."""
-    return tuple(hook.name for hook in dialogs_for(settings))
+def shown_dialogs(layout: Layout, settings: Settings) -> list[DialogHook]:
+    """Die Haken, die an sind und in dieser Datenwurzel etwas zeigen (``DialogHook.shown``)."""
+    return [
+        hook for hook in dialogs_for(settings) if hook.shown is None or hook.shown(layout, settings)
+    ]
+
+
+def dialog_names(settings: Settings, layout: Layout | None = None) -> tuple[str, ...]:
+    """Was am ``<dialog>`` der Hauptseite als ``data-extras`` steht.
+
+    Mit ``layout`` nur die Haken, die dort etwas zeigen (``shown_dialogs``); ohne alle, die an sind.
+    """
+    hooks = dialogs_for(settings) if layout is None else shown_dialogs(layout, settings)
+    return tuple(hook.name for hook in hooks)
 
 
 def contributed_dialog_files(layout: Layout, settings: Settings) -> tuple[Path, ...]:
@@ -169,6 +199,7 @@ def _indices_resolve(
     version: str,
     generated_at: dt.datetime,
     show: Sequence[str] = ("drucksache",),
+    listed: bool = False,
     result: dict[str, object] | None = None,
 ) -> bool:
     """Jeder Schlüssel und jedes Ziel zeigt auf ein Dokument, das es gibt."""
@@ -176,10 +207,14 @@ def _indices_resolve(
     documents = result["documents"]
     out = result["rows"]
     assert isinstance(documents, list) and isinstance(out, dict)
+
+    def resolves(target: int) -> bool:
+        return 0 <= target < len(order) or 0 < -target <= len(documents)
+
     return all(
         0 <= int(key) < len(order)
         and all(
-            len(e) == 1 or (0 <= e[1] < len(order) or 0 < -e[1] <= len(documents)) for e in entries
+            resolves(e) if isinstance(e, int) else len(e) == 1 or resolves(e[1]) for e in entries
         )
         for key, entries in out.items()
     )
@@ -196,25 +231,28 @@ def dialog_payload(
     version: str,
     generated_at: dt.datetime,
     show: Sequence[str] = ("drucksache",),
+    listed: bool = False,
 ) -> dict[str, object]:
     """``data/<name>.json`` aus den Zeilen eines Beitrags und der Folge von ``dokumente.json``.
 
     ``order`` sind die Korpus-IDs in der Folge von ``dokumente.json``, ``base`` dessen Präfix der
     Links. Zeilen für Dokumente außerhalb von ``order`` fallen weg (der Dialog zeigt sie nie).
     Die Schlüssel stehen aufsteigend, die eigenen Ziele in der Folge ihres ersten Auftretens.
+    ``listed`` hängt ``"list": true`` an; ohne fehlt der Schlüssel.
     """
     position = {doc_id: i for i, doc_id in enumerate(order)}
     own: dict[str, int] = {}
-    out: dict[str, list[list[int]]] = {}
+    out: dict[str, list[list[int] | int]] = {}
     for doc_id in sorted((d for d in rows.rows if d in position), key=position.__getitem__):
-        entries: list[list[int]] = []
+        entries: list[list[int] | int] = []
         for label, target in rows.rows[doc_id]:
             if target is None:
                 entries.append([label])
-            elif target in position:
-                entries.append([label, position[target]])
-            else:
-                entries.append([label, -1 - own.setdefault(target, len(own))])
+                continue
+            index = (
+                position[target] if target in position else -1 - own.setdefault(target, len(own))
+            )
+            entries.append(index if label == 0 else [label, index])  # Format 3: kurz mit Wort 0
         if entries:
             out[str(position[doc_id])] = entries
     documents = [
@@ -226,7 +264,7 @@ def dialog_payload(
         ]
         for t in (rows.targets[target] for target in own)
     ]
-    return {
+    payload: dict[str, object] = {
         "format": DIALOG_FORMAT,
         "version": version,
         "generated_at": generated_at.isoformat(),
@@ -238,3 +276,6 @@ def dialog_payload(
         "documents": documents,
         "rows": out,
     }
+    if listed:
+        payload["list"] = True
+    return payload
