@@ -1,5 +1,11 @@
 {# Der Fuß der Unterseiten (page.html.j2) und des Spaltenschemas (spalten.html.j2): Lizenzen, Verweis auf die Details für Quellen und Lizenzen der Daten, Zeitpunkt #}
 <footer>
+{# Vorhaben 19: eine Seite mit Ergebnissen unter einer anderen Lizenz nennt sie zuerst (Page.license) #}
+{% if page is defined and page.license %}
+<p>{{ page.license.what }}: <a href="{{ page.license.url }}">{{ page.license.name }}</a> ({{ page.license.attribution }}).</p>
+<p>Übrige Ergebnisse: <a href="{{ links.cc0 }}">CC0 1.0</a>; Quelltext: <a href="{{ links.gpl }}">GPL-3.0-or-later</a>. Quellen und Lizenzen der Daten nennen die <a href="details.html">Details</a>.</p>
+{% else %}
 <p>Ergebnisse: <a href="{{ links.cc0 }}">CC0 1.0</a>; Quelltext: <a href="{{ links.gpl }}">GPL-3.0-or-later</a>. Quellen und Lizenzen der Daten nennen die <a href="details.html">Details</a>.</p>
+{% endif %}
 <p>Erzeugt am {{ model.generated_at|datetime_de }} mit georep {{ model.version }}{% if model.commit %}, Commit {{ model.commit }}{% endif %}.</p>
 </footer>

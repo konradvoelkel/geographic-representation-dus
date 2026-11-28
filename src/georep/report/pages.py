@@ -75,6 +75,19 @@ def no_links(layout: Layout, settings: Settings) -> frozenset[str]:
 
 
 @dataclass(frozen=True)
+class PageLicense:
+    """Eine Lizenz für Ergebnisse einer Unterseite, die nicht CC0 sind (Vorhaben 19, Frage 37).
+
+    Der Fuß der Seite nennt sie vor den übrigen Ergebnissen; ``url`` muss in ``Page.links`` stehen.
+    """
+
+    what: str  # „Politikfelder und die Zahlen dieser Seite"
+    name: str  # „CC BY-NC-SA 4.0"
+    url: str
+    attribution: str  # die Namensnennung, die die Lizenz verlangt
+
+
+@dataclass(frozen=True)
 class Page:
     """Eine Unterseite: Datei ``<name>.html``, Titel, ein Satz, Eingaben, Daten für die Vorlage."""
 
@@ -90,6 +103,9 @@ class Page:
     # Mit ``layout`` wie ``inputs`` und ``data`` (Vorhaben 15): die PDF-Links einer Liste von
     # Dokumenten stehen in den Daten, nicht in den Settings.
     links: Callable[[Layout, Settings], frozenset[str]] = no_links
+    # Vorhaben 19: Ergebnisse unter einer anderen Lizenz als CC0; der Fuß nennt sie. Am Ende, damit
+    # kein Aufruf mit Positionen seine Bedeutung ändert.
+    license: PageLicense | None = None
 
     def __post_init__(self) -> None:
         if not _valid_name(self.name):

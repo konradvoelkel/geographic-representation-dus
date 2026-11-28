@@ -26,7 +26,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import NamedTuple
 
@@ -41,6 +41,8 @@ from georep.io import write_parquet
 from georep.layout import Layout
 from georep.pipeline import Step
 from georep.prep.bodies import KINDS
+from georep.report.pages import Page, PageLicense
+from georep.report.tables import PublishedTable, TableCheck
 from georep.settings import POLICY_AREA_CODES, Settings
 
 POLICY_AREAS_SCHEMA_VERSION = 1  # erhöhen, wenn sich Spalten oder Typen der Tabellen ändern
@@ -358,4 +360,134 @@ def policy_area_steps(settings: Settings, layout: Layout, http: Transport) -> li
     ]
 
 
-CONTRIBUTION = Contribution("19-politikfelder", steps=policy_area_steps)
+# --- Stufe 3 (Messdokument § 7 mit § 10): Tabellen und Seite ----------------------------------------
+CC_BY_NC_SA = "https://creativecommons.org/licenses/by-nc-sa/4.0/deed.de"
+LICENSE_NOTE = (
+    "Lizenz CC BY-NC-SA 4.0, nicht CC0: Codes nach dem Comparative Agendas Project (CAP), "
+    "German Policy Agendas Project"
+)
+_ID = ("OParl-URL des Dokuments", "")
+_EMPTY = "; leer ohne Rohtext"
+
+
+def _check_sentence(settings: Settings) -> str:
+    """Der Satz unter den Downloads: Lizenz und Prüfung, aus ``guete.json`` (wie ``themen.html``)."""
+    from georep.report.model import format_de, percent_de
+    from georep.report.themes import read_check
+
+    check = read_check(settings)
+    where = {
+        "gemessen": "an diesem Datensatz",
+        # Die Auswertung nennt weder eine andere Stadt (test_second_city.py) noch das Wahljahr einer
+        # anderen Periode (test_period_pipeline.py); themen.html nennt den Datensatz der Prüfung.
+        "periode": "nur in einer anderen Periode derselben Stadt, für diese angenommen",
+        "explorativ": "nur an einem Datensatz einer anderen Stadt, für diesen explorativ",
+    }[check.status]
+    return (
+        f"{LICENSE_NOTE}; dasselbe gilt für politikfelder_anteile. Das Feld je Dokument sagt ein "
+        f"Klassifikator voraus, {check.sentence}, {where}: Makro-F1 {format_de(check.macro_f1, 3)}, "
+        f"Genauigkeit {percent_de(check.accuracy, 1)}. Mehr auf themen.html."
+    )
+
+
+def _check_files(settings: Settings) -> tuple[Path, ...]:
+    from georep.report.themes import check_files
+
+    return check_files(settings)
+
+
+TABLES = (
+    PublishedTable(
+        "politikfelder",
+        lambda layout: policy_area_files(layout).areas,
+        f"Politikfeld je Ratsdokument nach dem CAP, von einem Klassifikator; {LICENSE_NOTE}",
+        {
+            "id": _ID,
+            "politikfeld": (
+                "Hauptthema des CAP: 1 bis 10, 12 bis 21, 23, oder 99 (kein Politikfeld erkennbar)"
+                f"{_EMPTY}; die Namen nennt themen.html",
+                "",
+            ),
+            "quelle": (f"klassifikator (Weg 3b){_EMPTY}", ""),
+            "modell": (
+                f"xlm-roberta-large@ und die ersten acht Ziffern des SHA-256 der Gewichte{_EMPTY}",
+                "",
+            ),
+            "prompt": ("leer: kein Sprachmodell", ""),
+            "wahrscheinlichkeit": (
+                f"Softmax des gewählten Themas, auf drei Stellen{_EMPTY}",
+                "Anteil 0 bis 1",
+            ),
+            "abgeschnitten": (
+                "der Klassifikator sah nicht den ganzen Text: Rohtext über policy_areas.chars "
+                f"Zeichen oder Eingabe über 256 Token{_EMPTY}",
+                "",
+            ),
+        },
+        enabled=policy_areas_enabled,
+        csv=None,  # Rückstand 35: je Dokument nur Parquet
+        check=TableCheck(files=_check_files, sentence=_check_sentence),
+    ),
+    PublishedTable(
+        "politikfelder_anteile",
+        lambda layout: policy_area_files(layout).shares,
+        f"Anteile der Politikfelder je Gremiumsart in dieser Periode; {LICENSE_NOTE}",
+        {
+            "periode": ("Wahlperiode des Datensatzes", ""),
+            "gremium_art": (
+                "alle, dann bezirksvertretung, rat, ausschuss, beirat oder unbekannt wie in gremien",
+                "",
+            ),
+            "politikfeld": ("Hauptthema wie in politikfelder; leer: ohne Rohtext", ""),
+            "dokumente": ("Dokumente der Gremiumsart mit diesem Feld", "Dokumente"),
+            "anteil": ("dokumente durch alle Dokumente der Gremiumsart", "Anteil 0 bis 1"),
+            "anteil_mit_feld": (
+                "dokumente durch die Dokumente der Gremiumsart mit Feld; leer in der Zeile ohne "
+                "Rohtext",
+                "Anteil 0 bis 1",
+            ),
+        },
+        enabled=policy_areas_enabled,
+    ),
+)
+
+
+def _page_inputs(layout: Layout, settings: Settings) -> tuple[Path, ...]:
+    from georep.report.themes import themes_inputs
+
+    return themes_inputs(layout, settings)
+
+
+def _page_data(layout: Layout, settings: Settings) -> Mapping[str, object]:
+    from georep.report.themes import themes_data
+
+    return themes_data(layout, settings)
+
+
+def _page_links(layout: Layout, settings: Settings) -> frozenset[str]:
+    from georep.report.themes import themes_links
+
+    return themes_links(layout, settings)
+
+
+PAGE = Page(
+    "themen",
+    "Politikfelder nach dem Comparative Agendas Project",
+    "Welches Politikfeld die Ratsdokumente tragen, je Gremium, Fraktion und Wahlbezirk, neben "
+    "dem Bundestag.",
+    inputs=_page_inputs,
+    data=_page_data,
+    enabled=policy_areas_enabled,
+    links=_page_links,
+    license=PageLicense(
+        what="Politikfelder und die Zahlen dieser Seite",
+        name="CC BY-NC-SA 4.0",
+        url=CC_BY_NC_SA,
+        attribution="Codes nach dem Comparative Agendas Project; German Policy Agendas Project, "
+        "Breunig, Guinaudeau und Schnatterer 2021",
+    ),
+)
+
+CONTRIBUTION = Contribution(
+    "19-politikfelder", steps=policy_area_steps, tables=TABLES, pages=(PAGE,)
+)

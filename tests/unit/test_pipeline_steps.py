@@ -288,9 +288,11 @@ def test_only_the_report_topics_and_vocabulary_steps_carry_an_extra(
     assert found["page_bedarf"] == found["report"]
     assert found["page_vorgaenge"] == found["report"]
     assert found["page_zeit"] == found["report"]
+    assert found["page_themen"] == found["report"]
     assert sorted(name for name, extra in found.items() if extra) == [
         "page_akteure",
         "page_bedarf",
+        "page_themen",
         "page_vorgaenge",
         "page_zeit",
         "policy_areas",
