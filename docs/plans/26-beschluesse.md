@@ -1,9 +1,10 @@
 # Vorhaben 26: Beschlusslage und Antragserfolg
 
-**Stand 2026-11-26: Urteil bauen mit Rückfall 1 (§ 5), Stufe 2 auf `main` (`v0.28.0`, Punkt 79);
-Stufe 3 (Abschnitte auf `vorgaenge.html`, Beschluss im Dokumentdialog) wartet auf den F2-Nachzug für
-Abschnitte aus fremden Beiträgen, den Haken von 14 und die Kürzel aus Frage 9.17 (§ 10, Punkte 7 und
-8).**
+**Stand 2026-11-28: Urteil bauen mit Rückfall 1 (§ 5), Stufe 2 auf `main` (`v0.28.0`, Punkt 79);
+Stufe 3 (drei Abschnitte auf `vorgaenge.html`, die Beschlusslage im Dokumentdialog, die Downloads
+`beschlusslage`, `beratungsverlauf`, `antragserfolg`) mit den Kürzeln aus Frage 9.17 und den drei
+Namen für `rolle` gebaut auf `feat/26-beschluesse-seite`, wartet auf Review und Merge. Die Kürzel
+ändern H28.2 von Vorhaben 28 (41 von 389 → 41 von 458, bestätigt wie vorher; Entscheidungseintrag).**
 
 Stufe 1 (Messen) vom 2026-11-24 auf dem Branch `feat/26-beschluesse` (gemerged, entfernt). Briefing:
 [../plan-vorverarbeitung-2026-11.md](../plan-vorverarbeitung-2026-11.md), § 11 „26 Beschlusslage und
