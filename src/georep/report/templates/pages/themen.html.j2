@@ -11,7 +11,7 @@
 {% set k = m.measured %}
 {% set u = data.urls %}
 {% set x = " (explorativ)" if m.explorative else "" %}
-{% macro bar(share) %}<span class="feldbalken" aria-hidden="true"><span style="width:{{ '%.1f'|format(share * 100) }}%"></span></span>{% endmacro %}
+{% macro bar(share, top) %}<span class="feldbalken" aria-hidden="true"><span style="width:{{ '%.1f'|format(share / top * 100) }}%"></span></span>{% endmacro %}
 {% macro cell(share) %}<td class="num" data-value="{{ '%.4f'|format(share) }}">{{ (share * 100)|num(1) }}</td>{% endmacro %}
 <p class="lizenz"><strong>Lizenz:</strong> Die Politikfelder und alle Zahlen dieser Seite, die aus ihnen abgeleitet sind, stehen unter <a href="{{ u.license }}">CC BY-NC-SA 4.0</a>, anders als die übrigen Ergebnisse (CC0). {{ data.attribution }}, <a href="{{ u.cap }}">comparativeagendas.net</a>, <a href="{{ u.doi }}">doi 10.1080/13572334.2021.2010395</a>.</p>
 <section id="ueberblick">
@@ -31,12 +31,12 @@
 
 <section id="perioden">
 <h2>Politikfelder in dieser Periode{{ x }}</h2>
-<p>Anteile an den Dokumenten mit Feld, getrennt für Rat und Ausschüsse ({{ m.groups[0].with_area|num }} Dokumente) und für die Bezirksvertretungen ({{ m.groups[1].with_area|num }}); die Spalte „alle“ zählt auch Beiräte und Dokumente ohne erkanntes Gremium ({{ m.groups[2].with_area|num }}). Ein Balken ist der Anteil in seiner Gruppe; die Felder stehen nach ihrer Zahl über alle Dokumente.</p>
+<p>Anteile an den Dokumenten mit Feld, getrennt für Rat und Ausschüsse ({{ m.groups[0].with_area|num }} Dokumente) und für die Bezirksvertretungen ({{ m.groups[1].with_area|num }}); die Spalte „alle“ zählt auch Beiräte und Dokumente ohne erkanntes Gremium ({{ m.groups[2].with_area|num }}). Ein Balken ist der Anteil in seiner Gruppe, gemessen am größten Anteil der Tabelle; die Felder stehen nach ihrer Zahl über alle Dokumente.</p>
 <div class="scroll"><table id="felder" class="felder">
 <thead><tr><th scope="col">Politikfeld</th><th scope="col" class="num">Rat und Ausschüsse, %</th><th scope="col" class="num">Bezirks&shy;vertretungen, %</th><th scope="col" class="num">alle Dokumente</th><th scope="col" class="num">%</th></tr></thead>
 <tbody>
 {% for a in m.areas %}
-<tr><th scope="row">{{ a.name }} <span class="note">({{ a.code }})</span></th><td class="num">{{ (a.council_share * 100)|num(1) }} {{ bar(a.council_share) }}</td><td class="num">{{ (a.district_share * 100)|num(1) }} {{ bar(a.district_share) }}</td><td class="num">{{ a.total|num }}</td><td class="num">{{ (a.total_share * 100)|num(1) }}</td></tr>
+<tr><th scope="row">{{ a.name }} <span class="note">({{ a.code }})</span></th><td class="num">{{ (a.council_share * 100)|num(1) }} {{ bar(a.council_share, m.bar_max) }}</td><td class="num">{{ (a.district_share * 100)|num(1) }} {{ bar(a.district_share, m.bar_max) }}</td><td class="num">{{ a.total|num }}</td><td class="num">{{ (a.total_share * 100)|num(1) }}</td></tr>
 {% endfor %}
 </tbody></table></div>
 <p class="note">Ohne Feld: {% for g in m.groups %}{{ g.label }} {{ g.undetermined|num }} von {{ g.documents|num }}{% if not loop.last %}; {% endif %}{% endfor %}. Sport, Kinder und Jugend zählen nach dem deutschen CAP-Codebuch zum Sozialen (13), Parks und Denkmalschutz zu den öffentlichen Flächen (21), Verwaltungsinterna wie Sitzungstermine und Wahlen zu Staat und Verwaltung (20); das <a href="{{ u.codebook }}">Codebuch</a> nennt alle Regeln.</p>
@@ -82,7 +82,7 @@
 <thead><tr><th scope="col">Politikfeld</th><th scope="col" class="num">diese Periode, %</th><th scope="col" class="num">Bundestag 1976 bis 2005, %</th></tr></thead>
 <tbody>
 {% for a in m.areas if a.bundestag_share is not none %}
-<tr><th scope="row">{{ a.short }} <span class="note">({{ a.code }})</span></th><td class="num">{{ (a.total_share * 100)|num(1) }} {{ bar(a.total_share) }}</td><td class="num">{{ (a.bundestag_share * 100)|num(1) }} {{ bar(a.bundestag_share) }}</td></tr>
+<tr><th scope="row">{{ a.short }} <span class="note">({{ a.code }})</span></th><td class="num">{{ (a.total_share * 100)|num(1) }} {{ bar(a.total_share, m.bundestag_max) }}</td><td class="num">{{ (a.bundestag_share * 100)|num(1) }} {{ bar(a.bundestag_share, m.bundestag_max) }}</td></tr>
 {% endfor %}
 </tbody></table></div>
 </section>

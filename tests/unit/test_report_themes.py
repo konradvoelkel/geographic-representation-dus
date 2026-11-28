@@ -166,6 +166,9 @@ def test_the_model_splits_council_and_district_bodies() -> None:
         ("2 Süd", 1, 1),
     ]
     assert model.district_documents == 2
+    # die Balken beziehen sich auf den größten Anteil ihrer Tabelle
+    assert model.bar_max == 1.0  # Verkehr in Rat und Ausschüssen: 2 von 2
+    assert model.bundestag_max == 2 / 6  # Verkehr in dieser Periode, vor jedem Anteil im Bundestag
 
 
 # --- Die Seite der Mini-Fixture -----------------------------------------------------------------------

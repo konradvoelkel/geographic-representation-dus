@@ -6,7 +6,7 @@ ul.toc { display: flex; flex-wrap: wrap; gap: .25rem 1.25rem; list-style: none; 
 .pruefung { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: .25rem 1rem .75rem; margin: 1rem 0; }
 .pruefung h2 { margin-top: .75rem; font-size: 1.1rem; }
 table.felder td.num { white-space: nowrap; }
-table.felder th[scope="row"] { min-width: 12em; }
+@media (min-width: 48rem) { table.felder th[scope="row"] { min-width: 12em; } }
 .feldbalken { display: inline-block; vertical-align: middle; width: 5em; height: .6em; background: var(--grid); border-radius: 2px; margin-left: .35em; }
 .feldbalken > span { display: block; height: 100%; max-width: 100%; background: var(--q2); border-radius: 2px; }
 table.breit { font-size: .82rem; }

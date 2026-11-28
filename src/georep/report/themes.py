@@ -284,6 +284,10 @@ class ThemesModel:
     fractions: tuple[ShareRow, ...] | None  # None ohne Antragsteller (Vorhaben 15 aus)
     districts: tuple[ShareRow, ...]
     district_documents: int  # Dokumente mit Treffer in mindestens einem Wahlbezirk und Feld
+    # Die Balken einer Tabelle beziehen sich auf ihren größten Anteil (Fotos 2026-11-28: am Anteil
+    # selbst gemessen war der längste Balken ein Drittel der Spur, die meisten ein Strich).
+    bar_max: float  # Abschnitt 1: der größte Anteil in Rat und Ausschüssen oder Bezirksvertretungen
+    bundestag_max: float  # Abschnitt 4: der größte Anteil dieser Periode oder des Bundestags
 
     @property
     def explorative(self) -> bool:
@@ -447,6 +451,18 @@ def build_themes(
         fractions=fractions,
         districts=tuple(sorted(districts, key=lambda r: int(r.key))),
         district_documents=with_hit,
+        bar_max=max((s for a in rows for s in (a.council_share, a.district_share)), default=0.0)
+        or 1.0,
+        bundestag_max=max(
+            (
+                s
+                for a in rows
+                if a.bundestag_share is not None
+                for s in (a.total_share, a.bundestag_share)
+            ),
+            default=0.0,
+        )
+        or 1.0,
     )
 
 
