@@ -19,7 +19,7 @@ from georep.errors import MissingInputError
 from georep.layout import Layout
 from georep.pipeline import Outcome, UnknownStepError, build_steps, run_pipeline
 from georep.prep.voters import TURNOUT
-from georep.report.dialog import dialogs_for
+from georep.report.dialog import shown_dialogs
 from georep.report.search import fold, fold_ascii
 from georep.report.tables import published
 from georep.settings import Settings, load_settings
@@ -312,7 +312,7 @@ def test_pipeline_reproduces_the_thesis_results(
     tables = published(layout, settings)
     assert {"dokumente_kopf", "kennungen"} <= {t.name for t in tables}
     files = [n for t in tables for n in t.download_names(layout)]
-    hooks = len(dialogs_for(settings))
+    hooks = len(shown_dialogs(layout, settings))  # Vorhaben 18: nur, wer etwas zeigt
     assert len(list(layout.site_data.iterdir())) == len(files) + 6 + hooks
     assert (layout.site / "karte.html").stat().st_size < 1_000_000
     _compare_results(

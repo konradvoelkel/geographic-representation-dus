@@ -11,7 +11,7 @@ from georep.bootstrap import bootstrap_from_settings
 from georep.io import digest
 from georep.layout import Layout
 from georep.pipeline import build_steps, freshness, run_pipeline
-from georep.report.dialog import dialogs_for
+from georep.report.dialog import shown_dialogs
 from georep.report.tables import published
 from georep.settings import Settings, load_settings
 from tests.conftest import within_budget
@@ -125,7 +125,7 @@ def test_the_whole_chain_on_the_reference_publishes_both_sections(
     # Vorhaben 11 und 12: der Kopf ohne CSV, beide nur mit den Settings (gemessen, mit Rohtext);
     # dazu je Dialog-Haken seine Datei (Vorarbeit V2)
     files = [n for t in published(layout, settings) for n in t.download_names(layout)]
-    hooks = len(dialogs_for(settings))
+    hooks = len(shown_dialogs(layout, settings))  # Vorhaben 18: nur, wer etwas zeigt
     assert len(list(layout.site_data.iterdir())) == len(files) + 6 + hooks
     assert '<section id="kontrollvariablen">' in page and "Modell C" in page
     assert '<section id="abgeleitete-daten">' in page

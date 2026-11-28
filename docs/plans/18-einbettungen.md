@@ -1,7 +1,8 @@
 # Vorhaben 18: Einbettungen, Ähnlichkeit, semantische Suche
 
-**Stand 2026-11-26: Urteil bauen (§ 5.1), Stufe 2 auf `main` (`v0.26.0`, Punkt 77); Stufe 3
-(„ähnliche Dokumente" im Dokumentdialog) wartet auf den Haken aus Stufe 3 von 14 (§ 10, Punkt 7).**
+**Stand 2026-11-28: Urteil bauen (§ 5.1), Stufe 2 auf `main` (`v0.26.0`, Punkt 77); Stufe 3
+(„ähnliche Dokumente" im Dokumentdialog über den Haken von 14, der Download `aehnliche_dokumente`)
+gebaut auf `feat/18-aehnlich`, wartet auf Review und Merge.**
 
 Stufe 1 (Messen) abgeschlossen am 2026-11-24; Stufe 2 gebaut auf `feat/18-einbettungen`, gemerged und
 entfernt (was vom Bauplan abweicht, steht im Entscheidungspunkt „Einbettungen über Stücke" in
@@ -102,9 +103,9 @@ genau die dieses Vorhabens.
 | `cache_root/ml/nomic-embed-text-v2-moe_latest.sqlite` | Modellcache von F5: je Stück und Frage ein Vektor float32, Schlüssel Digest, Prompt-Version samt Fensterschlüssel (`18-stuecke-1+1868f0241d5a`, `18-anfrage-1+1868f0241d5a`) und SHA-256 der Eingabe | `--einbetten`, lokal |
 
 **Modell**: `nomic-embed-text-v2-moe:latest`, Digest `ff9c2f10ef5e3722…`, F16, 958 MB, ollama 0.24.0.
-`ollama show --license` nennt keine Lizenz; die Modellseite nennt nach Erinnerung Apache 2.0
-(nicht geprüft, Frage 9.6). Ins Repo kämen ohnehin nur Ausgaben (IDs, gegebenenfalls Vektoren), nie
-das Modell.
+`ollama show --license` nennt keine Lizenz; die Modellseite nennt Apache 2.0 (nachgesehen vom
+Supervisor am 2026-11-28, Frage 9.6). Ins Repo kämen ohnehin nur Ausgaben (IDs, gegebenenfalls
+Vektoren), nie das Modell.
 
 **Einheit.** Die Messung rechnet je PDF-Datei (§ 3.1). Von den 19 108 Korpus-IDs haben 19 032 einen
 nicht leeren Rohtext, jede in ihrer eigenen Datei (die Dateien, die sich mehrere IDs teilen, haben
@@ -703,7 +704,7 @@ vorab festgelegt ist (Verfahren, Kriterium, Rückfall, explorative Zusätze), st
 | 9.3 | Soll es eine freie semantische Suche auf der Seite geben? | Modell im Browser oder Server, § 3.4: rund 0,5 GB Modell oder ein eigener Dienst, dazu 12 bis 64 MB Index | Nicht in Stufe 3; „ähnliche Dokumente" und `georep suche` lokal decken die Ratsarbeit, eine Suche auf der Seite wäre ein eigenes Vorhaben mit eigener Messung (kleineres Modell, andere Vektoren) |
 | 9.4 | Snowball-Stemmer als eigene Umsetzung oder als Abhängigkeit `snowballstemmer`? | eine Bibliothek für rund 70 Zeilen gegen den Prüfaufwand einer eigenen | Eigene Umsetzung mit der vollständigen Beispielliste als Test (wie `krippendorff` in F4, Punkt 71) |
 | 9.5 | Wie erkennt ein Modellschritt, dass ollama still auf der CPU rechnet? | Am 2026-11-23 um 22:42 scheiterte die CUDA-Initialisierung (`ggml_cuda_init: failed to initialize CUDA: initialization error` im Log), `ollama ps` sagte trotzdem „100% GPU"; rund 1,6 Stücke/s statt rund 90 je Sekunde auf der GPU | Die Messung prüft das Tempo an einer Probe von 64 Stücken (`GPU_GRENZE_S`); 370 auf der CPU gerechnete Vektoren dieses Vorhabens sind aus dem Cache gelöscht und auf der GPU neu gerechnet. Für F5: eine Tempo-Probe in `georep ml status` oder vor dem ersten Stapel, Entscheidung des Supervisors |
-| 9.6 | Unter welcher Lizenz stehen die Gewichte von `nomic-embed-text-v2-moe`? | Die Seite nennt das Modell neben den Nachbarn | `ollama show --license` ist leer; nach Erinnerung Apache 2.0. Vor Stufe 3 auf der Modellseite nachsehen |
+| 9.6 | Unter welcher Lizenz stehen die Gewichte von `nomic-embed-text-v2-moe`? | Die Seite nennt das Modell neben den Nachbarn | `ollama show --license` ist leer; nach Erinnerung Apache 2.0. Vor Stufe 3 auf der Modellseite nachsehen. **Nachgesehen am 2026-11-28 (Supervisor, Frage 47): Apache-2.0**, https://huggingface.co/nomic-ai/nomic-embed-text-v2-moe |
 | 9.7 | Verraten veröffentlichte Vektoren Text? | Aus Einbettungen lässt sich Text teilweise zurückgewinnen (Morris u. a. 2023, „vec2text"*), bei kurzen Texten weitgehend; die Seite veröffentlicht bewusst keine Volltexte (`workflow-ratsmitglied.md`, § 4) | Keine Vektoren auf der Seite und im Repo (9.1); die Nachbartabelle trägt nur IDs und Ähnlichkeiten |
 | 9.8 | Kommt `georep suche` mit BM25, auch wenn Teil 1 des Kriteriums verfehlt wird? | BM25 ist billig und ohne Modell; die Messung liefert seine Güte mit | Entfällt: Teil 1 ist erfüllt (§ 5.1). BM25 bleibt als `--verfahren bm25` für Läufe ohne ollama (nDCG@10 0,709) |
 | 9.9 | Sind die Labels voreingenommen? | Suchfragen, Bedarf und Kodierung kommen aus derselben Modellfamilie; der Bedarf beschreibt Synonyme, die BM25 nicht sieht, aber die Einbettung vielleicht | Beantwortet, soweit es die Daten können (§ 4.4): der Vorsprung liegt nicht nur bei umschriebenen Fragen, am größten ist er bei Fragesätzen, bei Stichwörtern im Amtswortlaut ist er klein (+0,032, Intervall über 0); ohne Fragesätze +0,107. Dass Fragen, Bedarf und Labels aus derselben Modellfamilie kommen, bleibt als Grenze (Frage 19 an Konrad) |

@@ -59,8 +59,9 @@ def test_ein_ziel_zeigt_in_dokumente_json_oder_auf_ein_eigenes_dokument() -> Non
         note="ein Satz",
     )
     payload = _payload(rows, ["a", "b", "c"])
-    assert payload["format"] == DIALOG_FORMAT
-    assert payload["rows"] == {"0": [[0, 1], [0, -1]], "2": [[1, 0], [1, -2], [1, -1]]}
+    assert payload["format"] == DIALOG_FORMAT == 3
+    # Format 3 (Vorhaben 18): ein Eintrag mit dem ersten Wort und einem Ziel ist nur dessen Zahl
+    assert payload["rows"] == {"0": [1, -1], "2": [[1, 0], [1, -2], [1, -1]]}
     # nur die Ziele außerhalb von dokumente.json, in der Folge ihres ersten Auftretens, relativ
     assert payload["documents"] == [
         ["00007.pdf", "2021-03-07", "X/007/2021", "Titel 7"],
@@ -83,7 +84,7 @@ def test_zeilen_ausserhalb_des_dialogs_fallen_weg() -> None:
         rows={"z": ((0, "a"),), "b": ((0, "a"),), "a": ()},
     )
     payload = _payload(rows, ["a", "b"])
-    assert payload["rows"] == {"1": [[0, 0]]}
+    assert payload["rows"] == {"1": [0]}
     assert payload["documents"] == []
 
 
@@ -130,7 +131,9 @@ def _empty() -> DialogRows:
     return DialogRows(labels=(), rows={})
 
 
-def _probe(layout_file: str = "probe.parquet", *, on: bool = True) -> DialogHook:
+def _probe(
+    layout_file: str = "probe.parquet", *, on: bool = True, shown: bool | None = None
+) -> DialogHook:
     return DialogHook(
         "probe",
         "Probe",
@@ -138,6 +141,7 @@ def _probe(layout_file: str = "probe.parquet", *, on: bool = True) -> DialogHook
         inputs=lambda layout, settings: (layout.processed / layout_file,),
         rows=_probe_rows,
         enabled=lambda settings: on,
+        shown=None if shown is None else (lambda layout, settings: shown),
     )
 
 
@@ -215,7 +219,7 @@ def test_der_bericht_schreibt_die_datei_und_raeumt_sie_wieder_weg(
     assert payload["base"] == listed["base"] and payload["title"] == "Probe"
     # jedes Dokument des Dialogs hat eine Zeile, und jede zeigt auf das eigene Ziel
     assert set(payload["rows"]) == {str(i) for i in range(len(listed["documents"]))}
-    assert {json.dumps(v) for v in payload["rows"].values()} <= {"[[0, -1]]", "[[0, 0]]"}
+    assert {json.dumps(v) for v in payload["rows"].values()} <= {"[-1]", "[0]"}
     assert [(d.name, d.format, d.rows) for d in downloads] == [
         ("probe.json", "JSON", len(listed["documents"]))
     ]
@@ -280,7 +284,7 @@ def test_ein_haken_waehlt_die_felder_seiner_ziele() -> None:
         generated_at=NOW,
         show=("drucksache", "datum", "titel"),
     )
-    assert payload["format"] == DIALOG_FORMAT == 2
+    assert payload["format"] == DIALOG_FORMAT == 3
     assert payload["show"] == [2, 1, 3]
     assert _payload(rows, ["a"])["show"] == [2]  # die Vorgabe: nur die Drucksache
     with pytest.raises(ValueError, match="show"):
@@ -296,8 +300,10 @@ def test_ein_haken_waehlt_die_felder_seiner_ziele() -> None:
 
 def test_das_skript_haelt_folge_notizen_und_woerter_nach_dem_format() -> None:
     """(a) je Haken ein Platzhalter in der Folge von data-extras, nicht in der Ankunftsfolge;
-    (b) die Sätze unter der Liste; (c) ein Wort nur, wenn es wechselt; (d) die Felder aus ``show``."""
+    (b) die Sätze unter der Liste; (c) ein Wort nur, wenn es wechselt; (d) die Felder aus ``show``;
+    (e) Format 3: eine Zahl ist ein Ziel mit dem ersten Wort."""
     hook = environment().get_template("frame/dialog.js.j2").render()
+    assert "e.length ? e : [0, e]" in hook  # (e)
     assert "EXTRAS.map" in hook  # (a) und (b): Platzhalter je Haken, angelegt vor dem Laden
     assert 'line(dialog, "", "note extra")' in hook  # (b): hinter <ol>, also unter der Liste
     assert "e[0] === row[k - 1][0]" in hook  # (c)
@@ -319,8 +325,9 @@ def test_der_haken_steht_nur_auf_seiten_mit_dateien(
     grown = len(with_hooks.encode("utf-8")) - len(without.encode("utf-8"))
     # Plan § 5 schätzte unter 1 KB; mit Review K3 (Folge, Sätze unter der Liste, Wort beim Wechsel,
     # Felder aus show) und N3 (Zähler je Aufruf, ein kaputter Link kostet nur sich) sind es rund
-    # 1,5 KB samt data-extras, die Grenze ist darum 1 600
-    assert 0 < grown < 1_600
+    # 1,5 KB samt data-extras; Vorhaben 18 (die Liste zum Aufklappen, ``list``, und die kurzen
+    # Einträge von Format 3) bringt rund 300 Byte dazu, die Grenze ist darum 1 900
+    assert 0 < grown < 1_900
     frame = page_frame(default_settings, now=NOW, commit=None)
     env = environment()
     from jinja2 import ChoiceLoader, DictLoader
@@ -361,3 +368,36 @@ def test_ein_fremdes_dokument_am_rand_von_dokumente_json_bricht_ab(
     _register(monkeypatch, _probe())
     with pytest.raises(SchemaError, match="Link"):
         write_dialogs(layout, mini_model, default_settings)
+
+
+# --- Vorhaben 18: eine Liste statt einer Zeile; ein Haken ohne Zeilen fehlt ----------------------
+def test_eine_liste_steht_nur_in_der_datei_die_sie_will() -> None:
+    """``list`` steht nur in der Datei eines Hakens, der ihn will; ohne fehlt der Schlüssel (14)."""
+    rows = DialogRows(labels=("",), rows={"a": ((0, "x"),)}, targets={"x": _target(7)})
+    assert "list" not in _payload(rows, ["a"])
+    payload = dialog_payload(
+        rows, ["a"], BASE, title="T", version="0", generated_at=NOW, listed=True
+    )
+    assert payload["list"] is True and payload["format"] == DIALOG_FORMAT == 3
+    assert list(payload)[:6] == ["format", "version", "generated_at", "title", "note", "show"]
+
+
+def test_ein_haken_ohne_etwas_zu_zeigen_fehlt_im_dialog(
+    mini_run: Layout,
+    mini_model: ReportModel,
+    default_settings: Settings,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """``DialogHook.shown``: an (also im Stamp von ``report``), aber in dieser Datenwurzel ohne
+    Zeilen -- dann fehlt er in ``data-extras``, und seine Datei fährt nicht mit."""
+    layout = _copy(mini_run, tmp_path)
+    _register(monkeypatch, _probe(shown=False))
+    assert dialog_names(default_settings) == ("probe",)
+    assert dialog_names(default_settings, layout) == ()
+    (layout.site_data / "probe.json").write_text("{}", encoding="utf-8")
+    assert write_dialogs(layout, mini_model, default_settings) == []
+    assert not (layout.site_data / "probe.json").exists()
+    _register(monkeypatch, _probe(shown=True))
+    assert dialog_names(default_settings, layout) == ("probe",)
+    assert [d.name for d in write_dialogs(layout, mini_model, default_settings)] == ["probe.json"]
