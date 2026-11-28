@@ -48,6 +48,9 @@ Stand 2026-11-26, `main` auf `v0.32.0`.
 - **Ähnliche Dokumente** (`v0.43.0`, Punkt 96): der Dokumentdialog der Hauptperiode zeigt je Dokument fünf
   ähnliche aus `data/aehnlich.json` (911 KB, nachgeladen); nachgeladene Dateien der Hauptperiode zusammen
   rund 1,0 MB von 1,5 MB.
+- **Ortsbezug** (`v0.44.0`, Punkt 97): der frühe Schritt `places` rechnet die Stelle je Treffer und die
+  Hausnummern (92,3 % verortet); die Gewichtungen `ortsbezug` (Nebenregel C) und `stelle` (explorativ)
+  stehen in der Hauptperiode in „Was ändert die Gewichtung?“. Mit ihnen sind es 28 Gewichtungen.
 - **`vorgaenge.html`** (`v0.38.0`): Antworten auf Anfragen, Kandidaten, Vorgänge; dazu der Dialog-Haken der
   Hauptseite, der Zeilen je Dokument beim Öffnen nachlädt. Die Hauptseite liegt damit bei 966 522 Byte,
   rund 29 KB über dem Stand vor der Phase (Ziel höchstens 30 KB, `docs/todo.md`, Punkt 36).

@@ -5645,7 +5645,7 @@ im Download); Vektoren oder eine freie Suche auf der Seite (Fragen 9.1, 9.3, 9.7
   „Vorgang" sind in A (Format 2) und B (Format 3) für denselben Begriff gleich, in der Hauptperiode
   (acht) und in 2014 bis 2020 (vier).
 
-## NN. Ortsbezug: die Stelle aus den Abschnitten von 11, die Hausnummer entscheidet die Grenzstraße und erzeugt keinen Treffer, zwei Gewichtungen statt einer neuen Zählung (Vorhaben 16, Stufe 2 und kleine Stufe 3, 2026-11-28)
+## 97. Ortsbezug: die Stelle aus den Abschnitten von 11, die Hausnummer entscheidet die Grenzstraße und erzeugt keinen Treffer, zwei Gewichtungen statt einer neuen Zählung (Vorhaben 16, Stufe 2 und kleine Stufe 3, 2026-11-28)
 
 Vorhaben 16 nach `docs/plans/16-ortsbezug.md`, § 6 und § 7 mit § 10 (Supervisor, 2026-11-28), in
 einem Bau (`docs/plan-zeigen-2026-11.md`, § 5). Gebaut auf `feat/16-ortsbezug` ab `main` `6accc37`.
