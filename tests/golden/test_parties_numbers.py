@@ -217,7 +217,7 @@ def test_the_page_carries_the_section_within_the_budget(
     """Auf der vollen Referenz: der Abschnitt steht auf der Seite, und sie bleibt unter dem Budget."""
     from georep.bootstrap import bootstrap_from_settings
     from georep.pipeline import build_steps, run_pipeline
-    from georep.report.dialog import dialogs_for
+    from georep.report.dialog import shown_dialogs
     from georep.report.tables import published
 
     root = tmp_path_factory.mktemp("parties_site")
@@ -243,7 +243,7 @@ def test_the_page_carries_the_section_within_the_budget(
     # Vorhaben 11 und 12: der Kopf ohne CSV, beide nur mit den Settings (gemessen, mit Rohtext);
     # dazu je Dialog-Haken seine Datei (Vorarbeit V2)
     files = {n for t in published(layout, settings) for n in t.download_names(layout)}
-    assert files <= names and len(names) == len(files) + 6 + len(dialogs_for(settings))
+    assert files <= names and len(names) == len(files) + 6 + len(shown_dialogs(layout, settings))
 
 
 # --- Punkt 60: die Urheber der Wahlperiode 2014 bis 2020 ----------------------------------------
