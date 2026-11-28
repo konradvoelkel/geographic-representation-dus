@@ -1156,3 +1156,23 @@ package = "snapshots/duesseldorf-strassenpunkte"  # georep pack --street-points;
 [street_points.labels]         # Stadtteilgrenzen 2025 des Portals, dl-de/zero-2.0 (license_title des Datensatzes, geprüft am 2026-11-23); als Paket nur Name und Punkt auf der Fläche
 url = "https://opendata.duesseldorf.de/sites/default/files/Stadtteile_2025_WGS84_EPSG4326_1.geojson"
 name = "Name"                  # die Eigenschaft mit dem Namen; daneben steht "Nummer"
+
+# --- Vorhaben 28: Abstimmungen (docs/plans/28-abstimmungen.md, § 8 und § 10) ----------------------
+# Ebene A in allen drei Perioden: das Paket von 26 trägt dort die Tagesordnungspunkte mit dem Eintrag
+# der Sitzungsleitung (Hauptperiode 25 439, 2014-2020 28 092, seit 2025 4 979). Ebene B (Positionen
+# der Fraktionen aus den Niederschriften) ist nach der Kodierung verworfen (§ 5.1); H28.1 und H28.3
+# bleiben darum nicht entscheidbar. Die Zeiträume sind die aus § 8.4, festgelegt im Commit 97ebb52:
+# ab dem Monat der Vereinbarung (Januar 2021, Dezember 2025), nicht ab der Wahlperiode des Rates
+# wie [majorities]; die Parteien der Mehrheit kommen von dort.
+[votes]
+enabled = true
+fixed = "97ebb52"              # Commit der Festlegung von Klassen, Kriterium und Hypothesen (2026-11-24 00:41)
+fixed_on = 2026-11-24
+excluded_parties = ["AfD"]     # H28.2 lässt Anträge mit dieser Fraktion aus; sie prüft H28.3 (WZB-Schwelle)
+[[votes.windows]]
+calculation = "haupttest"      # H28.2, Hauptrechnung: Sitzungen der Hauptperiode ab der Kooperationsvereinbarung
+start = 2021-01-01
+end = 2025-09-14
+[[votes.windows]]
+calculation = "R2"             # Nebenrechnung ab dem Koalitionsvertrag; rechnet im Profil duesseldorf-2025
+start = 2025-12-01

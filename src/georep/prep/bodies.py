@@ -274,6 +274,16 @@ def _from_code(code: str, rules: BodyRules, source: str = FROM_ALIAS) -> BodyRef
     return BodyRef(kind, code, None, FROM_NOWHERE if kind == UNKNOWN else source)
 
 
+@deal.post(lambda result: result in KINDS, message="eine Klasse aus KINDS")
+def kind_of_code(code: str, rules: BodyRules) -> str:
+    """Die Klasse eines Gremiums, dessen Kürzel schon feststeht (Vorhaben 28: die Sitzung eines
+    Tagesordnungspunkts, Kürzel aus ``[bodies.organizations]``); dieselbe Regel wie ``_from_code``.
+
+    Ein Schlüssel, den die Tabelle nicht kennt (``gr/400224``), ist ``unbekannt``.
+    """
+    return _from_code(code, rules).kind
+
+
 @deal.safe
 @deal.post(_consistent, message="Klasse aus KINDS, Stadtbezirk genau bei Bezirksvertretungen, ab 1")
 def parse_reference(reference: str | None, rules: BodyRules) -> BodyRef:

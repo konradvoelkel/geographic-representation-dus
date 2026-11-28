@@ -727,3 +727,41 @@ person_titles = 'Herrn?|Frau|Ratsherrn?|Ratsfrau|(?:Ober|Bezirks)?[Bb]ürgermeis
 # --- Vorhaben 11 und 12, Stufe 3: kein Personenname in einem Download (docs/plans/11-struktur.md und 12-kennungen.md, § 7)
 [report.names]                 # ein Unterblock von [report]: er betrifft nur die Seite und zählt im Stamp von report, nicht im Settings-Fingerprint
 person_titles = 'Herrn?|Frau|Dr\.|Prof\.|Ratsherrn?|Ratsfrau|Ratsmitglied|Bürgermitglied|(?:Ober|Bezirks)?[Bb]ürgermeister(?:in)?|Beigeordnete[rn]?|Stadtdirektor(?:in)?|Stadtkämmer(?:er|in)|Dezernent(?:in)?|Amtsleiter(?:in)?|Bezirksvertreter(?:in)?|Fraktionsvorsitzende[rn]?|Vorsitzende[rn]?|Sprecher(?:in)?|Geschäftsführer(?:in)?'  # folgt einem dieser Titel (mit oder ohne Doppelpunkt) ein groß geschriebener Buchstabe, trägt der Wert vermutlich einen Namen und fehlt im Download: im Kopf ein leerer Wert, unter den Kennungen die Spanne. Gezählt am 2026-11-27 in der Hauptperiode: 4 Amtszeilen, in die das Feld der Dezernentin oder des Dezernenten läuft („Kulturamt Dezernentin/Dezernent: Beigeordneter …"), keine Kennung. Verwaltungsdeutsch, keine Stadt; die Anreden wie summaries.person_titles, dazu die Rollen aus structure.head.signer_roles. Polars, also Rust-Syntax ohne Lookarounds
+
+# --- Vorhaben 28: Abstimmungen (docs/plans/28-abstimmungen.md, § 6, § 8 und § 10)
+[votes]                        # Ergebnis und Mehrheitsform je Tagesordnungspunkt aus dem Eintrag der Sitzungsleitung (Ebene A, § 5.1); ein Stadtprofil schaltet ein, wenn das Paket von 26 seine Punkte trägt
+enabled = false
+# Die Wortregel aus § 8.1, vorab festgelegt im Commit 97ebb52, bevor ein Wert von `result` gezählt war,
+# und an 150 Punkten geprüft (Präzision 0,982). Die erste Zeile, deren Wort im kleingeschriebenen
+# Eintrag steht, gilt, sonst „sonstiges": eine Regel über Wörter, keine Tabelle der Werte, damit ein
+# neuer Wert nicht still herausfällt. Die Sprache der Sitzungsleitung, keine Stadt; nicht ändern ohne
+# neue Messung (ein Test hält sie gleich der des Messskripts)
+changed = ["abweichend", "geändert"]  # angenommen mit Änderung (Merker geaendert)
+unanimous = ["einstimmig"]     # Form einstimmig, nur bei angenommen oder abgelehnt
+majority = ["mehrheitlich"]    # Form mehrheitlich; sonst ohne_angabe
+motion_type = "antrag"         # H28.2: ein Antrag ist eine Drucksache, deren Dokumentart dieses Wort enthält …
+motion_not = "anfrage"         # … und dieses nicht (§ 8.6, wie das Messskript)
+threshold = 0.25               # H28.2: angenommen in weniger als einem Viertel der Fälle (§ 8.6, vorab gesetzt)
+min_units = 30                 # H28.2: darunter nicht entscheidbar
+alpha = 0.05                   # Holm über H28.1 bis H28.3, bestätigt bei p_holm < alpha
+[[votes.results]]
+result = "zurueckgezogen"
+words = ["zurückgezogen"]
+[[votes.results]]
+result = "vertagt"
+words = ["vertagt", "zurückgestellt", "abgesetzt"]
+[[votes.results]]
+result = "verwiesen"
+words = ["verwiesen"]
+[[votes.results]]
+result = "abgelehnt"
+words = ["abgelehnt"]
+[[votes.results]]
+result = "angenommen"
+words = ["beschlossen", "zugestimmt", "angenommen", "passieren lassen"]
+[[votes.results]]
+result = "kenntnis"
+words = ["kenntnis", "beantwortet"]
+[[votes.results]]
+result = "erledigt"
+words = ["erledigt"]

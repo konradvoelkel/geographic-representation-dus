@@ -1,0 +1,91 @@
+{% if data.abstimmungen %}
+{#
+  Vorhaben 28, Stufe 3 (docs/plans/28-abstimmungen.md, § 7 mit § 10, Punkt 5): ein Gast auf
+  akteure.html. Das Modell ist ``report.votes.VotesModel``; jede Zahl kommt aus den Tabellen des
+  Schritts votes, jeder Name einer Fraktion aus dem Profil. Für alle Fraktionen gleich, ohne
+  Personen und ohne Positionen je Fraktion (Ebene B ist verworfen, § 5.1).
+#}
+{% set v = data.abstimmungen %}
+{% set c = v.check %}
+{% set ex = " (explorativ)" if v.explorative else "" %}
+<h2>Abstimmungen{{ ex }}</h2>
+{% if not v.on %}
+<p>Wie die Gremien über die Dokumente entscheiden, liest dieser Abschnitt aus den Einträgen der Sitzungsleitung an jedem Tagesordnungspunkt. Für diesen Datensatz fehlt das:</p>
+<ul class="note">
+{% for line in v.missing %}
+<li>{{ line }}</li>
+{% endfor %}
+</ul>
+{% else %}
+<p>Wie entscheiden die Gremien über die Dokumente der {{ v.period }}? An jedem Tagesordnungspunkt trägt die Sitzungsleitung ein kurzes Ergebnis ein („einstimmig beschlossen“, „mehrheitlich abgelehnt“, „vertagt“). Daraus liest dieser Abschnitt nach einer vorab festgelegten Wortregel, ob ein Beschluss angenommen oder abgelehnt wurde und ob einstimmig (ohne Gegenstimme, Enthaltungen sind möglich) oder mehrheitlich. Wer wie gestimmt hat, steht nur in den Niederschriften; diese Ebene hat die Prüfung verworfen, darum nennt die Seite keine Positionen der Fraktionen.</p>
+<div class="pruefung" id="abstimmungen-pruefung">
+<h3>Wie geprüft</h3>
+<ul>
+{% if not c.measured %}
+<li><strong>Explorativ</strong>: gemessen ist an {{ c.measured_datasets|join("; ") }}, nicht an diesem Datensatz. Was dort gilt, steht hier; die Zahlen dieses Abschnitts sind darum explorativ.</li>
+{% endif %}
+<li><strong>Ergebnis und Form</strong> {{ c.sentence }}; Einheit ist ein Tagesordnungspunkt mit seinem Abschnitt der Niederschrift. An den {{ c.rule.basis|num }} Punkten, denen der Eintrag eine Form gibt, stimmen Ergebnis und Form in {{ c.rule.hits|num }} mit den Labels überein, gewichtet {{ c.rule.level_a.precision|num(3) }} (95-%-Intervall {{ c.rule.level_a.interval[0]|num(3) }}–{{ c.rule.level_a.interval[1]|num(3) }}); verlangt war {{ c.rule.criterion|num(1) }}. In der Messung nannte der Eintrag bei {{ c.rule.with_form|num }} von {{ c.rule.decided|num }} Beschlüssen der Hauptperiode eine Form ({{ c.rule.level_a.coverage|pct(1) }}).{% if c.agreements %} Die Kodierer stimmten untereinander {% for a in c.agreements %}{{ a.label }} in {{ a.agreed|num }} von {{ a.paired|num }} (α = {{ a.alpha|num(2) }}){{ ", " if not loop.last }}{% endfor %} überein{% if c.same_model %}; bei zwei Kodierern desselben Modells ist das ein schwacher Beleg{% endif %}.{% endif %}</li>
+<li><strong>Positionen der Fraktionen</strong>: aus den Niederschriften gelesen {{ c.rule.level_b.precision|num(3) }} ({{ c.rule.level_b.interval[0]|num(3) }}–{{ c.rule.level_b.interval[1]|num(3) }}), unter dem Kriterium; diese Ebene ist verworfen.</li>
+</ul>
+<p class="note">Wie gemessen ist, steht im <a href="{{ data.urls.measurement }}">Messdokument</a>; Codebuch, Stichprobe und Labels im Ordner <a href="{{ data.urls.check }}">{{ data.urls.check_folder }}</a>.</p>
+</div>
+
+<h3 id="abstimmungen-gremien">Einstimmig und mehrheitlich je Gremienart (explorativ)</h3>
+{% if v.total %}
+{% set t = v.total %}
+<p>{{ t.decided|num }} der {{ t.items|num }} Tagesordnungspunkte mit Beratung sind Beschlüsse: {{ t.accepted|num }} angenommen, {{ t.rejected|num }} abgelehnt. Einstimmig waren davon {{ t.share(t.unanimous)|pct(1) }}, mehrheitlich {{ t.share(t.majority)|pct(1) }}; bei {{ t.share(t.unstated)|pct(1) }} nennt der Eintrag keine Form. Beschreibend, keine vorab festgelegte Prüfung.</p>
+<div class="scroll"><table id="abstimmungen-arten">
+<thead><tr><th scope="col">Gremienart</th><th scope="col" class="num">Beschlüsse</th><th scope="col" class="num">angenommen</th><th scope="col" class="num">abgelehnt</th><th scope="col" class="num">einstimmig</th><th scope="col" class="num">mehrheitlich</th><th scope="col" class="num">ohne Angabe</th><th scope="col" class="num">geändert</th></tr></thead>
+<tbody>
+{% for r in v.kinds %}
+<tr><th scope="row">{{ r.label }}</th><td class="num">{{ r.decided|num }}</td><td class="num">{{ r.accepted|num }}</td><td class="num">{{ r.rejected|num }}</td><td class="num">{{ r.unanimous|num }} <span class="note">({{ r.share(r.unanimous)|pct(0) }})</span></td><td class="num">{{ r.majority|num }} <span class="note">({{ r.share(r.majority)|pct(0) }})</span></td><td class="num">{{ r.unstated|num }}</td><td class="num">{{ r.changed|num }}</td></tr>
+{% endfor %}
+</tbody>
+<tfoot><tr><th scope="row">{{ t.label }}</th><td class="num">{{ t.decided|num }}</td><td class="num">{{ t.accepted|num }}</td><td class="num">{{ t.rejected|num }}</td><td class="num">{{ t.unanimous|num }} <span class="note">({{ t.share(t.unanimous)|pct(0) }})</span></td><td class="num">{{ t.majority|num }} <span class="note">({{ t.share(t.majority)|pct(0) }})</span></td><td class="num">{{ t.unstated|num }}</td><td class="num">{{ t.changed|num }}</td></tr></tfoot>
+</table></div>
+<p class="note">Gezählt sind die Punkte zu den Dokumenten dieser Periode, auch in Sitzungen nach ihrem Ende. Eine Empfehlung eines vorberatenden Gremiums zählt wie ein Beschluss dieses Gremiums. „Geändert“ heißt angenommen mit Änderung („abweichend beschlossen“); dieser Eintrag nennt nie eine Form. Die Gremienart folgt der ersten Organisation der Sitzung.</p>
+{% else %}
+<p class="note">Kein Tagesordnungspunkt dieses Datensatzes ist ein Beschluss.</p>
+{% endif %}
+
+<h3 id="abstimmungen-pruefungen">Vorab festgelegte Prüfungen</h3>
+<p>Drei Hypothesen sind vorab festgelegt, {% if v.fixed_on %}am {{ v.fixed_on|date_de }} {% endif %}im Commit <a href="{{ data.urls.commit }}"><code>{{ v.fixed }}</code></a>, bevor ein Eintrag gezählt war. Einheit von H28.2 ist der Antrag mit seinem letzten Beschluss im Rat im Zeitraum, der Test ein einseitiger exakter Binomialtest gegen {{ v.threshold|pct(0) }}; die Schwelle ist α = {{ v.alpha|num(2) }} nach Holm über alle drei, bestätigt bei p nach Holm unter α, widerlegt, wenn die untere Grenze des Anteils über der Schwelle liegt, und unter {{ v.min_units|num }} Anträgen nicht entscheidbar.</p>
+<ul>
+{% for s in v.statements %}
+<li><strong>{{ s.hypothesis }}</strong>: {{ s.text }}</li>
+{% endfor %}
+</ul>
+{% if v.tests %}
+<div class="scroll"><table id="abstimmungen-hypothesen">
+<thead><tr><th scope="col">Prüfung</th><th scope="col">Rechnung, Zeitraum</th><th scope="col" class="num">Anträge</th><th scope="col" class="num">angenommen</th><th scope="col" class="num">p</th><th scope="col" class="num">p nach Holm</th><th scope="col">Ergebnis</th></tr></thead>
+<tbody>
+{% for t in v.tests %}
+<tr><th scope="row">{{ t.hypothesis }}</th><td>{{ t.calculation_label }}; {{ t.start|date_de }} bis {% if t.end %}{{ t.end|date_de }}{% else %}heute{% endif %}</td>{% if t.n %}<td class="num">{{ t.n|num }}</td><td class="num">{{ t.accepted|num }} ({{ t.share|pct(1) }}; bis {{ t.upper|pct(1) }})</td><td class="num">{{ t.p }}</td><td class="num">{{ t.p_holm }}</td>{% else %}<td class="num" colspan="4">nicht gerechnet</td>{% endif %}<td>{% if t.decision %}<strong>{{ t.decision }}</strong>{% else %}Nebenrechnung, entscheidet nicht{% endif %}{% if t.reason %} <span class="note">({{ t.reason }})</span>{% endif %}</td></tr>
+{% endfor %}
+</tbody></table></div>
+<p class="note">Angenommen mit dem Anteil und der oberen einseitigen 95-%-Grenze nach Clopper-Pearson. „Nicht entscheidbar“ heißt: die Prüfung sagt weder ja noch nein, nicht „kein Effekt“.{% if not v.has_main %} Der Haupttest rechnet in der Periode, in der sein Zeitraum liegt; hier steht nur die Nebenrechnung.{% endif %}</p>
+{% else %}
+<p>Für diesen Datensatz ist keine dieser Prüfungen gerechnet: ihre Zeiträume liegen in anderen Perioden ({% for name, start, end in v.windows %}{{ data.calculation_labels[name] }} {{ start|date_de }} bis {% if end %}{{ end|date_de }}{% else %}heute{% endif %}{{ "; " if not loop.last }}{% endfor %}).</p>
+{% endif %}
+{% if v.side %}
+<h4>Nebenrechnungen von H28.2 (entscheiden nicht)</h4>
+<div class="scroll"><table id="abstimmungen-neben">
+<thead><tr><th scope="col">Rechnung</th><th scope="col" class="num">Anträge</th><th scope="col" class="num">angenommen</th><th scope="col" class="num">obere Grenze</th></tr></thead>
+<tbody>
+{% for t in v.side %}
+<tr><th scope="row">{{ t.calculation_label }}{% if t.party %}: {{ t.party }}{% endif %}</th>{% if t.n %}<td class="num">{{ t.n|num }}</td><td class="num">{{ t.accepted|num }} ({{ t.share|pct(1) }})</td><td class="num">{{ t.upper|pct(1) }}</td>{% else %}<td class="num" colspan="3">kein Antrag</td>{% endif %}</tr>
+{% endfor %}
+</tbody></table></div>
+<p class="note">Ein gemeinsamer Antrag zweier Fraktionen der Opposition zählt unter R4 bei beiden.</p>
+{% endif %}
+{% if v.missing %}
+<p class="note">In diesem Profil fehlt:</p>
+<ul class="note">
+{% for line in v.missing %}
+<li>{{ line }}</li>
+{% endfor %}
+</ul>
+{% endif %}
+<p class="note">Die Tabellen <code>abstimmungen_gremien</code>{% if v.tests %}, <code>abstimmungen_hypothesen</code>{% endif %} und je Punkt <code>abstimmungen</code> stehen auf den Details unter den <a href="details.html#downloads">Downloads</a>, ihre Spalten auf der Seite <a href="spalten.html#abstimmungen">Spalten</a>.</p>
+{% endif %}
+{% endif %}

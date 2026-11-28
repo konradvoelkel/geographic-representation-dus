@@ -27,6 +27,7 @@ from georep.analysis.cycles import CYCLE_TESTS_SCHEMA_VERSION, CYCLES_SCHEMA_VER
 from georep.analysis.functions import FUNCTIONS_SCHEMA_VERSION
 from georep.analysis.lexicon import VOCABULARY_SCHEMA_VERSION
 from georep.analysis.outcomes import OUTCOMES_SCHEMA_VERSION
+from georep.analysis.votes import VOTES_SCHEMA_VERSION
 from georep.council import COUNCIL_SCHEMA_VERSION
 from georep.enrich.procedures import PROCEDURES_SCHEMA_VERSION
 from georep.enrich.summaries import SUMMARIES_SCHEMA_VERSION
@@ -116,6 +117,8 @@ VERSIONS = {
     "summaries": SUMMARIES_SCHEMA_VERSION,
     # Startseite: der Netzschritt der Straßenpunkte (``georep.prep.streetpoints``)
     "street_points": STREET_POINTS_SCHEMA_VERSION,
+    # Vorhaben 28: ein Schritt, drei Dateien (``georep.enrich.votes``)
+    "votes": VOTES_SCHEMA_VERSION,
 }
 
 

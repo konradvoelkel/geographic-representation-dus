@@ -443,7 +443,9 @@ def test_die_vorlage_nennt_keine_partei() -> None:
         for party in (*settings.originators.parties, *settings.originators.groups):
             names |= {party.key, party.label, party.short}
     folder = REPO / "src" / "georep" / "report" / "templates" / "pages"
-    text = "".join(p.read_text(encoding="utf-8") for p in sorted(folder.rglob("akteure*")))
+    # Vorhaben 28: die Gäste der Seite liegen im Ordner ``akteure/`` und zählen mit
+    files = [*folder.glob("akteure.*"), *folder.glob("akteure/*")]
+    text = "".join(p.read_text(encoding="utf-8") for p in sorted(files) if p.is_file())
     found = sorted(n for n in names if n and re.search(rf"(?<!\w){re.escape(n)}(?!\w)", text))
     assert found == []
 
@@ -530,9 +532,9 @@ def test_kein_leser_sieht_das_wort_symbol(mini_run: Layout) -> None:
 
 def test_die_vorlagen_nennen_das_wort_symbol_nicht() -> None:
     folder = REPO / "src" / "georep" / "report" / "templates" / "pages"
-    found = sorted(
-        p.name for p in folder.rglob("akteure*") if WORD.search(p.read_text(encoding="utf-8"))
-    )
+    # Vorhaben 28: die Gäste der Seite liegen im Ordner ``akteure/`` und zählen mit
+    files = [p for p in (*folder.glob("akteure.*"), *folder.glob("akteure/*")) if p.is_file()]
+    found = sorted(p.name for p in files if WORD.search(p.read_text(encoding="utf-8")))
     assert found == []
 
 
