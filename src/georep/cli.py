@@ -36,6 +36,7 @@ from georep.pack import (
     pack_need,
     pack_neighbors,
     pack_outcomes,
+    pack_policy_areas,
     pack_raw_texts,
     pack_street_points,
     pack_texts,
@@ -207,6 +208,19 @@ def build_parser() -> argparse.ArgumentParser:
         "--street-points",
         action="store_true",
         help="nur die Straßenpunkte und die Namen der Stadtteile packen (external/startkarte/)",
+    )
+    # Vorhaben 19: die Politikfelder je Dokument aus dem Klassifikator, der außerhalb läuft
+    only.add_argument(
+        "--policy-areas",
+        action="store_true",
+        help="nur die Politikfelder je Dokument packen (processed/politikfelder.parquet), aus der "
+        "Vorhersage des Klassifikators (--from)",
+    )
+    pack_cmd.add_argument(
+        "--from",
+        dest="source",
+        type=Path,
+        help="mit --policy-areas: politikfelder.parquet aus 19-politikfelder-training.py --vorhersage",
     )
     # Vorhaben 16: Hausnummer -> Stimm- und Wahlbezirk, aus dem Archiv der Straßenpunkte
     only.add_argument(
@@ -476,8 +490,19 @@ def _cmd_pack(args: argparse.Namespace, settings: Settings, layout: Layout) -> i
     ähnlichen Dokumente (Vorhaben 18), mit ``--outcomes`` nur die Tabelle Paper ×
     Tagesordnungspunkt (Vorhaben 26), mit ``--need`` nur die Stadtauszüge der Bedarfsquellen
     (Vorhaben 22), mit ``--street-points`` nur die Straßenpunkte und Namen der Stadtteile
-    (Startseite), mit ``--addresses`` nur das Adresspaket (Vorhaben 16).
+    (Startseite), mit ``--addresses`` nur das Adresspaket (Vorhaben 16), mit ``--policy-areas
+    --from <datei>`` nur die Politikfelder je Dokument (Vorhaben 19).
     """
+    if args.policy_areas or args.source is not None:
+        if not (args.policy_areas and args.source is not None):
+            print("Fehler: --policy-areas und --from nur zusammen", file=sys.stderr)
+            return 2
+        report = pack_policy_areas(
+            layout, settings, args.target, source=args.source, force=args.force
+        )
+        print(report.line())
+        print(report.table(), end="")
+        return 0
     write = (
         pack_consultations
         if args.consultations

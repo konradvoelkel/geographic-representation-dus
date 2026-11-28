@@ -1171,3 +1171,169 @@ def pack_addresses(
         readme_written=not (target / README_NAME).exists(),
     )
     return _with_readme(report, settings, today, command="pack --addresses")
+
+
+# --- Vorhaben 19: die Politikfelder je Dokument aus dem Klassifikator (Weg 3b) -------------------
+
+POLICY_AREAS_NAME = "processed/politikfelder.parquet"
+POLICY_AREAS_DECIMALS = 3  # die Wahrscheinlichkeit im Paket; mehr Stellen trägt die Messung nicht
+CC_BY_NC_SA = "https://creativecommons.org/licenses/by-nc-sa/4.0/"
+CAP_CITATION = (
+    "Comparative Agendas Project, www.comparativeagendas.net; German Policy Agendas Project: "
+    "Christian Breunig, Benjamin Guinaudeau und Tinette Schnatterer (2021), Policy agendas in "
+    "Germany – database and descriptive insights, The Journal of Legislative Studies, "
+    "doi 10.1080/13572334.2021.2010395"
+)
+
+
+def pack_policy_areas(
+    layout: Layout,
+    settings: Settings,
+    target: Path,
+    *,
+    source: Path,
+    force: bool = False,
+    today: dt.date | None = None,
+) -> PackReport:
+    """Die Vorhersage des Klassifikators für dieses Profil einfrieren (Vorhaben 19, Weg 3b).
+
+    ``source`` ist ``politikfelder.parquet`` aus ``19-politikfelder-training.py --vorhersage``
+    (Messdokument ``docs/plans/19-politikfelder.md``, § 6 und § 10). Geprüft wird mit derselben
+    Regel wie im Schritt ``policy_areas`` gegen den Korpus dieses Laufs (``check_areas``): eine Zeile
+    je Korpus-ID, nur Codes aus dem CAP, die Kennung der Gewichte aus ``policy_areas.weights_sha256``;
+    sonst ``PackError``. Die Wahrscheinlichkeit steht auf drei Stellen gerundet im Paket (zstd auf
+    Stufe 19). Das README schreibt der Befehl vollständig, mit Modell, Prüfsumme der Gewichte und
+    der Lizenz der Codes, CC BY-NC-SA 4.0 (Frage 37); ein vorhandenes rührt er nicht an.
+    """
+    from georep.enrich.policy_areas import POLICY_AREAS_SCHEMA_VERSION, check_areas
+    from georep.errors import SchemaError
+
+    claim_target(layout, target)
+    areas = settings.policy_areas
+    if not areas.weights_sha256:
+        raise PackError("policy_areas.weights_sha256 ist leer; die Kennung der Gewichte fehlt")
+    for path, how in ((source, "--from"), (layout.corpus, "`georep run corpus`")):
+        if not path.is_file():
+            raise PackError(f"{path} fehlt ({how})")
+    corpus = pl.read_parquet(layout.corpus, columns=["id"]).get_column("id").to_list()
+    try:
+        frame = check_areas(pl.read_parquet(source), corpus, areas.model_id)
+    except SchemaError as error:
+        raise PackError(f"{source}: {error}") from error
+    frame = frame.with_columns(pl.col("wahrscheinlichkeit").round(POLICY_AREAS_DECIMALS))
+    destination = target / POLICY_AREAS_NAME
+    skipped: list[str] = []
+    if destination.exists() and not force:
+        skipped.append(POLICY_AREAS_NAME)
+    else:
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        write_parquet(
+            frame,
+            destination,
+            schema_version=POLICY_AREAS_SCHEMA_VERSION,
+            compression_level=RAW_TEXTS_ZSTD_LEVEL,
+        )
+    filled = int((frame.get_column("politikfeld") != "").sum())
+    report = PackReport(
+        target=target,
+        files=(
+            PackedFile(
+                name=POLICY_AREAS_NAME,
+                bytes=destination.stat().st_size,
+                sha256=sha256_of(destination),
+            ),
+        ),
+        skipped=tuple(skipped),
+        figures=(
+            ("Dokumente", frame.height),
+            ("mit Politikfeld", filled),
+            ("ohne Rohtext", frame.height - filled),
+            ("abgeschnitten", int(frame.get_column("abgeschnitten").sum())),
+        ),
+        readme_written=not (target / README_NAME).exists(),
+    )
+    if report.readme_written:
+        write_text(
+            target / README_NAME,
+            policy_areas_readme(report, settings, source=source, today=today or dt.date.today()),
+        )
+    return report
+
+
+def policy_areas_readme(
+    report: PackReport, settings: Settings, *, source: Path, today: dt.date
+) -> str:
+    """Das README des Pakets: Herkunft, Modell, Lizenz und Prüfsummen, ohne Platzhalter."""
+    from georep.report.model import period_info
+
+    areas = settings.policy_areas
+    profile = settings.default_profile
+    sample_file = settings.validation.root / "19-politikfelder" / "stichprobe.json"
+    sample = str(json.loads(sample_file.read_text(encoding="utf-8"))["profil"])
+    checked = (
+        "Dieses Paket ist das des geprüften Datensatzes"
+        if sample == profile
+        else "Für dieses Profil ist die Datei nicht geprüft"
+    )
+    rows = "\n".join(f"| {label} | {_thousands(value)} |" for label, value in report.figures)
+    return f"""# Datenpaket {report.target.name} (Politikfelder, {settings.city.name}, {period_info(settings).title}, gepackt am {today.isoformat()})
+
+Ein Politikfeld nach dem **Comparative Agendas Project** (CAP) je Ratsdokument des Profils
+`{profile}`: eines der 21 Hauptthemen des CAP-Master-Codebuchs oder 99 („kein Politikfeld
+erkennbar"), leer ohne Rohtext. Vorhaben 19, Weg 3b (`docs/plans/19-politikfelder.md`, § 5, § 6 und
+§ 10). Erzeugt mit `georep --profile {profile} pack --policy-areas --from {source.name}
+{report.target}`; `[policy_areas].package` des Profils zeigt hierher, `bootstrap` kopiert die Datei
+nach `raw/politikfelder_paket.parquet`, und der Schritt `policy_areas` prüft sie gegen den Korpus.
+Der Ordner wird **nur gelesen** (`Layout.guard_writable`).
+
+## Lizenz
+
+Anders als der Rest des Repositorys und der Seite (CC0 und GPL) steht diese Datei unter
+**CC BY-NC-SA 4.0** ({CC_BY_NC_SA}): die Codes sind die des CAP, und der Klassifikator ist auf
+den menschlich kodierten Daten des German Policy Agendas Project trainiert (Frage 37, Konrad,
+2026-11-26: „unter NC-SA zeigen"). Zitat: {CAP_CITATION}.
+
+## Modell
+
+- Klassifikator `xlm-roberta-large` (FacebookAI, Revision `c23d21b0`, MIT-Lizenz), feinjustiert auf
+  den deutschen CAP-Daten (Anfragentitel des Bundestags 1976–2005, Sätze aus Wahlprogrammen) und auf
+  Silberlabels des lokalen Sprachmodells `qwen3.6:27b` für 4 200 Ratsdokumente der Hauptperiode
+  (`docs/plans/19-politikfelder-training.py`, Variante 3b).
+- Gewichte `training-3b/beste/model.safetensors`, SHA-256 `{areas.weights_sha256}`; die Gewichte
+  (2,24 GB) liegen **nicht** im Repo. Jede Zeile trägt die Kennung `{areas.model_id}`.
+- Eingabe: Titel und die ersten {_thousands(areas.chars)} Zeichen des Rohtexts (Fundament F1),
+  Leerraum zusammengezogen (`georep policy-areas export`), im Modell auf 256 Token gekürzt;
+  `abgeschnitten` sagt, ob der Klassifikator weniger als den ganzen Text sah.
+- Die Wahrscheinlichkeit (Softmax des gewählten Themas) steht auf {POLICY_AREAS_DECIMALS} Stellen gerundet da.
+
+## Güte
+
+Geprüft nur am Datensatz der Stichprobe (Profil `{sample}`, `validierung/19-politikfelder/`): von
+zwei KI-Kodierern desselben Modells an 300 Dokumenten, nicht von Menschen (`guete.json`), Makro-F1
+0,704 (Bootstrap 0,620–0,807), Genauigkeit 83,7 %; an 200 von Menschen kodierten Bundestagsanfragen
+Makro-F1 0,688. {checked} (Fragen 46 und 9.10).
+
+## Inhalt mit Prüfsummen (SHA-256)
+
+{report.table()}
+Zusammen {_thousands(report.total_bytes)} Bytes. `tests/unit/test_data_packages.py` hält diese
+Tabelle gegen die Dateien im Repo.
+
+## Zahlen
+
+| Größe | Wert |
+|---|---|
+{rows}
+
+## Spalten
+
+| Spalte | Typ | Inhalt |
+|---|---|---|
+| `id` | str | OParl-URL des Dokuments, eine Zeile je Korpus-ID, sortiert |
+| `politikfeld` | str | Hauptthema des CAP (1–10, 12–21, 23) oder 99; leer ohne Rohtext |
+| `quelle` | str | `klassifikator`; leer ohne Rohtext |
+| `modell` | str | `{areas.model_id}`; leer ohne Rohtext |
+| `prompt` | str | leer (kein Sprachmodell) |
+| `wahrscheinlichkeit` | float | Softmax des gewählten Themas, 0 bis 1; leer ohne Rohtext |
+| `abgeschnitten` | bool | Rohtext über {_thousands(areas.chars)} Zeichen oder Eingabe über 256 Token; leer ohne Rohtext |
+"""

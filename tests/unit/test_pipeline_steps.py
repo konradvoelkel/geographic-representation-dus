@@ -463,6 +463,9 @@ SCHEMA_CONSTANTS_WITHOUT_A_STEP = {
     # Vorhaben 19: die Eingabe des Klassifikators, die ``georep policy-areas export`` schreibt; sie
     # gehört zu einem Befehl, und der Klassifikator läuft außerhalb des Pakets.
     "georep.enrich.policy_areas.INPUT_SCHEMA_VERSION",
+    # ... und die Version des Pakets aus ``georep pack --policy-areas``, bis der Schritt
+    # ``policy_areas`` sie für seine Ausgabe nennt (dann fällt diese Zeile)
+    "georep.enrich.policy_areas.POLICY_AREAS_SCHEMA_VERSION",
 }
 
 
