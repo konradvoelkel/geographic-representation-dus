@@ -31,6 +31,7 @@ import datetime as dt
 import hashlib
 import json
 import shutil
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -38,8 +39,17 @@ import polars as pl
 
 from georep.enrich.embeddings import embedding_files
 from georep.errors import GeorepError
-from georep.io import atomic_path, digest, write_parquet, write_text
+from georep.geo import read_canonical_precincts
+from georep.io import atomic_path, digest, write_json, write_parquet, write_text
 from georep.layout import Layout
+from georep.prep.addresses import (
+    ADDRESS_DIR,
+    ADDRESS_FILE,
+    ADDRESS_SCHEMA_VERSION,
+    address_table,
+    read_house_numbers,
+)
+from georep.prep.addresses import SOURCES_FILE as ADDRESS_SOURCES
 from georep.prep.bodies import CONSULTATION
 from georep.prep.context import (
     ACCIDENTS_FILE,
@@ -51,9 +61,9 @@ from georep.prep.context import (
 )
 from georep.prep.raw_texts import RAW_SUFFIX
 from georep.prep.references import MASK, ReferenceRules, mask_person_names
-from georep.prep.streetpoints import START_DIR, street_point_files
+from georep.prep.streetpoints import GEBREF_CRS, START_DIR, described, street_point_files, to_crs
 from georep.search.vectors import NEIGHBORS_SCHEMA, NEIGHBORS_SCHEMA_VERSION
-from georep.settings import Settings
+from georep.settings import Settings, archive_name
 from georep.stores import RAW_TEXT_SCHEMA_VERSION, RawTextStore, TextStore
 
 README_NAME = "README.md"
@@ -1077,3 +1087,87 @@ def pack_street_points(
         readme_written=not (target / README_NAME).exists(),
     )
     return _with_readme(report, settings, today, command="pack --street-points")
+
+
+# --- Vorhaben 16: das Adresspaket (Hausnummer -> Stimm- und Wahlbezirk) --------------------------
+
+
+def pack_addresses(
+    layout: Layout,
+    settings: Settings,
+    target: Path,
+    *,
+    force: bool = False,
+    today: dt.date | None = None,
+) -> PackReport:
+    """Das Adresspaket aus dem GebRef-Archiv des Netzschritts ``street_points`` (Vorhaben 16, § 10).
+
+    Anders als die übrigen ``pack``-Befehle kopiert dieser keine Ausgabe eines Schritts: das Paket
+    entsteht hier, aus derselben Datei wie die Straßenpunkte der Startseite
+    (``cache_root/startkarte/``, Punkt 93), ohne zweiten Abruf und ohne zweite URL. Je Straße,
+    Nummer und Zusatz die Stimmbezirke der Koordinate (``crosswalk.point_shares``, Band 0) und ihr
+    Wahlbezirk, **keine Koordinate**; daneben ``quellen.json`` mit Gemeinde, Archiv und Prüfsumme.
+    Die Stimmbezirke sind die der Karte (``Layout.target_view``), also die eines gelaufenen
+    Profils. Mit zstd auf Stufe 19, wie das Rohtextpaket.
+    """
+    claim_target(layout, target)
+    places = settings.places
+    if not places.enabled or not places.house_numbers:
+        raise PackError("places.house_numbers ist aus; dieses Profil schlägt keine Hausnummer nach")
+    url = settings.street_points.url
+    archive = street_point_files(layout).archives / archive_name(url)
+    if not archive.is_file():
+        raise PackError(
+            f"{archive} fehlt; lief `georep fetch street_points` (mit "
+            "GEOREP_STREET_POINTS__FETCH=true) für dieses Profil?"
+        )
+    precincts_file = layout.target_view(settings).precincts_geojson
+    if not precincts_file.is_file():
+        raise PackError(f"{precincts_file} fehlt; lief `georep run` für dieses Profil?")
+    working_crs = settings.geo.working_crs
+    houses = to_crs(read_house_numbers(archive, settings.city.ags), GEBREF_CRS, working_crs)
+    if not houses.height:
+        raise PackError(f"{archive}: keine Hausnummer der Gemeinde {settings.city.ags}")
+    table, outside = address_table(houses, read_canonical_precincts(precincts_file, working_crs))
+    folder = target / "external" / ADDRESS_DIR
+
+    def write_table(path: Path) -> None:
+        write_parquet(
+            table,
+            path,
+            schema_version=ADDRESS_SCHEMA_VERSION,
+            compression_level=RAW_TEXTS_ZSTD_LEVEL,
+        )
+
+    def write_sources(path: Path) -> None:
+        write_json(path, {"ags": settings.city.ags, "archiv": described(archive, url)})
+
+    outputs: tuple[tuple[Path, Callable[[Path], None]], ...] = (
+        (folder / ADDRESS_FILE, write_table),
+        (folder / ADDRESS_SOURCES, write_sources),
+    )
+    files: list[PackedFile] = []
+    skipped: list[str] = []
+    for destination, write in outputs:
+        name = destination.relative_to(target).as_posix()
+        if destination.exists() and not force:
+            skipped.append(name)
+        else:
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            write(destination)
+        files.append(
+            PackedFile(name=name, bytes=destination.stat().st_size, sha256=sha256_of(destination))
+        )
+    report = PackReport(
+        target=target,
+        files=tuple(files),
+        skipped=tuple(skipped),
+        figures=(
+            ("Hausnummern", houses.height),
+            ("außerhalb der Stimmbezirke", outside),
+            ("Zeilen (Adresse und Stimmbezirk)", table.height),
+            ("Straßen", table.get_column("strasse").n_unique()),
+        ),
+        readme_written=not (target / README_NAME).exists(),
+    )
+    return _with_readme(report, settings, today, command="pack --addresses")

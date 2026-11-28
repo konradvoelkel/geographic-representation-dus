@@ -27,6 +27,7 @@ from georep.learn import learn_bodies
 from georep.ml import commands as ml_commands
 from georep.pack import (
     pack,
+    pack_addresses,
     pack_attachments,
     pack_consultations,
     pack_need,
@@ -203,6 +204,13 @@ def build_parser() -> argparse.ArgumentParser:
         "--street-points",
         action="store_true",
         help="nur die Straßenpunkte und die Namen der Stadtteile packen (external/startkarte/)",
+    )
+    # Vorhaben 16: Hausnummer -> Stimm- und Wahlbezirk, aus dem Archiv der Straßenpunkte
+    only.add_argument(
+        "--addresses",
+        action="store_true",
+        help="nur das Adresspaket packen (external/adressen/): Straße, Nummer, Zusatz, Stimm- und "
+        "Wahlbezirk je Hausnummer aus dem Archiv von street_points, keine Koordinate",
     )
 
     # Punkt 58: die Abbildung Organisation -> Gremium aus den Daten lernen, nicht raten
@@ -464,7 +472,7 @@ def _cmd_pack(args: argparse.Namespace, settings: Settings, layout: Layout) -> i
     ähnlichen Dokumente (Vorhaben 18), mit ``--outcomes`` nur die Tabelle Paper ×
     Tagesordnungspunkt (Vorhaben 26), mit ``--need`` nur die Stadtauszüge der Bedarfsquellen
     (Vorhaben 22), mit ``--street-points`` nur die Straßenpunkte und Namen der Stadtteile
-    (Startseite).
+    (Startseite), mit ``--addresses`` nur das Adresspaket (Vorhaben 16).
     """
     write = (
         pack_consultations
@@ -483,6 +491,8 @@ def _cmd_pack(args: argparse.Namespace, settings: Settings, layout: Layout) -> i
         if args.need
         else pack_street_points  # Startseite
         if args.street_points
+        else pack_addresses  # Vorhaben 16
+        if args.addresses
         else pack
     )
     report = write(layout, settings, args.target, force=args.force)

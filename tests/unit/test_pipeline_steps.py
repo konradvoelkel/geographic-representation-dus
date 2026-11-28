@@ -451,6 +451,9 @@ SCHEMA_CONSTANTS_WITHOUT_A_STEP = {
     # --outcomes`` schreibt; wie bei Punkt 58 gehört sie zu einem Befehl, und der Schritt, der das
     # Paket liest, nennt die Version seiner eigenen Ausgabe.
     "georep.analysis.outcomes.AGENDA_SCHEMA_VERSION",
+    # Vorhaben 16: die Version des Adresspakets, das ``georep pack --addresses`` schreibt; wie bei
+    # 26 gehört sie zu einem Befehl, und ``places`` nennt die Version seiner eigenen Ausgaben.
+    "georep.prep.addresses.ADDRESS_SCHEMA_VERSION",
 }
 
 
