@@ -1,7 +1,8 @@
 # Vorhaben 16: Ortsbezug verfeinern
 
-**Stand 2026-11-26: Urteil bauen (§ 5.5), gemessen, nicht gebaut. § 10 vor dem Bau durch den
-Supervisor**: § 6 ist durch die Synergie überholt (`flatten_with_offsets` aus F1 statt `store_view`,
+**Stand 2026-11-28: Stufe 2 und die kleine Stufe 3 auf `main` (`v0.44.0`, Punkt 97), nach § 10.** Bis dahin galt
+(2026-11-26): Urteil bauen (§ 5.5), gemessen, nicht gebaut; § 10 vor dem Bau durch den
+Supervisor: § 6 ist durch die Synergie überholt (`flatten_with_offsets` aus F1 statt `store_view`,
 Spannen nach F3 mit Int64, Rumpf aus 11, Adressen über `point_shares` aus 22;
 [00-synergien-2026-11.md](00-synergien-2026-11.md), § 4 „16 Ortsbezug"). Alle Voraussetzungen liegen auf
 `main`.

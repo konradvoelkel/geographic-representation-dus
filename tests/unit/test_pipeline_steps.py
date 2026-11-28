@@ -29,6 +29,7 @@ from georep.analysis.lexicon import VOCABULARY_SCHEMA_VERSION
 from georep.analysis.outcomes import OUTCOMES_SCHEMA_VERSION
 from georep.analysis.votes import VOTES_SCHEMA_VERSION
 from georep.council import COUNCIL_SCHEMA_VERSION
+from georep.enrich.places import PLACES_SCHEMA_VERSION
 from georep.enrich.procedures import PROCEDURES_SCHEMA_VERSION
 from georep.enrich.summaries import SUMMARIES_SCHEMA_VERSION
 from georep.errors import MissingInputError
@@ -117,6 +118,8 @@ VERSIONS = {
     "summaries": SUMMARIES_SCHEMA_VERSION,
     # Startseite: der Netzschritt der Straßenpunkte (``georep.prep.streetpoints``)
     "street_points": STREET_POINTS_SCHEMA_VERSION,
+    # Vorhaben 16: ein früher Schritt (``georep.enrich.places``), drei Dateien
+    "places": PLACES_SCHEMA_VERSION,
     # Vorhaben 28: ein Schritt, drei Dateien (``georep.enrich.votes``)
     "votes": VOTES_SCHEMA_VERSION,
 }
@@ -454,6 +457,9 @@ SCHEMA_CONSTANTS_WITHOUT_A_STEP = {
     # --outcomes`` schreibt; wie bei Punkt 58 gehört sie zu einem Befehl, und der Schritt, der das
     # Paket liest, nennt die Version seiner eigenen Ausgabe.
     "georep.analysis.outcomes.AGENDA_SCHEMA_VERSION",
+    # Vorhaben 16: die Version des Adresspakets, das ``georep pack --addresses`` schreibt; wie bei
+    # 26 gehört sie zu einem Befehl, und ``places`` nennt die Version seiner eigenen Ausgaben.
+    "georep.prep.addresses.ADDRESS_SCHEMA_VERSION",
 }
 
 

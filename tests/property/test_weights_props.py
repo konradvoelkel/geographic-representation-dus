@@ -19,6 +19,8 @@ from georep.analysis.regression import spearman
 from georep.analysis.weights import (
     BY_DISTRICTS,
     BY_IDF,
+    ORTSBEZUG,
+    STELLE,
     TOPIC_PREFIX,
     UNIT,
     TypeRules,
@@ -251,3 +253,64 @@ def _types_frame() -> pl.DataFrame:
         {"id": PAPERS, "paper_type": [TYPES[i % len(TYPES)] for i in range(len(PAPERS))]},
         schema={"id": pl.String, "paper_type": pl.String},
     )
+
+
+# --- Vorhaben 16: mit allen Gewichten 1 ist jede Stellenvariante die Zählung der Arbeit ----------
+
+POSITIONS = ["titel", "betreff", "kern", "begleittext", "rest"]
+
+
+@given(
+    dictionary=dictionary_rows,
+    index=index_rows,
+    stellen=st.lists(st.sampled_from(POSITIONS), min_size=64, max_size=64),
+    without=st.sets(st.sampled_from(PAPERS)),
+)
+def test_position_variants_with_all_weights_one_are_the_unit_count(
+    dictionary: dict[int, list[str]],
+    index: dict[str, list[str]],
+    stellen: list[str],
+    without: set[str],
+) -> None:
+    """Messdokument § 6: ``ortsbezug`` und ``stelle`` mit allen Gewichten 1 reproduzieren
+    ``einheit`` exakt, ob ein Dokument Rohtext hat (eine Zeile je Begriff) oder nicht (keine)."""
+    index = _as_built(dictionary, index)
+    assume(_overlapping(dictionary, index))
+    pairs = [
+        (doc, term) for term, docs in sorted(index.items()) for doc in docs if doc not in without
+    ]
+    positions = pl.DataFrame(
+        {
+            "id": [doc for doc, _ in pairs],
+            "suchbegriffe": [term for _, term in pairs],
+            "stelle": stellen[: len(pairs)],
+            "handelt_von": [True] * len(pairs),
+        },
+        schema={
+            "id": pl.String,
+            "suchbegriffe": pl.String,
+            "stelle": pl.String,
+            "handelt_von": pl.Boolean,
+        },
+    )
+    assume(positions.height > 0)
+    frame = variants(
+        _dictionary(dictionary),
+        _index(index),
+        pl.DataFrame({"id": PAPERS, "paper_type": [""] * len(PAPERS)}),
+        _voters(list(dictionary)),
+        ELIGIBLE,
+        len(PAPERS),
+        positions=positions,
+        position_weights=dict.fromkeys(POSITIONS, 1.0),
+    )
+
+    def counts(name: str) -> list[float]:
+        return (
+            frame.filter(pl.col("variante") == name)
+            .sort("wahlkreis_id")
+            .get_column("anzahl_treffer_gewichtet")
+            .to_list()
+        )
+
+    assert counts(ORTSBEZUG) == counts(UNIT) == counts(STELLE)

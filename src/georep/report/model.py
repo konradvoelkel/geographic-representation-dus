@@ -48,6 +48,8 @@ from georep.analysis.weights import (
     BY_IDF,
     COMBINED,
     N_DISTRICTS,
+    ORTSBEZUG,
+    STELLE,
     TOPIC_PREFIX,
     UNIT,
     VARIANT,
@@ -70,6 +72,7 @@ from georep.prep.raw_texts import RAW_SUFFIX
 from georep.prep.streets import Agreement, directory_agreement
 from georep.prep.voters import ELIGIBLE_TOTAL, PRECINCT, TURNOUT, VOTERS
 from georep.report.literature import literature
+from georep.report.places import PlacesFinding, places_finding, variant_texts
 from georep.report.search import SearchEntry, search_entries
 from georep.report.tables import GEOJSON_COLUMNS, GEOJSON_TABLE, PublishedTable, published
 from georep.search.dictionary import all_terms
@@ -83,6 +86,7 @@ from georep.settings import (
     Diverging,
     LiteratureEntry,
     Party,
+    PlacesSettings,
     ReportSource,
     Settings,
     Weights,
@@ -411,6 +415,12 @@ class Sensitivity:
     strongest: TermExample | None = None  # der Begriff in den meisten Dokumenten
     widest: TermExample | None = None  # der Begriff in den meisten Wörterbüchern
     level: float = 0.05
+
+    @property
+    def with_positions(self) -> bool:
+        """Trägt die Tabelle die Gewichtungen nach Stelle (Vorhaben 16)? Nur dann nennt die Formel
+        über ihr den Faktor der Stelle, und nur dann rechnet eine Zahl der Seite mit dem Rohtext."""
+        return any(row.name in (ORTSBEZUG, STELLE) for row in self.rows)
 
     @property
     def has_without(self) -> bool:
@@ -794,6 +804,9 @@ class ReportModel:
     # Vorarbeit V2: die Dateien der Dialog-Haken (``report.dialog``), als ``data-extras`` am
     # Dokumentdialog; leer heißt kein Attribut, und die Seite bleibt bytegleich.
     dialogs: tuple[str, ...] = ()
+    # Vorhaben 16, kleine Stufe 3: der Befund der Kodierung in „Methode und Grenzen"; None, wo
+    # nicht gemessen ist oder es keine Stelle gibt, und die Seite bleibt bytegleich.
+    places: PlacesFinding | None = None
 
 
 @dataclass(frozen=True)
@@ -1369,13 +1382,19 @@ _FIXED_LABELS: dict[str, tuple[str, str]] = {
 }
 
 
-def variant_labels(weights: Weights) -> dict[str, tuple[str, str]]:
+def variant_labels(
+    weights: Weights, places: PlacesSettings | None = None
+) -> dict[str, tuple[str, str]]:
     """Beschriftung und Formel je Variante; die Regelsätze bringen ihre Beschriftung mit.
 
     Nichts davon steht in den Daten: die festen Varianten sind im Code benannt, die Regelsätze in
     den Settings (``[[weights.paper_type]] label``), und die Kombination zählt ihre Faktoren auf.
+    Die beiden Gewichtungen nach Stelle (Vorhaben 16) nennen die Gewichte aus ``places`` und die
+    Bestätigung aus ``report.places``.
     """
     labels = dict(_FIXED_LABELS)
+    if places is not None:
+        labels.update(variant_texts(places))
     for rule_set in weights.paper_type:
         rules = "; ".join(
             f"Dokumentarten nach dem Muster {rule.pattern} zählen {format_de(rule.weight, 2)}"
@@ -1412,7 +1431,15 @@ def _ordered_variants(
     Rest eines abgeschalteten Schritts.
     """
     present = set(weighted.get_column(VARIANT).unique().to_list())
-    wanted = [UNIT, BY_DISTRICTS, BY_IDF, *(r.name for r in weights.paper_type), COMBINED]
+    wanted = [
+        UNIT,
+        BY_DISTRICTS,
+        BY_IDF,
+        *(r.name for r in weights.paper_type),
+        COMBINED,
+        ORTSBEZUG,  # Vorhaben 16: nur mit Stellen in der Datei
+        STELLE,
+    ]
     topics = sorted(name for name in present if name.startswith(TOPIC_PREFIX))
     return [name for name in wanted if name in present] + (topics if with_topics else [])
 
@@ -1424,6 +1451,7 @@ def _rows_match_the_file(
     exclude: Sequence[int] = (),
     with_topics: bool = True,
     topic_labels: Mapping[int, str] | None = None,
+    places: PlacesSettings | None = None,
     result: tuple[SensitivityRow, ...] | None = None,
 ) -> bool:
     assert result is not None
@@ -1441,7 +1469,7 @@ def _rows_match_the_file(
 
 
 @deal.pre(
-    lambda weighted, results, weights, exclude=(), with_topics=True, topic_labels=None: (
+    lambda weighted, results, weights, exclude=(), with_topics=True, topic_labels=None, places=None: (
         has_columns(weighted, DISTRICT, VARIANT, WEIGHTED_HITS, WEIGHTED_RATE)
         and has_columns(results, DISTRICT, TURNOUT, RATE)
     )
@@ -1456,9 +1484,10 @@ def sensitivity_rows(
     exclude: Sequence[int] = (),
     with_topics: bool = True,
     topic_labels: Mapping[int, str] | None = None,
+    places: PlacesSettings | None = None,
 ) -> tuple[SensitivityRow, ...]:
     """Je Variante beide Regressionen und die Rangkorrelation zur ungewichteten Quote."""
-    labels = variant_labels(weights)
+    labels = variant_labels(weights, places)
     rows: list[SensitivityRow] = []
     for name in _ordered_variants(weighted, weights, with_topics):
         frame = _variant_frame(weighted, results, name)
@@ -1595,6 +1624,7 @@ def build_sensitivity(layout: Layout, settings: Settings, results: pl.DataFrame)
         settings.analysis.exclude_districts,
         with_topics,
         {row.index: row.label for row in topics},
+        settings.places,
     )
     terms = (
         pl.read_parquet(layout.term_weights, columns=[TERM, N_DISTRICTS, HITS])
@@ -2024,6 +2054,7 @@ def build_report_model(
         preview_rows=settings.report.table_preview_rows,  # Punkt 48
         extraction=extraction_figures(layout),  # docs/todo.md, Punkt 7; Fundament F1
         table_checks=table_checks(layout, settings),  # Vorhaben 11 und 12, Stufe 3
+        places=places_finding(layout, settings),  # Vorhaben 16, kleine Stufe 3
     )
 
 

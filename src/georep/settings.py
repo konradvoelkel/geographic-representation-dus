@@ -573,7 +573,7 @@ class Bodies(_Strict):
 
 # Namen, die die festen Varianten der gewichteten Trefferquote tragen; ein Regelsatz darf keinen
 # davon tragen und nicht wie ein Thema heißen (``thema_NN``).
-FIXED_VARIANTS = ("einheit", "bezirke", "idf", "kombiniert")
+FIXED_VARIANTS = ("einheit", "bezirke", "idf", "kombiniert", "ortsbezug", "stelle")
 TOPIC_PREFIX = "thema_"
 _VARIANT_NAME = re.compile(r"[a-z][a-z0-9_]*")
 
@@ -2931,6 +2931,66 @@ class Summaries(_Strict):
         return _compiles([value], "summaries.person_titles")[0]
 
 
+# --- Vorhaben 16: Ortsbezug (docs/plans/16-ortsbezug.md, § 6 und § 10) ----------------------------
+# Die fünf groben Stellen eines Treffers in ihrer Rangfolge; ``search.positions`` hält dieselben
+# Namen (ein Test hält beide gleich), die Gewichte nach Stelle nennen genau diese.
+PLACE_POSITIONS = ("titel", "betreff", "kern", "begleittext", "rest")
+
+
+class PlacesSettings(_Strict):
+    """Stelle je Treffer, Hausnummern und die Gewichtungen ``ortsbezug`` und ``stelle`` (Vorhaben 16).
+
+    ``list_max_line``, ``list_max_lead`` und ``house_number`` sind die Konstanten von Nebenregel C
+    aus dem Messskript (``LISTE_MAX_ZEILE``, ``LISTE_MAX_VORLAUF``, ``HAUSNR``), unverändert: jede
+    Änderung ist ein neues Verfahren und braucht eine neue Stichprobe (Messdokument § 6). Das Muster
+    der Hausnummer ist sprachabhängig und steht im Stadtprofil; ``package`` ist ein Pfad wie
+    ``outcomes.package`` und zählt nicht zum Fingerprint.
+    """
+
+    enabled: bool = False
+    package: Path | None = None  # Paket snapshots/<stadt>-adressen; bootstrap kopiert es
+    house_numbers: bool = False
+    house_number: str = ""
+    list_max_line: int = Field(default=60, ge=1)
+    list_max_lead: int = Field(default=12, ge=0)
+    position_weights: dict[str, float] = {
+        "titel": 1.0,
+        "betreff": 1.0,
+        "kern": 1.0,
+        "begleittext": 0.5,
+        "rest": 0.25,
+    }
+
+    @field_validator("package", mode="before")
+    @classmethod
+    def _empty_is_none(cls, value: object) -> object:
+        return None if value in ("", None) else value
+
+    @field_validator("house_number")
+    @classmethod
+    def _house_number_compiles(cls, value: str) -> str:
+        return _compiles_one(value, "places.house_number")
+
+    @field_validator("position_weights")
+    @classmethod
+    def _five_positions(cls, value: dict[str, float]) -> dict[str, float]:
+        if sorted(value) != sorted(PLACE_POSITIONS):
+            raise ValueError(
+                f"places.position_weights nennt {sorted(value)}, nicht genau {PLACE_POSITIONS}"
+            )
+        for position, weight in value.items():
+            _unit_interval(f"places.position_weights.{position}", weight)
+        return value
+
+    @model_validator(mode="after")
+    def _house_numbers_need_the_pattern(self) -> PlacesSettings:
+        if self.house_numbers:
+            if not self.house_number:
+                raise ValueError("places.house_numbers ohne places.house_number")
+            _names_groups(self.house_number, ("nr", "zusatz"), "places.house_number")
+        return self
+
+
 # --- Vorhaben 28: Abstimmungen (docs/plans/28-abstimmungen.md, § 6, § 8 und § 10) ----------------
 # Die Klassen der Wortregel (§ 8.1) in ihrer Folge; was keine Regel trifft, auch ein leerer Eintrag,
 # ist ``sonstiges``. Entschieden sind nur ``angenommen`` und ``abgelehnt``: nur sie tragen eine Form.
@@ -3107,6 +3167,7 @@ class Settings(BaseSettings):
     identifiers: Identifiers = Identifiers()  # Vorhaben 12: Kennungen und Beträge
     summaries: Summaries = Summaries()  # Vorhaben 20: Kurzfassungen, nie veröffentlicht
     street_points: StreetPoints = StreetPoints()  # Startseite: Straßenpunkte, Ortsnamen
+    places: PlacesSettings = PlacesSettings()  # Vorhaben 16: Ortsbezug
     votes: Votes = Votes()  # Vorhaben 28: Abstimmungen je Tagesordnungspunkt (Ebene A)
 
     @property
@@ -3264,6 +3325,8 @@ class Settings(BaseSettings):
         von ``report``.
         Startseite: ``[street_points]`` steht ganz draußen; Quelle, Raster und Namen der Stadtteile
         trägt der Stamp des Netzschritts ``street_points`` als ``extra``.
+        Vorhaben 16: ``places.package`` ist ein Pfad; die Kopie des Pakets steht im Stamp von
+        ``places``.
         Vorhaben 28: ``votes.fixed_on`` ist Anzeige wie bei 22; Wortregel, Zeiträume und Commit zählen.
         """
         payload = self.model_dump(
@@ -3337,6 +3400,9 @@ class Settings(BaseSettings):
                 # ``report``, der die Kopie des Pakets als Eingabe liest; hier ließe er jeden
                 # Schritt neu laufen
                 "street_points": True,
+                # Vorhaben 16: das Adresspaket ist ein Pfad; ``bootstrap`` kopiert es nach
+                # ``external/adressen/``, und die Kopie steht als Eingabe im Stamp von ``places``
+                "places": {"package"},
                 # Vorhaben 28: der Tag der Festlegung ist Anzeige wie bei 22, der Commit zählt
                 "votes": {"fixed_on"},
             },

@@ -23,3 +23,8 @@
   `uv run python docs/plans/16-ortsbezug-messung.py --auswertung-2`, Ergebnis im Messdokument § 4.4
   und § 5.5. Aufgaben (`aufgaben-2.jsonl`)
   und Ausgabe des Verfahrens (`regel-2.jsonl`, den Kodierern nicht zeigen) nur lokal.
+- **Stufe 2 (`docs/plans/16-ortsbezug.md`, § 6)**: `verfahren.csv` ist die Ausgabe des Verfahrens
+  `ortsbezug-entwurf-2` (Nebenregel C) für die 300 kodierten Paare beider Runden, aus `regel.jsonl`
+  (Spalte `neben_c`) und `regel-2.jsonl` (Spalte `verfahren`), nur IDs und Wahrheitswerte:
+  `aufgabe`, `paar`, `ortsbezug`. `tests/golden/test_places_numbers.py` hält den Schritt `places`
+  daran fest; die Runde-2-Zeilen tragen das bestätigte Kriterium (F1 hochgerechnet 0,828).

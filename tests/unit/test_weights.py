@@ -16,6 +16,8 @@ from georep.analysis.weights import (
     BY_DISTRICTS,
     BY_IDF,
     COMBINED,
+    ORTSBEZUG,
+    STELLE,
     UNIT,
     TypeRules,
     district_weight,
@@ -67,7 +69,7 @@ def _types(rows: dict[str, str]) -> pl.DataFrame:
 
 def test_variant_names_match_the_reserved_names_of_the_settings() -> None:
     """Ein Regelsatz in den Settings darf keinen der festen Namen tragen; beide Listen müssen passen."""
-    assert FIXED_VARIANTS == (UNIT, BY_DISTRICTS, BY_IDF, COMBINED)
+    assert FIXED_VARIANTS == (UNIT, BY_DISTRICTS, BY_IDF, COMBINED, ORTSBEZUG, STELLE)
     assert topic_variant(7) == f"{TOPIC_PREFIX}07" == "thema_07"
     assert topic_variant(19) == "thema_19"
 
@@ -310,3 +312,80 @@ def test_combined_multiplies_its_factors() -> None:
     assert totals([BY_IDF, "antraege_halb"]) == {1: 1.0 * 0.5 + 0.5 * 1.0, 2: 0.25 + 0.5}
     # Zwei Begriffsfaktoren: a bleibt 1,0, b wird 0,5 · 0,5 = 0,25.
     assert totals([BY_DISTRICTS, BY_IDF]) == {1: 1.0 + 0.25, 2: 0.25 + 0.25}
+
+
+# --- Vorhaben 16: die Gewichtungen ortsbezug und stelle (docs/plans/16-ortsbezug.md, § 6) ---------
+
+POSITION_WEIGHTS = {"titel": 1.0, "betreff": 1.0, "kern": 1.0, "begleittext": 0.5, "rest": 0.25}
+
+
+def _positions(rows: list[tuple[str, str, str, bool]]) -> pl.DataFrame:
+    """Je (Dokument, Begriff) mit Rohtext: beste Stelle und Nebenregel C, wie ``places`` sie rechnet."""
+    return pl.DataFrame(
+        rows,
+        schema={
+            "id": pl.String,
+            "suchbegriffe": pl.String,
+            "stelle": pl.String,
+            "handelt_von": pl.Boolean,
+        },
+        orient="row",
+    )
+
+
+def test_a_position_factor_multiplies_each_term_before_the_maximum() -> None:
+    """``g = max_t w_begriff(t) · w_stelle(d, t)``: der Faktor hängt an Dokument und Begriff."""
+    pairs = document_pairs(_dictionary({1: ["a", "b"]}), _index({"a": ["p1"], "b": ["p1"]}))
+    terms = pl.DataFrame({"suchbegriffe": ["a", "b"], "gewicht": [1.0, 0.5]})
+    position = pl.DataFrame({"id": ["p1", "p1"], "suchbegriffe": ["a", "b"], "gewicht": [0.0, 1.0]})
+    with_position = document_weights(pairs, terms, position_weights=position)
+    assert with_position.get_column("gewicht").to_list() == [0.5]
+    assert document_weights(pairs, terms).get_column("gewicht").to_list() == [1.0]
+
+
+def test_the_position_variants_count_rule_c_and_the_best_position() -> None:
+    dictionary = _dictionary({1: ["a", "b"], 2: ["b"]})
+    index = _index({"a": ["p1", "p2"], "b": ["p2", "p3"]})
+    positions = _positions(
+        [
+            ("p1", "a", "begleittext", False),
+            ("p2", "a", "titel", True),
+            ("p2", "b", "begleittext", False),
+            # p3 hat keinen Rohtext: keine Zeile, das Paar zählt 1
+        ]
+    )
+    frame = variants(
+        dictionary,
+        index,
+        _types({"p1": "", "p2": "", "p3": ""}),
+        _voters([1, 2]),
+        ELIGIBLE,
+        3,
+        positions=positions,
+        position_weights=POSITION_WEIGHTS,
+    )
+    got = {
+        (row["variante"], row["wahlkreis_id"]): row["anzahl_treffer_gewichtet"]
+        for row in frame.iter_rows(named=True)
+    }
+    assert got[(UNIT, 1)] == 3.0 and got[(UNIT, 2)] == 2.0
+    assert got[(ORTSBEZUG, 1)] == 2.0  # p1 erwähnt nur, p2 handelt von, p3 ohne Stelle
+    assert got[(ORTSBEZUG, 2)] == 1.0  # p2 erwähnt b nur, p3 ohne Stelle
+    assert got[(STELLE, 1)] == 2.5  # 0,5 + max(1, 0,5) + 1
+    assert got[(STELLE, 2)] == 1.5  # 0,5 + 1
+
+
+@pytest.mark.parametrize("positions", [None, "leer"])
+def test_without_positions_there_are_no_position_variants(positions: str | None) -> None:
+    """Ohne Rohtext (Pages außer der Hauptperiode) gäbe es nur Kopien von ``einheit``."""
+    frame = variants(
+        _dictionary({1: ["a"]}),
+        _index({"a": ["p1"]}),
+        _types({"p1": ""}),
+        _voters([1]),
+        ELIGIBLE,
+        1,
+        positions=None if positions is None else _positions([]),
+        position_weights=POSITION_WEIGHTS,
+    )
+    assert set(frame.get_column("variante").to_list()) == {UNIT, BY_DISTRICTS, BY_IDF}

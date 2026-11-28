@@ -2,6 +2,16 @@
 
 Ein Eintrag je Version, die Änderungen aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
+## 0.44.0 (2026-11-28), Ortsbezug
+
+- **Ortsbezug** (Vorhaben 16, Stufe 2 und kleine Stufe 3, `docs/decisions.md`, Punkt 97): ein früher Schritt
+  `places` bestimmt je Treffer, wo im Dokument der Ort steht (Titel, Betreff, Kern, Begleittext, Rest), und
+  verortet Hausnummern über die Gebäudereferenzen NRW. Zwei neue Gewichtungen in „Was ändert die
+  Gewichtung?" der Hauptperiode: `ortsbezug` (nur Treffer, die vom Ort handeln, Nebenregel C, bestätigt an
+  100 Paaren) und `stelle` (explorativ); dazu ein Satz in „Methode und Grenzen".
+- Neues Paket `snapshots/duesseldorf-adressen/` (`georep pack --addresses`), neuer Download
+  `dokumente_wahlbezirke_stelle` (nur Parquet). Adressen und Textstellen bleiben lokal.
+
 ## 0.43.0 (2026-11-28), Ähnliche Dokumente
 
 - **Ähnliche Dokumente im Dokumentdialog** (Vorhaben 18, Stufe 3, `docs/decisions.md`, Punkt 96): je Dokument

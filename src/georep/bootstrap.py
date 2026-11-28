@@ -27,6 +27,7 @@ from georep.enrich.outcomes import outcome_files
 from georep.enrich.procedures import procedure_files
 from georep.io import atomic_path
 from georep.layout import Layout
+from georep.prep.addresses import ADDRESS_DIR, ADDRESS_FILES
 from georep.prep.context import NEED_DIR, NEED_FILES
 from georep.prep.raw_texts import RAW_SUFFIX
 from georep.prep.streetpoints import LABELS_FILE, START_DIR, START_FILES
@@ -314,6 +315,12 @@ def bootstrap_from_settings(
         need=settings.context.need.package if settings.context.need.enabled else None,
         # Startseite: die Straßenpunkte und Namen der Stadtteile, wo das Profil ein Paket nennt
         street_points=settings.street_points.package,
+        # Vorhaben 16: das Adresspaket, nur wo der Schritt places Hausnummern nachschlägt
+        addresses=(
+            settings.places.package
+            if settings.places.enabled and settings.places.house_numbers
+            else None
+        ),
     )
 
 
@@ -332,6 +339,7 @@ def bootstrap(
     outcomes: Path | None = None,
     need: Path | None = None,
     street_points: Path | None = None,
+    addresses: Path | None = None,
 ) -> BootstrapReport:
     """Die Eingaben aus ``reference_root`` übernehmen.
 
@@ -367,6 +375,9 @@ def bootstrap(
     Paket mit den Straßenpunkten und, wo es welche gibt, den Namen der Stadtteile
     (``[street_points].package``), kopiert nach ``external/startkarte/``; eine Datei, die das
     Paket nicht trägt (Stadtteile in Mönchengladbach), fehlt nicht, sie gibt es dort nicht.
+    ``addresses`` ist die Naht von Vorhaben 16: das Adresspaket (``[places].package``, Straße,
+    Nummer, Zusatz, Stimm- und Wahlbezirk je Hausnummer), kopiert nach ``external/adressen/``, wo
+    der Schritt ``places`` es liest; bringt der eingefrorene Datensatz eigenes mit, gilt seins.
     """
     reference = layout.reference_view()
     layout.ensure_dirs()
@@ -418,6 +429,11 @@ def bootstrap(
             source = own if own.is_file() else street_points / "external" / START_DIR / name
             if source.is_file() or name != LABELS_FILE:
                 pairs.append((source, layout.external / START_DIR / name))
+    if addresses is not None:  # Vorhaben 16
+        for name in ADDRESS_FILES:
+            own = reference.external / ADDRESS_DIR / name
+            source = own if own.is_file() else addresses / "external" / ADDRESS_DIR / name
+            pairs.append((source, layout.external / ADDRESS_DIR / name))
     for source, target in pairs:
         _copy_input(layout, source, target, report, force=force)
     # Option 02: die zwei Eingaben des Crosswalks, wenn der Schnappschuss sie mitbringt

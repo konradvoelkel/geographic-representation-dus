@@ -116,6 +116,7 @@ def write_inputs() -> None:
     write_consultations(keep)
     write_agenda(keep)
     write_need()
+    write_addresses()
 
 
 def write_need() -> tuple[int, int, int]:
@@ -166,6 +167,38 @@ def write_need() -> tuple[int, int, int]:
         counts.append(kept.height)
     (target / SOURCES_FILE).write_bytes((source / SOURCES_FILE).read_bytes())
     return counts[0], counts[1], counts[2]
+
+
+def write_addresses() -> int:
+    """``mini/external/adressen/``: das Adresspaket für die 22 Stimmbezirke (Vorhaben 16).
+
+    Gefiltert aus dem Paket der Hauptperiode (``[places].package``): die Hausnummern, deren
+    Stimmbezirk einer der Fixture ist; ``quellen.json`` unverändert. Wie die Bedarfsdaten gilt es
+    vor dem Paket des Profils, und so liest der Schritt ``places`` auch aus einem Arbeitsverzeichnis,
+    von dem aus der relative Pfad des Pakets nicht trägt (``tests/unit/test_cli.py``). Liefert die
+    Zahl der Zeilen.
+    """
+    from georep.io import write_parquet
+    from georep.prep.addresses import (
+        ADDRESS_DIR,
+        ADDRESS_FILE,
+        ADDRESS_SCHEMA_VERSION,
+        SOURCES_FILE,
+    )
+
+    settings = load_settings(cwd=Path("/nonexistent"))
+    assert settings.places.package is not None
+    source = REPO / settings.places.package / "external" / ADDRESS_DIR
+    precincts = read_precincts(
+        MINI / "external" / "Stimmbezirke_2025.geojson", settings.columns, settings.geo.working_crs
+    )
+    keep = sorted({p.precinct_id for p in precincts})
+    frame = pl.read_parquet(source / ADDRESS_FILE).filter(pl.col("stimmbezirk_id").is_in(keep))
+    target = MINI / "external" / ADDRESS_DIR
+    target.mkdir(parents=True, exist_ok=True)
+    write_parquet(frame, target / ADDRESS_FILE, schema_version=ADDRESS_SCHEMA_VERSION)
+    (target / SOURCES_FILE).write_bytes((source / SOURCES_FILE).read_bytes())
+    return frame.height
 
 
 def write_consultations(keep: set[str]) -> int:
