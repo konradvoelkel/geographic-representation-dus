@@ -45,6 +45,9 @@ Stand 2026-11-26, `main` auf `v0.32.0`.
   (242 267 Byte) und in Mönchengladbach ohne Klassen (133 866 Byte); H1 nach der vorab festgelegten Regel
   bestätigt, aber nur zwischen den Stadtbezirken. Die Klasse „Ordnung und Verkehr“ ist an Dokumenten ohne
   Ausschussberatung ohne verlässliches Maß geprüft (`docs/todo.md`, Punkt 40).
+- **Ähnliche Dokumente** (`v0.43.0`, Punkt 96): der Dokumentdialog der Hauptperiode zeigt je Dokument fünf
+  ähnliche aus `data/aehnlich.json` (911 KB, nachgeladen); nachgeladene Dateien der Hauptperiode zusammen
+  rund 1,0 MB von 1,5 MB.
 - **`vorgaenge.html`** (`v0.38.0`): Antworten auf Anfragen, Kandidaten, Vorgänge; dazu der Dialog-Haken der
   Hauptseite, der Zeilen je Dokument beim Öffnen nachlädt. Die Hauptseite liegt damit bei 966 522 Byte,
   rund 29 KB über dem Stand vor der Phase (Ziel höchstens 30 KB, `docs/todo.md`, Punkt 36).

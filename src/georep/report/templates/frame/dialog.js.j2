@@ -11,7 +11,8 @@
   show (1 Datum, 2 Drucksache, 3 Titel); der Titel steht immer auch als title daran (d).
 
   Ein Eintrag e ist [label] oder [label, ziel]: ein Ziel >= 0 ist der Index in dokumente.json,
-  eins < 0 das Dokument documents[-1 - ziel] der Datei selbst (in JavaScript ~e[1]). Der Link ist
+  eins < 0 das Dokument documents[-1 - ziel] der Datei selbst (in JavaScript ~e[1]). Format 3
+  (Vorhaben 18): eine bloße Zahl ist [0, zahl], ein Ziel mit dem ersten Wort. Der Link ist
   relativ zu base oder schon vollständig (new URL; ohne gemeinsames Präfix ist base leer und jeder
   Link vollständig); ein Ziel ohne Link ist ein <a> ohne href, also Text. Fehlt eine Datei, bleibt
   die Liste, wie sie ist, und ein zweites Öffnen versucht es noch einmal (forget).
@@ -21,22 +22,30 @@
   an Platzhaltern einer alten Liste und ihr Satz unter der neuen. Ein Link, den new URL nicht lesen
   kann, wird Text; die übrigen Einträge und Zeilen bleiben.
 
+  Vorhaben 18: trägt eine Datei "list", stehen ihre Einträge nicht in einer Zeile hinter dem Titel,
+  sondern in einem <details> mit dem Titel als <summary>, je Eintrag ein <li>; fünf Vorschläge mit
+  Titel wären als Zeile ein Absatz unter jedem Dokument. Ein leeres Wort (18) setzt nichts vor den
+  Link; ein Trenner steht nur in der Zeile, in der Liste trennt der Listenpunkt.
+
   Die Erklärung steht als Jinja-Kommentar hier, damit sie die Seite nicht größer macht; gemessen in
   tests/unit/test_report_dialog.py.
 #}
   var EXTRAS = (dialog.dataset.extras || "").match(/\S+/g) || [], opened = 0;
+  function el(p, tag) { return p.appendChild(document.createElement(tag)); }
   function extra(x, docs, div, row) {
-    div.append(x.title + ": ");
+    row = row.map(function (e) { return e.length ? e : [0, e]; });
+    var box = x.list && el(div, "details"), list, to = div;
+    if (box) { el(box, "summary").textContent = x.title; list = el(box, "ul"); } else div.append(x.title + ": ");
     row.forEach(function (e, k) {
       var d = 1 in e && (e[1] < 0 ? x.documents[~e[1]] : docs[e[1]]);
-      var same = k && e[0] === row[k - 1][0];
-      div.append((k ? (same ? ", " : "; ") : "") + (same ? "" : x.labels[e[0]] + (d ? " " : "")));
+      var w = k && e[0] === row[k - 1][0] ? "" : x.labels[e[0]];
+      if (list) to = el(list, "li"); else if (k) to.append(w ? "; " : ", ");
+      to.append(w && d ? w + " " : w);
       if (!d) return;
-      var a = document.createElement("a");
+      var a = el(to, "a");
       try { if (d[0]) a.href = new URL(d[0], x.base || location); } catch (err) {}
       a.textContent = x.show.map(function (i) { return i === 1 ? germanDate(d[i]) : d[i]; }).filter(Boolean).join(", ");
       a.title = d[3];
-      div.append(a);
     });
   }
   function extras(items, docs) {

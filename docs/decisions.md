@@ -5510,6 +5510,141 @@ verlinkt ihren Abschnitt, und die Seite verweist auf `spalten.html#wahlbezirke_b
   Karten, Streudiagramme und der Kasten die Farben des Rahmens. Bei 1280 brach der Name des
   Wahlbezirks in drei bis vier Zeilen; eine Mindestbreite der Spalte hält ihn bei zwei.
 
+## 96. Ähnliche Dokumente im Dokumentdialog: die fünf nächsten als Liste zum Aufklappen, Format 3 des Hakens, nur in der Hauptperiode (Vorhaben 18, Stufe 3, 2026-11-28)
+
+Stufe 3 von Vorhaben 18 nach `docs/plans/18-einbettungen.md` (§ 7, § 10) und
+`docs/plan-zeigen-2026-11.md` (§ 4, V2 und V5; § 6). Kein Abschnitt und keine Unterseite: eine Zeile
+je Dokument im Dokumentdialog über den Haken von V2 (Punkt 91) und ein Download. Gebaut auf
+`feat/18-aehnlich` ab `main` `6accc37` (`v0.42.0`). Die Nummer bekommt der Eintrag beim Merge.
+
+**Was gebaut ist** (`report/similar.py`, registriert in `enrich/embeddings` als `TABLES` und
+`DIALOG`):
+
+- *Der Haken `aehnlich`*: `data/aehnlich.json` trägt je Dokument des Dialogs die ersten fünf Nachbarn
+  aus `processed/aehnliche_dokumente.parquet` nach Rang, als Index in `dokumente.json` oder als
+  eigenes Ziel mit Link, Datum, Drucksache und Titel, wie `dokumente.json` sie schreibt (der volle
+  Titel). Im Dialog steht unter jedem Dokument „Ähnliche Dokumente" zum Aufklappen, darin je
+  Vorschlag ein Listenpunkt mit Drucksache, Datum und Titel als Link auf das PDF (`show`), der Titel
+  auch als `title`. Unter der Liste des Dialogs steht der Satz der Datei, nach dem von 14.
+- *Der Satz* (`similar_sentence`): was die Vorschläge sind (die fünf mit der ähnlichsten Einbettung
+  von Titel und Text), das Modell mit Lizenz und Quelle (`nomic-embed-text-v2-moe`, Apache-2.0,
+  `https://huggingface.co/nomic-ai/nomic-embed-text-v2-moe`; Frage 47, vom Supervisor am 2026-11-28
+  auf der Modellseite nachgesehen), die Präzision@5 mit Intervall („Von den ersten fünf betrafen 208
+  von 250 Vorschlägen zu 50 Dokumenten dieselbe Sache oder dasselbe Thema (Präzision@5 0,832,
+  95-%-Intervall nach Wilson 0,781–0,873)"), der Satz aus `guete.json` samt der Schlichtung durch
+  dasselbe Modell (`Quality.text`, Punkt 89) und „Geprüft nur an <Stadt>, <Periode>" (Frage 9.10).
+  Die Präzision steht nur, wenn `alpha_genuegt` der Frage `aehnlich` wahr ist (heute: α ordinal
+  0,943); sonst sagt der Satz, dass die Kodierer zu wenig übereinstimmen, und nennt keine Zahl.
+- *Der Download `aehnliche_dokumente`*: die ganze Tabelle, zehn je Dokument (190 320 Zeilen,
+  1 021 174 Byte), nur als Parquet: die CSV wäre 27,8 MB, fast nur die zwei OParl-URLs je Zeile
+  (`docs/todo.md`, Punkt 35). Spaltendoku auf `spalten.html` und in `schema.json`, derselbe Satz
+  unter den Downloads.
+- *Wo* (Frage 9.10, plan-zeigen § 6): nur mit `similar_enabled` (Schritte an und `neighbors_package`
+  gesetzt: die Hauptperiode und ihr Vergleich), in einem gemessenen Datensatz
+  (`report.downloads.measured`, der Ordner aus `stichprobe.json`) und mit Zeilen in der Tabelle
+  (`has_rows`). Eine Datenwurzel ohne Paketkopie schreibt eine leere Tabelle und zeigt weder Zeile
+  noch Download noch Fehler; ebenso 2014 bis 2020, die laufende Periode und die zweite Stadt, auch
+  wo sie lokal Nachbarn aus einem Lauf mit `--models` haben (dort ist nicht gemessen).
+
+**Drei Erweiterungen des Hakens** (`report/dialog.py`, `frame/dialog.js.j2`; ein eigener Commit
+vor dem von 18):
+
+1. *`list`* (`DialogHook.listed`): die Einträge stehen in einem `<details>` mit dem Titel als
+   `<summary>`, je Eintrag ein `<li>`. Fünf Vorschläge mit Titel wären als Zeile ein Absatz unter
+   jedem Dokument; ein Begriff mit 40 Dokumenten zeigte 200 Vorschläge, bevor jemand einen wollte.
+   Zugeklappt kostet der Haken je Dokument eine Zeile.
+2. *`shown`* (`DialogHook.shown`, `shown_dialogs`, `dialog_names` mit Layout): ein Haken, der an ist,
+   aber in dieser Datenwurzel nichts zeigt, fehlt in `data-extras`, und seine Datei fährt nicht mit;
+   seine Eingaben bleiben im Stamp von `report`. Sonst lüde die Hauptperiode ohne Paketkopie (und
+   die Mini-Kette der Tests) eine leere `aehnlich.json`. Ein Schalter allein reicht nicht: ob die
+   Tabelle Zeilen hat, weiß erst die Datenwurzel.
+3. *Format 3*: ein Eintrag mit dem ersten Wort und einem Ziel ist nur dessen Zahl; das Skript liest
+   ihn als `[0, zahl]`. Im Format 2 kosteten fünf Ziele mit `[0,…]` je Dokument rund 54 Byte, und
+   `aehnlich.json` der Hauptperiode war 1 127 146 Byte groß, 37 % über dem Plan (820 KB); mit
+   `beschluesse.json` (geplant unter 300 KB) wäre die Grenze der nachgeladenen Dateien von 1,5 MB je
+   Profil gerissen. Mit Format 3 sind es rund 34 Byte je Dokument. `vorgaenge.json` zeigt dieselben
+   Zeilen (im Browser verglichen, unten) und wird um 0 bis 112 Byte kleiner. `list` ist ein
+   Schlüssel, der nur in der Datei eines Hakens steht, der ihn will.
+
+Der Haken im Skript des Rahmens wächst um 285 Byte, samt `data-extras` von rund 1,5 auf rund 1,8 KB
+(`test_der_haken_steht_nur_auf_seiten_mit_dateien`: unter 1 900 statt 1 600). Keine Zeile CSS: die
+Liste nimmt die Vorgaben des Browsers und die Regeln des Dialogs für `li` und `details`.
+
+**Bewusst anders als § 7 oder der Auftrag.**
+
+1. *911 386 statt 820 KB* (gzip 302 783 statt 262 KB): die 3 726 eigenen Ziele tragen den vollen
+   Titel wie `dokumente.json` (540 KB statt der gemessenen 513), und die Zeilen tragen den Index als
+   Schlüssel (rund 370 KB statt 307). Ein gekürzter Titel (100 Zeichen, wie die Ziele von 14) hieße,
+   dass dasselbe Dokument im Dialog verschieden aussieht, je nachdem ob es in `dokumente.json` steht.
+   Mit `vorgaenge.json` sind die nachgeladenen Dateien der Hauptperiode 1 006 296 Byte; für
+   `beschluesse.json` bleiben rund 490 KB bis 1,5 MB.
+2. *Die Präzision@5 ist eine geprüfte Konstante* (`NEIGHBORS_CHECK`, wie `HEAD_CHECK` von 11, Punkt
+   89), nicht aus `guete.json`: `guete.json` trägt die Übereinstimmung der Kodierer, nicht die Güte
+   des Verfahrens. `test_die_praezision_folgt_aus_labels_und_paket` rechnet sie aus `labels.csv`,
+   `stichprobe.csv` und dem Nachbarpaket im Repo nach wie das Messskript (`--auswertung`): Rang 1 bis
+   5 der 50 Anker, 208 von 250. `read_quality` bricht ab, wenn `guete.json` ein anderes Codebuch oder
+   eine andere Zahl der Einheiten nennt.
+3. *Die Quelle steht als Text im Satz, nicht als Link*: der Haken setzt den Satz als Text
+   (`textContent`); ein Link hieße mehr Skript im Rahmen für einen Satz.
+4. *Das Modell ist das der Messung*, eine Konstante neben der Präzision, kein Wert aus `[ml]`:
+   `test_das_gemessene_modell_ist_die_vorgabe` hält `[ml.embedding].model` beim gemessenen Modell. Wer
+   es lokal ändert und mit `--models` rechnet, bekommt andere Nachbarn unter demselben Satz; das ist
+   eine neue Messung (Gültigkeitsregel, plan-zeigen § 8), keine Einstellung.
+5. *Auf den Unterseiten öffnet sich kein Dialog*: `akteure.html`, `vorgaenge.html`, `zeit.html` und
+   `bedarf.html` tragen das Element und `showDocumentList` im Rahmen (Punkt 93), aber keinen Knopf
+   und kein Skript, das ihn öffnet, und seit Review N1 von 14 keinen Haken. Sie bleiben Byte für Byte,
+   wie sie waren; die Zeilen erscheinen auf `details.html` und auf der Startseite (Liste der Orte und
+   Karte über `showDocumentList`).
+
+**Verworfen.** Die Vorschläge als Zeile wie bei 14 (siehe oben); nur Nachbarn aus `dokumente.json`
+(spart 540 KB, verliert jeden Vorschlag ohne Ortstreffer, 3 726 Dokumente); Format 2 mit `[0, n]`
+(1,13 MB, siehe oben); ein eigenes Skript für 18 (V2: Beiträge hängen sich mit Daten an); eine CSV des
+Downloads; die Ähnlichkeit als Zahl im Dialog (nach dem Plan Drucksache, Datum, Titel, Link; sie steht
+im Download); Vektoren oder eine freie Suche auf der Seite (Fragen 9.1, 9.3, 9.7).
+
+**Geprüft.**
+
+- Tests: `tests/unit/test_report_similar.py` (fünf je Dokument nach Rang, Ziele wie `dokumente.json`,
+  die Datei mit `list`, `show` und eigenen Zielen, leere Tabelle ohne Haken und Download, die fünf
+  Paketprofile, der Satz aus `guete.json`, ohne genügendes α keine Zahl, ein geänderter Satz, eine
+  andere Kodierung bricht ab, die Präzision aus Labels und Paket, das Modell der Vorgabe, der
+  Download nur als Parquet mit Spaltendoku und Prüfsatz, `aehnlich.json` neben `dokumente.json` an
+  der Mini-Kette, die Liste im Skript); `tests/unit/test_report_dialog.py` (Format 3, `list` nur auf
+  Wunsch, `shown`, die Größe des Hakens). Rot vor den Änderungen: Exit 1 mit acht und mit sechs
+  Tests (Haken), Exit 2 beim Sammeln (18); die Namen stehen in den Commits.
+- A/B-Bau aller fünf Profile wie `pages.yml` (`scripts/ab_bau.sh`, `POLARS_MAX_THREADS=4
+  OMP_NUM_THREADS=2`), A aus `main` `6accc37` (`v0.42.0`, `ab/18d-a`), B aus `02ed167` (`ab/18d-b`;
+  danach nur Doku). Unter `site/` 340 Dateien in A, 342 in B, 16 Abweichungen, alle erwartet: neu
+  `data/aehnlich.json` und `data/aehnliche_dokumente.parquet` der Hauptperiode; anders je Stadt und
+  Periode `details.html` und die Startseite (die 285 Byte des Hakens; in der Hauptperiode dazu
+  `data-extras`, die zwei Downloadzeilen, der Prüfsatz, die Zahl der Downloadzeilen 80 → 82, die
+  Größen von `schema.json` und `vorgaenge.json`) und `data/vorgaenge.json` (Format 3; aufgefaltet
+  gleich in Zeilen, Zielen, Wörtern und Satz), dazu `schema.json` und `spalten.html` der Hauptperiode
+  (je die eine Tabelle). Gleich sind `karte.html`, `vergleich.html`, alle Unterseiten und jede andere
+  Datei unter `data/`. Über die Datenwurzeln 1 219 und 1 223 Dateien: dieselben Abweichungen in den
+  Ordnern der Profile, kein Parquet unter `processed/` oder `interim/` anders, 137 Stamps (111 nur
+  `written`; 25 dazu `extra`, weil `report_fingerprint` die geänderte Vorlage zählt; der von
+  `index.html` der Hauptperiode dazu in den Eingaben: die Nachbartabelle, `guete.json` und
+  `stichprobe.json` von 18). `georep publish --strict-budget` lief in beiden Bauten durch.
+- Größen, veröffentlicht:
+
+  | | `details.html` A → B | Startseite A → B | `aehnlich.json` (gzip) | nachgeladen je Profil |
+  |---|---|---|---|---|
+  | Hauptperiode | 923 125 → 925 019 (+1 894) | 92 972 → 93 266 | 911 386 (302 783) | 1 006 296 |
+  | `2014-2020/` | 810 574 → 810 859 (+285) | 92 349 → 92 634 | – | 45 079 |
+  | `2025/` | 708 924 → 709 209 (+285) | 92 107 → 92 392 | – | 20 615 |
+  | `moenchengladbach/` | 797 144 → 797 429 (+285) | 86 955 → 87 240 | – | 6 661 |
+
+- Im Browser (headless Chrome über Port 8782 auf dem B-Bau, je mit einem eingefügten Skript, das den
+  Dialog öffnet): `details.html` der Hauptperiode, Begriff „diezelweg" mit neun Dokumenten, bei
+  1 280 und 390 Pixeln, hell und dunkel; jedes Dokument trägt „Ähnliche Dokumente", aufgeklappt fünf
+  Vorschläge, und unter der Liste stehen der Satz von 14 und der von 18. Die Startseite über die
+  Liste der Orte (`openPlace`, also `showDocumentList` wie ein Klick in die Karte) bei 1 280 hell und
+  390 dunkel. In 2014 bis 2020 und der zweiten Stadt öffnet der Dialog mit den Zeilen „Vorgang", ohne
+  ähnliche Dokumente, ohne Meldung in der Konsole und ohne Abruf von `aehnlich.json`. Die Zeilen
+  „Vorgang" sind in A (Format 2) und B (Format 3) für denselben Begriff gleich, in der Hauptperiode
+  (acht) und in 2014 bis 2020 (vier).
+
 ## NN. Ortsbezug: die Stelle aus den Abschnitten von 11, die Hausnummer entscheidet die Grenzstraße und erzeugt keinen Treffer, zwei Gewichtungen statt einer neuen Zählung (Vorhaben 16, Stufe 2 und kleine Stufe 3, 2026-11-28)
 
 Vorhaben 16 nach `docs/plans/16-ortsbezug.md`, § 6 und § 7 mit § 10 (Supervisor, 2026-11-28), in
