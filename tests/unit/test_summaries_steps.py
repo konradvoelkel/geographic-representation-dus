@@ -146,9 +146,9 @@ def _step(settings: Settings, layout: Layout, generator: object | None = None) -
 
 def test_the_contribution_is_registered_after_the_sections(default_settings: Settings) -> None:
     names = [c.name for c in CONTRIBUTIONS]
-    assert names[-1] == "20-kurzfassungen" and names.index("11-struktur") < names.index(
-        "20-kurzfassungen"
-    )
+    # hinter 20 steht seit Vorhaben 28 nur noch 28 (am Ende des Registers, Plan der Phase „Zeigen“)
+    assert names.index("11-struktur") < names.index("20-kurzfassungen")
+    assert names[names.index("20-kurzfassungen") + 1 :] in ([], ["28-abstimmungen"])
     off = default_settings.model_copy(update={"summaries": Summaries(enabled=False)})
     layout = Layout(Path("/nonexistent/d"), Path("/nonexistent/c"), Path("/nonexistent/r"))
     assert summaries_steps(off, layout, HTTP) == []

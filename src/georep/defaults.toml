@@ -737,3 +737,41 @@ house_number = ""              # Muster der Hausnummer direkt hinter einem Begri
 list_max_line = 60             # Nebenregel C, Listenzeile: die Zeile ohne Leerraum am Rand hat höchstens so viele Zeichen (LISTE_MAX_ZEILE des Messskripts; geändert ist es ein neues Verfahren, § 6)
 list_max_lead = 12             # ... und vor dem Begriff stehen in ihr höchstens so viele („14 ", „1. ", „6 Anlage "; LISTE_MAX_VORLAUF)
 position_weights = { titel = 1.0, betreff = 1.0, kern = 1.0, begleittext = 0.5, rest = 0.25 }  # Variante stelle (explorativ, § 3.3): Gewicht je Begriff nach seiner vordersten Stelle; mit allen Gewichten 1 zählt sie wie einheit. Hauptperiode: Summe 23 243,5 von 29 330
+
+# --- Vorhaben 28: Abstimmungen (docs/plans/28-abstimmungen.md, § 6, § 8 und § 10)
+[votes]                        # Ergebnis und Mehrheitsform je Tagesordnungspunkt aus dem Eintrag der Sitzungsleitung (Ebene A, § 5.1); ein Stadtprofil schaltet ein, wenn das Paket von 26 seine Punkte trägt
+enabled = false
+# Die Wortregel aus § 8.1, vorab festgelegt im Commit 97ebb52, bevor ein Wert von `result` gezählt war,
+# und an 150 Punkten geprüft (Präzision 0,982). Die erste Zeile, deren Wort im kleingeschriebenen
+# Eintrag steht, gilt, sonst „sonstiges": eine Regel über Wörter, keine Tabelle der Werte, damit ein
+# neuer Wert nicht still herausfällt. Die Sprache der Sitzungsleitung, keine Stadt; nicht ändern ohne
+# neue Messung (ein Test hält sie gleich der des Messskripts)
+changed = ["abweichend", "geändert"]  # angenommen mit Änderung (Merker geaendert)
+unanimous = ["einstimmig"]     # Form einstimmig, nur bei angenommen oder abgelehnt
+majority = ["mehrheitlich"]    # Form mehrheitlich; sonst ohne_angabe
+motion_type = "antrag"         # H28.2: ein Antrag ist eine Drucksache, deren Dokumentart dieses Wort enthält …
+motion_not = "anfrage"         # … und dieses nicht (§ 8.6, wie das Messskript)
+threshold = 0.25               # H28.2: angenommen in weniger als einem Viertel der Fälle (§ 8.6, vorab gesetzt)
+min_units = 30                 # H28.2: darunter nicht entscheidbar
+alpha = 0.05                   # Holm über H28.1 bis H28.3, bestätigt bei p_holm < alpha
+[[votes.results]]
+result = "zurueckgezogen"
+words = ["zurückgezogen"]
+[[votes.results]]
+result = "vertagt"
+words = ["vertagt", "zurückgestellt", "abgesetzt"]
+[[votes.results]]
+result = "verwiesen"
+words = ["verwiesen"]
+[[votes.results]]
+result = "abgelehnt"
+words = ["abgelehnt"]
+[[votes.results]]
+result = "angenommen"
+words = ["beschlossen", "zugestimmt", "angenommen", "passieren lassen"]
+[[votes.results]]
+result = "kenntnis"
+words = ["kenntnis", "beantwortet"]
+[[votes.results]]
+result = "erledigt"
+words = ["erledigt"]

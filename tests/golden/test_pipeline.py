@@ -152,6 +152,9 @@ def test_pipeline_runs_skips_and_reruns(
         "need": "ausgeführt",  # Vorhaben 22: liest die Auswertung (Dokumente je Wahlbezirk)
         # Vorhaben 12: liest Rohtexte und Korpus, beide unverändert
         "identifiers": "übersprungen",
+        # Vorhaben 28: liest Beratungsverlauf, Korpus und Urheber; parties schreibt dieselben
+        # Urheber noch einmal, die Orte ändern keines davon
+        "votes": "übersprungen",
         "report": "ausgeführt",
         # Vorhaben 15, Stufe 3: die Unterseite liest Korpus, Urheber, Gremien, die beiden Tabellen
         # von 15 und die Prüfung im Repo; die Orte ändern keines davon

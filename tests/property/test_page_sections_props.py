@@ -17,6 +17,7 @@ from hypothesis import given
 from hypothesis import strategies as st
 
 import georep.enrich
+import georep.report.pages
 from georep.enrich import Contribution
 from georep.layout import Layout
 from georep.report.pages import Page, PageSection, order_sections, sections_for
@@ -74,7 +75,12 @@ def test_die_folge_haengt_nicht_am_register(sections: list[PageSection], seeds: 
     results = []
     for seed in seeds:
         shares = 1 + seed % 4
-        with patch.object(georep.enrich, "CONTRIBUTIONS", _by_page(sections, seed, shares)):
+        # Vorhaben 28: wie die Beispieltests ersetzt der Probelauf mit dem Register auch den Ordner
+        # der Vorlagen, sonst wäre der echte Gast ``akteure/abstimmungen.html.j2`` darin verwaist
+        with (
+            patch.object(georep.enrich, "CONTRIBUTIONS", _by_page(sections, seed, shares)),
+            patch.object(georep.report.pages, "pages_folder", lambda: Path("/nonexistent/pages")),
+        ):
             results.append(sections_for(SETTINGS))
     assert results[0] == results[1]
     for page, found in results[0].items():

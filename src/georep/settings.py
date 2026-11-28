@@ -2991,6 +2991,119 @@ class PlacesSettings(_Strict):
         return self
 
 
+# --- Vorhaben 28: Abstimmungen (docs/plans/28-abstimmungen.md, § 6, § 8 und § 10) ----------------
+# Die Klassen der Wortregel (§ 8.1) in ihrer Folge; was keine Regel trifft, auch ein leerer Eintrag,
+# ist ``sonstiges``. Entschieden sind nur ``angenommen`` und ``abgelehnt``: nur sie tragen eine Form.
+VOTE_RESULTS: tuple[str, ...] = (
+    "zurueckgezogen",
+    "vertagt",
+    "verwiesen",
+    "abgelehnt",
+    "angenommen",
+    "kenntnis",
+    "erledigt",
+)
+VOTE_OTHER = "sonstiges"
+VOTE_DECIDED: tuple[str, ...] = ("angenommen", "abgelehnt")
+VoteResult = Literal[
+    "zurueckgezogen", "vertagt", "verwiesen", "abgelehnt", "angenommen", "kenntnis", "erledigt"
+]
+# Die vorab festgelegten Rechnungen von H28.2 (§ 8.6) mit eigenem Zeitraum im Profil: der Haupttest
+# und die Nebenrechnung R2; R1, R3 und R4 rechnen im Zeitraum des Haupttests.
+VoteCalculation = Literal["haupttest", "R2"]
+
+
+class VoteRule(_Strict):
+    """Eine Zeile der Wortregel: enthält ``result`` (kleingeschrieben) eines der Wörter, gilt die Klasse."""
+
+    result: VoteResult
+    words: list[str]
+
+    @field_validator("words")
+    @classmethod
+    def _lowercase_and_filled(cls, value: list[str]) -> list[str]:
+        if not value or any(not word or word != word.lower() for word in value):
+            raise ValueError(f"votes.results: Wörter klein und nicht leer, nicht {value}")
+        return value
+
+
+class VoteWindow(_Strict):
+    """Ein vorab festgelegter Zeitraum für H28.2 (§ 8.4), beide Grenzen einschließlich.
+
+    Die Mehrheit gilt hier ab dem Monat ihrer Vereinbarung, nicht ab der Wahlperiode des Rates
+    (anders als ``[majorities]``, Punkt 75): so steht es im Messdokument, bevor ein Ergebnis gezählt
+    war. Welche Parteien die Mehrheit sind, sagt ``majorities.on(start)``.
+    """
+
+    calculation: VoteCalculation
+    start: date
+    end: date | None = None  # None: offen (laufende Periode)
+
+    @model_validator(mode="after")
+    def _ordered(self) -> VoteWindow:
+        if self.end is not None and self.end < self.start:
+            raise ValueError(f"votes.windows: {self.calculation} endet vor seinem Beginn")
+        return self
+
+    def within(self, period: Period) -> bool:
+        """Ob der Zeitraum ganz in der Periode eines Profils liegt: nur dort wird er gerechnet."""
+        if self.start < period.start:
+            return False
+        if period.end is None:
+            return True
+        return self.end is not None and self.end <= period.end
+
+
+class Votes(_Strict):
+    """Abstimmungen je Tagesordnungspunkt (Vorhaben 28, nur Ebene A nach § 5.1 des Messdokuments).
+
+    Die Eingabe ist der Beratungsverlauf von Vorhaben 26; ohne ``outcomes.enabled`` fehlt der
+    Schritt. ``results`` ist die Wortregel aus § 8.1, vorab festgelegt im Commit ``fixed``. Sie steht
+    in ``defaults.toml``, weil sie die Sprache der Sitzungsleitung liest und keine Stadt, und ein Test
+    hält sie gleich der des Messskripts. Was nur eine Stadt kennt (die Zeiträume der Mehrheit, die
+    Fraktion der WZB-Schwelle), steht im Stadtprofil.
+    """
+
+    enabled: bool = False
+    results: list[VoteRule] = []
+    changed: list[str] = []  # „abweichend", „geändert": angenommen mit Änderung
+    unanimous: list[str] = []  # Form einstimmig
+    majority: list[str] = []  # Form mehrheitlich
+    # H28.2 (§ 8.6): ein Antrag ist eine Drucksache, deren Dokumentart (klein) ``motion_type``
+    # enthält und ``motion_not`` nicht; den Urheber nennt Option 04 (``dokumente_urheber``)
+    motion_type: str = ""
+    motion_not: str = ""
+    # Parteischlüssel aus [originators], deren Anträge H28.2 auslässt: sie prüft H28.3 (WZB-Schwelle)
+    excluded_parties: list[str] = []
+    windows: list[VoteWindow] = []
+    threshold: float = Field(default=0.25, gt=0.0, lt=1.0)  # H28.2: Anteil angenommen unter …
+    min_units: int = Field(default=30, ge=1)  # darunter nicht entscheidbar
+    alpha: float = Field(default=0.05, gt=0.0, lt=1.0)  # Holm über H28.1 bis H28.3, p_holm < alpha
+    fixed: str = ""  # Commit der Festlegung (§ 8)
+    fixed_on: date | None = None  # Tag der Festlegung; Anzeige, nicht im Fingerprint
+
+    @field_validator("changed", "unanimous", "majority")
+    @classmethod
+    def _lowercase(cls, value: list[str]) -> list[str]:
+        if any(not word or word != word.lower() for word in value):
+            raise ValueError(f"votes: Wörter klein und nicht leer, nicht {value}")
+        return value
+
+    @model_validator(mode="after")
+    def _complete(self) -> Votes:
+        classes = [rule.result for rule in self.results]
+        if len(set(classes)) != len(classes):
+            raise ValueError(f"votes.results: eine Klasse steht zweimal in {classes}")
+        calculations = [window.calculation for window in self.windows]
+        if len(set(calculations)) != len(calculations):
+            raise ValueError(f"votes.windows: eine Rechnung steht zweimal in {calculations}")
+        if self.enabled and not (self.results and self.unanimous and self.majority):
+            raise ValueError("votes.enabled braucht die Wortregel (results, unanimous, majority)")
+        if self.windows and not (self.motion_type and self.fixed):
+            raise ValueError("votes.windows braucht motion_type und den Commit der Festlegung")
+        return self
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="GEOREP_",
@@ -3055,6 +3168,7 @@ class Settings(BaseSettings):
     summaries: Summaries = Summaries()  # Vorhaben 20: Kurzfassungen, nie veröffentlicht
     street_points: StreetPoints = StreetPoints()  # Startseite: Straßenpunkte, Ortsnamen
     places: PlacesSettings = PlacesSettings()  # Vorhaben 16: Ortsbezug
+    votes: Votes = Votes()  # Vorhaben 28: Abstimmungen je Tagesordnungspunkt (Ebene A)
 
     @property
     def base_profile(self) -> str:
@@ -3213,6 +3327,7 @@ class Settings(BaseSettings):
         trägt der Stamp des Netzschritts ``street_points`` als ``extra``.
         Vorhaben 16: ``places.package`` ist ein Pfad; die Kopie des Pakets steht im Stamp von
         ``places``.
+        Vorhaben 28: ``votes.fixed_on`` ist Anzeige wie bei 22; Wortregel, Zeiträume und Commit zählen.
         """
         payload = self.model_dump(
             mode="json",
@@ -3288,6 +3403,8 @@ class Settings(BaseSettings):
                 # Vorhaben 16: das Adresspaket ist ein Pfad; ``bootstrap`` kopiert es nach
                 # ``external/adressen/``, und die Kopie steht als Eingabe im Stamp von ``places``
                 "places": {"package"},
+                # Vorhaben 28: der Tag der Festlegung ist Anzeige wie bei 22, der Commit zählt
+                "votes": {"fixed_on"},
             },
         )
         return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:16]

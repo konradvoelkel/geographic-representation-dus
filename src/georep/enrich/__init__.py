@@ -108,6 +108,7 @@ from georep.enrich.places import CONTRIBUTION as PLACES  # noqa: E402  (Vorhaben
 from georep.enrich.procedures import CONTRIBUTION as PROCEDURES  # noqa: E402  (Vorhaben 14)
 from georep.enrich.sections import CONTRIBUTION as SECTIONS  # noqa: E402  (Vorhaben 11)
 from georep.enrich.summaries import CONTRIBUTION as SUMMARIES  # noqa: E402  (Vorhaben 20)
+from georep.enrich.votes import CONTRIBUTION as VOTES  # noqa: E402  (Vorhaben 28)
 
 CONTRIBUTIONS: tuple[Contribution, ...] = (
     FUNCTIONS,
@@ -120,6 +121,7 @@ CONTRIBUTIONS: tuple[Contribution, ...] = (
     PLACES,  # hinter 11: liest die Abschnitte
     IDENTIFIERS,
     SUMMARIES,
+    VOTES,
 )
 
 

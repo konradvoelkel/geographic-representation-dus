@@ -1163,3 +1163,23 @@ enabled = true
 package = "snapshots/duesseldorf-adressen"  # georep pack --addresses: Straße, Nummer, Zusatz, Stimm- und Wahlbezirk je Hausnummer aus GebRef NRW (dl-de/zero-2.0); bootstrap kopiert nach external/adressen/. Die Perioden erben es (dieselben Wahlbezirke)
 house_numbers = true           # § 3.4: 92,3 % (91,7–92,7) der Adressen hinter einem Straßenbegriff sind verortbar (Schwelle 80 %), 10 143 von 10 146 verorteten liegen im Wahlbezirk des Begriffs
 house_number = '\s{0,3}(?:Nr\.\s?)?(?P<nr>\d{1,3})(?:\s?(?P<zusatz>[a-zA-Z])(?![A-Za-zÄÖÜäöüß]))?(?:\s?[-–/+]\s?\d{1,3}\s?[a-zA-Z]?(?![A-Za-zÄÖÜäöüß]))?(?!\d)(?!\s?[.,]\d)(?!\s?(?:%|m\b|km\b|qm\b|m²|mm\b|cm\b|ha\b|€|Euro\b|EUR\b|Jahr|Std|Uhr|Min|Monat|Tag|Woche|Pl[äa]tz|Stellpl|Standort|Wohnung|WE\b|Stück|Stk))'  # HAUSNR des Messskripts, unverändert: bis drei Ziffern direkt hinter dem Begriff, ein Buchstabe als Zusatz, ein Bereich („50–54", „12/14"), „Nr." davor; keine Hausnummer sind Dezimalzahlen, vierstellige Zahlen und Zahlen mit Einheit (m, %, €, Uhr, Plätze, Standorte …). In der Durchsicht von 40 Treffern 37 Adressen, „Standort" seither ausgeschlossen (§ 3.4)
+
+# --- Vorhaben 28: Abstimmungen (docs/plans/28-abstimmungen.md, § 8 und § 10) ----------------------
+# Ebene A in allen drei Perioden: das Paket von 26 trägt dort die Tagesordnungspunkte mit dem Eintrag
+# der Sitzungsleitung (Hauptperiode 25 439, 2014-2020 28 092, seit 2025 4 979). Ebene B (Positionen
+# der Fraktionen aus den Niederschriften) ist nach der Kodierung verworfen (§ 5.1); H28.1 und H28.3
+# bleiben darum nicht entscheidbar. Die Zeiträume sind die aus § 8.4, festgelegt im Commit 97ebb52:
+# ab dem Monat der Vereinbarung (Januar 2021, Dezember 2025), nicht ab der Wahlperiode des Rates
+# wie [majorities]; die Parteien der Mehrheit kommen von dort.
+[votes]
+enabled = true
+fixed = "97ebb52"              # Commit der Festlegung von Klassen, Kriterium und Hypothesen (2026-11-24 00:41)
+fixed_on = 2026-11-24
+excluded_parties = ["AfD"]     # H28.2 lässt Anträge mit dieser Fraktion aus; sie prüft H28.3 (WZB-Schwelle)
+[[votes.windows]]
+calculation = "haupttest"      # H28.2, Hauptrechnung: Sitzungen der Hauptperiode ab der Kooperationsvereinbarung
+start = 2021-01-01
+end = 2025-09-14
+[[votes.windows]]
+calculation = "R2"             # Nebenrechnung ab dem Koalitionsvertrag; rechnet im Profil duesseldorf-2025
+start = 2025-12-01
