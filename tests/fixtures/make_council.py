@@ -37,7 +37,7 @@ PAPERS = {
     "94646": "Vorlage: Empfehlung abweichend beschlossen, zuletzt beschlossen (Mini)",
     "100162": "Antrag: eine Beratung ohne Tagesordnungspunkt im Datensatz",
     "88452": "Haushaltsantrag in der Haushaltssitzung des Rates vom 2021-02-05, ohne Ergebnis",
-    "101779": "Haushaltsantrag in einem Gremium ohne Kürzel im Profil (gr/400224, Frage 9.17)",
+    "101779": "Haushaltsantrag aus den Sitzungen der eingereichten Haushaltsanträge (gr/400224, Frage 9.17)",
 }
 MEETING_FIELDS = {"id", "type", "start", "end", "organization"}
 ITEM_FIELDS = {"id", "type", "meeting", "number", "order", "consultation", "result"}

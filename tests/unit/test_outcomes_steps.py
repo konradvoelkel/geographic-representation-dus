@@ -62,7 +62,8 @@ EXPECTED = {
     "94646": ("beschlossen", "einstimmig beschlossen", 4, "RAT"),
     "100162": ("beschlossen", "mehrheitlich beschlossen", 2, "SENR"),  # eine Beratung ohne Punkt
     "88452": ("ohne_ergebnis", None, 1, None),  # Haushaltssitzung 2021-02-05
-    "101779": ("abgelehnt", "mehrheitlich abgelehnt", 1, "gr/400224"),  # Kürzel fehlt im Profil
+    # gr/400224, die Sitzungen der eingereichten Haushaltsanträge: der Rat (Frage 9.17 von 26)
+    "101779": ("abgelehnt", "mehrheitlich abgelehnt", 1, "RAT"),
 }
 
 

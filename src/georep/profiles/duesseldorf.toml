@@ -381,6 +381,13 @@ SENR = "Seniorenrat"           # OParl-organizations-Seite 2026-10-11
 # stehen seitdem in [bodies.committees], und erst damit darf die Zeile hier stehen):
 "gr/26" = "POA"                # 0 in der Hauptperiode; 304 in der Periode 2014 bis 2020, 45 davon eindeutig, Reinheit 100 %
 "gr/400237" = "ACI"            # 0 in der Hauptperiode; 56 in der laufenden, 53 eindeutig, 100 %
+# Frage 9.17 von Vorhaben 26 (2026-11-28): zwei Organisationen, die nur Sitzungen tragen und in keiner
+# Beratungsfolge stehen (`learn-bodies` sieht sie darum nicht, der Schritt `bodies` merkt nichts von
+# ihnen); sie zählen im Beratungsverlauf von 26 und in den Abstimmungen von 28. Belegt aus den
+# Sitzungen des Netzlaufs von F6 (raw/meetings.jsonl, Abruf 2026-11-23): Name der Sitzungen, dahinter
+# die Dokumente auf ihren Tagesordnungspunkten, davon mit diesem Kürzel in der Drucksachennummer.
+"gr/400224" = "RAT"            # „Eingereichte Haushaltsanträge zu den Etatberatungen 2024" bis „… 2027/2028" (4 Sitzungen, 2023-12-15 bis 2026-12-17, „Es handelt sich um keine eigene Sitzung": die Anträge zur Ratssitzung); die für 2022 und 2023 stehen unter gr/6. Hauptperiode 138, davon 138 (RAT/394/2024 …), laufende 122, davon 122
+"gr/65" = "GLA"                # „Ausschuss für Gleichstellung" (91 Sitzungen, 2014-09-09 bis 2026-02-03, danach gr/400242). Hauptperiode 160, davon 148 (die übrigen 12 mitberaten: JHA, INTR je 4, AGS, RAT, AWIR, HFA), laufende 7, davon 7; 2014 bis 2020 157, davon 31 (123 mit der Amtsnummer 02)
 
 # --- Option 06: Gewichtung (docs/plans/06-gewichtung.md). Alle Gewichte liegen in [0, 1]; ein Dokument
 # Fremddaten je Raumeinheit (hier der Quartiersatlas der Stadt je Sozialraum) werden über die
