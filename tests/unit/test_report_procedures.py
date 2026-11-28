@@ -421,7 +421,10 @@ def _named(text: str) -> list[str]:
 def test_kein_parteiname_in_vorlage_seite_und_spaltendoku() -> None:
     """Namen kommen nur aus den Daten: mit neutralen Fraktionen bleibt keiner übrig."""
     folder = REPO / "src" / "georep" / "report" / "templates" / "pages"
-    assert _named("".join(p.read_text(encoding="utf-8") for p in folder.rglob("vorgaenge*"))) == []
+    # Vorhaben 26: ``vorgaenge/`` ist der Ordner der Gäste; ihre Vorlagen gelten mit (wie bei 28)
+    files = [p for p in folder.rglob("vorgaenge*") if p.is_file()]
+    files += sorted((folder / "vorgaenge").glob("*")) if (folder / "vorgaenge").is_dir() else []
+    assert _named("".join(p.read_text(encoding="utf-8") for p in files)) == []
     page = _render(_check_settings(mg_settings()), _city(("F1", "F2")))
     assert _named(page) == []
     docs = " ".join(doc[0] for table in TABLES for doc in table.columns.values())
@@ -458,7 +461,11 @@ def test_die_drei_tabellen_stehen_als_download_mit_spaltendoku(
 
 def test_der_dialog_der_hauptseite_laedt_die_vorgaenge(mini_run: Layout) -> None:
     index = mini_run.site_details.read_text(encoding="utf-8")
-    assert '<dialog id="docs" aria-labelledby="docs-title" data-extras="vorgaenge">' in index
+    # Vorhaben 26 hängt den Haken ``beschluesse`` hinter 14 (Registerfolge)
+    assert (
+        '<dialog id="docs" aria-labelledby="docs-title" data-extras="vorgaenge beschluesse">'
+        in index
+    )
     listed = json.loads((mini_run.site_data / "dokumente.json").read_text(encoding="utf-8"))
     hook = mini_run.site_data / "vorgaenge.json"
     payload = json.loads(hook.read_text(encoding="utf-8"))

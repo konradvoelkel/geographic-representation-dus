@@ -13,6 +13,10 @@ und § 10):
   den Antragserfolg je Fraktion (``processed/antragserfolg.parquet``). Dazu liest er die Rollen und
   die Kanten von Vorhaben 14 und die Antragsteller von Vorhaben 15; ohne deren Schritte fehlt er.
 
+Dazu (Stufe 3, Messdokument § 7) drei veröffentlichte Tabellen, drei Abschnitte auf
+``vorgaenge.html`` von Vorhaben 14 (``Contribution.sections``, Vorarbeit V1) und der Haken
+``beschluesse`` im Dokumentdialog (Vorarbeit V2); was sie zeigen, steht in ``report.outcomes``.
+
 Die Regeln stehen in ``analysis.outcomes``; hier steht nur, was gelesen und geschrieben wird. Die
 Pfade gehören diesem Modul (Synergien 2026-11, § 2.1).
 """
@@ -53,6 +57,28 @@ from georep.layout import Layout
 from georep.oparl import OparlAgendaItem, OparlConsultation, OparlMeeting
 from georep.pipeline import Step
 from georep.prep.references import ReferenceRules, role_of
+from georep.report.dialog import DialogHook
+from georep.report.outcomes import (
+    DIALOG_NAME,
+    DIALOG_TITLE,
+    HOST,
+    SECTION_OUTCOMES,
+    SECTION_SESSION,
+    SECTION_SUCCESS,
+    dialog_inputs,
+    dialog_rows,
+    outcomes_section_data,
+    outcomes_section_inputs,
+    section_links,
+    session_section_data,
+    session_section_inputs,
+    success_section_data,
+    success_section_inputs,
+    table_check_files,
+    table_sentence,
+)
+from georep.report.pages import PageSection
+from georep.report.tables import PublishedTable, TableCheck
 from georep.settings import Settings
 from georep.stores import stored_schema_version
 
@@ -146,6 +172,22 @@ def read_agenda(layout: Layout, papers: list[str]) -> tuple[pl.DataFrame, str]:
     )
 
 
+def outcomes_built(settings: Settings) -> bool:
+    """Ob der Schritt ``outcomes`` gebaut wird: 26 an, Vorhaben 14 an und die Antragsteller von 15
+    (``functions.enabled`` mit Urhebern). Sonst steht nur der Beratungsverlauf da."""
+    return (
+        settings.outcomes.enabled
+        and settings.procedures.enabled
+        and settings.functions.enabled
+        and bool(settings.originators.parties)
+    )
+
+
+def progress_built(settings: Settings) -> bool:
+    """Ob ``council_results`` den Beratungsverlauf schreibt: ``outcomes.enabled``."""
+    return settings.outcomes.enabled
+
+
 def outcome_steps(settings: Settings, layout: Layout, http: Transport) -> list[Step]:
     """Die Schritte ``council_results`` und, mit 14 und 15, ``outcomes``; offline.
 
@@ -180,9 +222,7 @@ def outcome_steps(settings: Settings, layout: Layout, http: Transport) -> list[S
             optional=(*network_inputs(layout), files.agenda, *progress_inputs(layout)),
         )
     ]
-    with_procedures = settings.procedures.enabled
-    with_cosponsors = settings.functions.enabled and bool(settings.originators.parties)
-    if not (with_procedures and with_cosponsors):
+    if not outcomes_built(settings):
         return steps
     edges = procedure_files(layout).edges
     cosponsors = functions_files(layout).cosponsors
@@ -234,7 +274,7 @@ def outcome_steps(settings: Settings, layout: Layout, http: Transport) -> list[S
             period_key(settings.period.start, settings.period.end),
         )
         write_parquet(success, files.success, schema_version=OUTCOMES_SCHEMA_VERSION)
-        motions = frame.filter(pl.col("rolle") == MOTION)
+        motions = frame.filter(pl.col("dokument_rolle") == MOTION)
         entered = motions.filter(pl.col("klasse") != "ohne_ergebnis").height
         practice = motions.filter(~pl.col("eintrag_tragfaehig").fill_null(True)).height
         figures = outcome_figures(frame)
@@ -257,4 +297,200 @@ def outcome_steps(settings: Settings, layout: Layout, http: Transport) -> list[S
     return steps
 
 
-CONTRIBUTION = Contribution("26-beschluesse", steps=outcome_steps)
+# --- Stufe 3 (Messdokument § 7, § 10): Tabellen, Abschnitte auf vorgaenge.html, Dialog -------------
+_ID = ("OParl-URL der Drucksache (Korpus-ID)", "")
+_BODY = (
+    "Kürzel des Gremiums der Sitzung aus bodies.organizations, mehrere mit „+“, sonst der "
+    "Schlüssel der Organisation; leer ohne Organisation"
+)
+_MOTIONS = "Anträge"
+
+
+def without_review(frame: pl.DataFrame, settings: Settings) -> pl.DataFrame:
+    """Die veröffentlichte Beschlusslage: ohne ``pruefauftrag_beantragt`` (Rückfall 1, § 5).
+
+    Die Regel des beantragten Prüfauftrags verfehlte die vorab festgelegte Präzision (57 von 65,
+    Recall 0,73); die Spalte bleibt im Datensatz als Beschreibung, wird aber nicht veröffentlicht,
+    wie die verworfenen Spannen von 12 (Punkt 89).
+    """
+    return frame.drop("pruefauftrag_beantragt")
+
+
+TABLES = (
+    PublishedTable(
+        "beschlusslage",
+        lambda layout: outcome_files(layout).outcomes,
+        "Beschlusslage je Ratsdokument: Klasse aus der letzten Entscheidung in der Sache, "
+        "Gremium und Tag, Beratungen, Folgevorlage (nur Parquet); geprüft nur für Anträge",
+        {
+            "id": _ID,
+            "dokument_rolle": (
+                "Rolle des Dokuments nach Vorhaben 14: antrag, vorlage, anfrage, information "
+                "und weitere; nicht die Rolle einer Beratung (beratungsverlauf.beratung_rolle) "
+                "und nicht die Stellung im Vorgang (dokumente_vorgang.rolle)",
+                "",
+            ),
+            "klasse": (
+                "beschlossen, geaendert, abgelehnt, zurueckgezogen, erledigt (ohne Abstimmung), "
+                "vertagt (zuletzt vertagt), offen (verwiesen, danach nichts im Datensatz) oder "
+                "ohne_ergebnis, aus der letzten Entscheidung in der Sache, sonst dem letzten "
+                "Stand; an Anträgen geprüft, für die übrigen Rollen nur beschreibend",
+                "",
+            ),
+            "grob": (
+                "angenommen (beschlossen, geaendert), abgelehnt, ohne_sachbeschluss "
+                "(zurueckgezogen, erledigt), offen (vertagt, offen) oder ohne_ergebnis",
+                "",
+            ),
+            "result": (
+                "der maßgebliche Eintrag der Sitzungsleitung, wörtlich; leer bei ohne_ergebnis",
+                "",
+            ),
+            "entscheidung_top": (
+                "OParl-AgendaItem des maßgeblichen Tagesordnungspunkts; leer bei ohne_ergebnis",
+                "",
+            ),
+            "entscheidung_gremium": (_BODY.replace("der Sitzung", "dieses Punkts"), ""),
+            "entscheidung_datum": ("Tag der Sitzung dieses Punkts", ""),
+            "tage": (
+                "vom Datum des Dokuments bis zu dieser Sitzung; leer ohne Sitzung oder wenn sie "
+                "vor dem Dokument liegt",
+                "Tage",
+            ),
+            "beratungen": (
+                "Beratungen des Dokuments in diesem Datensatz, mit und ohne Tagesordnungspunkt",
+                "Beratungen",
+            ),
+            "folgevorlage": (
+                "nur Anträge: die erste Drucksache der Verwaltung, die den Antrag über eine starke "
+                "Verbindung von Vorhaben 14 nennt; eine Untergrenze, denn die Verbindungen kennen "
+                "nur Drucksachen dieses Datensatzes (eine Folgevorlage der nächsten Periode fehlt)",
+                "",
+            ),
+            "eintrag_tragfaehig": (
+                "nur Anträge mit Ergebnis: falsch in einem Gremium-Jahr, in dem mindestens "
+                "outcomes.practice_share der Anträge mit Ergebnis und mindestens "
+                "outcomes.practice_min nur „erledigt“ sind; dort ist der Eintrag eine Praxis der "
+                "Sitzungsleitung, kein Ergebnis",
+                "",
+            ),
+        },
+        optional=True,  # ohne den Schritt outcomes (etwa ohne Urheber) fehlt die Datei, nicht die Seite
+        enabled=outcomes_built,
+        csv=None,  # docs/todo.md, Punkt 35: je Dokument nur Parquet
+        view=without_review,
+        check=TableCheck(table_check_files, table_sentence),
+    ),
+    PublishedTable(
+        "beratungsverlauf",
+        lambda layout: outcome_files(layout).progress,
+        "Beratungsverlauf je Ratsdokument: jede Beratung mit ihren Tagesordnungspunkten, Gremium, "
+        "Sitzung und dem Eintrag der Sitzungsleitung, wörtlich (nur Parquet)",
+        {
+            "id": _ID,
+            "beratung": ("OParl-Consultation: eine Beratung des Dokuments", ""),
+            "top": (
+                "OParl-AgendaItem, der Tagesordnungspunkt; leer, wenn die Beratung keinen Punkt in "
+                "den Sitzungen dieser Periode hat",
+                "",
+            ),
+            "gremium": (_BODY, ""),
+            "beratung_rolle": (
+                "Rolle der Beratung im Ratsinformationssystem (OParl role: Entscheidung, "
+                "Kenntnisnahme, Vorberatung, Anhörung oder „-“); nicht die Rolle des Dokuments "
+                "(beschlusslage.dokument_rolle) und nicht die Stellung im Vorgang "
+                "(dokumente_vorgang.rolle)",
+                "",
+            ),
+            "sitzung": ("Beginn der Sitzung, Ortszeit des Servers ohne Zone", ""),
+            "nummer": ("Nummer des Punkts auf der Tagesordnung", ""),
+            "ordnung": ("Folge des Punkts in der Sitzung (OParl order)", ""),
+            "result": ("Eintrag der Sitzungsleitung (OParl result), wörtlich; leer: keiner", ""),
+            "stufe": (
+                "sache (beschlossen, geändert, abgelehnt, zurückgezogen, auch als Empfehlung) "
+                "oder stand (Kenntnisnahme, Vertagung, Verweisung), nach outcomes.results; leer "
+                "ohne Eintrag",
+                "",
+            ),
+        },
+        enabled=progress_built,
+        csv=None,  # docs/todo.md, Punkt 35: je Punkt nur Parquet
+    ),
+    PublishedTable(
+        "antragserfolg",
+        lambda layout: outcome_files(layout).success,
+        "Antragserfolg je Fraktion und Gremienart: Anträge mit Sachentscheidung, angenommen, "
+        "erwartet nach der Praxis der Gremien (explorativ; die Klassen wie in beschlusslage)",
+        {
+            "periode": ("die Periode der Dokumente, etwa 2020-2025; offen: 2025-", ""),
+            "gremium_art": (
+                "rat, ausschuss, bezirksvertretung, beirat oder unbekannt: die Art des Gremiums "
+                "der Drucksache",
+                "",
+            ),
+            "fraktion": ("Fraktion aus den Antragstellern von Vorhaben 15", ""),
+            "n": (
+                "Anträge mit Sachentscheidung (angenommen oder abgelehnt); ein gemeinsamer Antrag "
+                "zählt für jede beteiligte Fraktion, einer in einer Praxiszelle für keine",
+                _MOTIONS,
+            ),
+            "angenommen": ("davon angenommen, auch mit Änderungen", _MOTIONS),
+            "erwartet": (
+                "Summe der Annahmequoten der Gremien der Drucksachen über diese Anträge "
+                "(indirekte Standardisierung, je Gremienart Summe gleich angenommen)",
+                _MOTIONS,
+            ),
+            "beob_erw": (
+                "angenommen geteilt durch erwartet; leer, wo erwartet 0 ist",
+                "Verhältnis",
+            ),
+        },
+        optional=True,  # ohne den Schritt outcomes (etwa ohne Urheber) fehlt die Datei, nicht die Seite
+        enabled=outcomes_built,
+    ),
+)
+
+SECTIONS = (
+    PageSection(
+        HOST,
+        SECTION_OUTCOMES,
+        30,
+        inputs=outcomes_section_inputs,
+        data=outcomes_section_data,
+        links=section_links,
+    ),
+    PageSection(
+        HOST,
+        SECTION_SUCCESS,
+        31,
+        inputs=success_section_inputs,
+        data=success_section_data,
+        enabled=outcomes_built,
+    ),
+    PageSection(
+        HOST,
+        SECTION_SESSION,
+        32,
+        inputs=session_section_inputs,
+        data=session_section_data,
+        enabled=outcomes_built,
+    ),
+)
+
+DIALOG = DialogHook(
+    DIALOG_NAME,
+    DIALOG_TITLE,
+    "Beschlusslage je Antrag des Dialogs: Klasse, Gremium und Tag der Entscheidung; der "
+    "Dokumentdialog lädt die Datei beim ersten Öffnen nach",
+    inputs=dialog_inputs,
+    rows=dialog_rows,
+    enabled=outcomes_built,
+)
+
+CONTRIBUTION = Contribution(
+    "26-beschluesse",
+    steps=outcome_steps,
+    tables=TABLES,
+    sections=SECTIONS,
+    dialogs=(DIALOG,),
+)

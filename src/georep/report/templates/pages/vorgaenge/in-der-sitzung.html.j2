@@ -1,0 +1,31 @@
+{% if data.sitzung %}
+{#
+  Vorhaben 26, Stufe 3 (docs/plans/26-beschluesse.md, § 3.9, § 7, Frage 9.9): ein Gast auf
+  vorgaenge.html unter dem Namen, den Vorhaben 14 erwartet (``report.procedures.SESSION_GUEST``):
+  steht er da, verweist der Abschnitt „Antworten je Gremium“ hierher statt auf die Niederschrift.
+  Das Modell ist ``report.outcomes.SessionModel``. Gezählt ist der Wortlaut des maßgeblichen
+  Eintrags (``outcomes.answered``), keine geprüfte Klasse; dieselben Zeilen wie bei 14.
+#}
+{% set z = data.sitzung %}
+<h2>In der Sitzung beantwortet</h2>
+{% if z.on %}
+{% set t = z.total %}
+<p>Viele Gremien beantworten Anfragen nicht als Anlage, sondern in der Sitzung oder schriftlich zur Niederschrift. Das trägt die Sitzungsleitung am Tagesordnungspunkt ein ({% for w in z.words %}„{{ w }}“{{ " oder " if not loop.last }}{% endfor %}). Von {{ t.questions|num }} Anfragen tragen {{ t.answered|num }} ({{ t.share(t.answered)|pct(1) }}) einen solchen Eintrag{% if z.written_words %}, {{ t.written|num }} davon schriftlich{% endif %}; eine Antwort im Ratsinformationssystem (oben) haben {{ t.attached|num }} ({{ t.share(t.attached)|pct(1) }}), weder das eine noch das andere {{ t.neither|num }} ({{ t.share(t.neither)|pct(1) }}). Wo der Eintrag eine Antwort nennt, ist die Anfrage beantwortet, auch ohne Anlage; das Datum der Antwort ist dann das der Sitzung, und ihren Wortlaut hat nur die Niederschrift.</p>
+{% if z.rows %}
+<div class="scroll"><table id="in-der-sitzung-gremien">
+<thead><tr><th scope="col" data-sort="text">Gremium</th><th scope="col" class="num" data-sort="num">Anfragen</th><th scope="col" class="num" data-sort="num">Antwort im System</th><th scope="col" class="num" data-sort="num">in der Sitzung beantwortet</th>{% if z.written_words %}<th scope="col" class="num" data-sort="num">davon schriftlich</th>{% endif %}<th scope="col" class="num" data-sort="num">weder noch</th></tr></thead>
+<tbody>
+{% for r in z.rows %}
+<tr><th scope="row">{{ r.name }}</th><td class="num" data-value="{{ r.questions }}">{{ r.questions|num }}</td><td class="num" data-value="{{ r.share(r.attached)|round(4) }}">{{ r.share(r.attached)|pct(1) }}</td><td class="num" data-value="{{ r.share(r.answered)|round(4) }}">{{ r.share(r.answered)|pct(1) }}</td>{% if z.written_words %}<td class="num" data-value="{{ r.share(r.written)|round(4) }}">{{ r.share(r.written)|pct(1) }}</td>{% endif %}<td class="num" data-value="{{ r.share(r.neither)|round(4) }}">{{ r.share(r.neither)|pct(1) }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+{% endif %}
+<p class="note">Dieselben Gremien wie unter <a href="#antworten">Antworten je Gremium</a>: eine Zeile ab {{ z.min_questions }} Anfragen{% if z.small_bodies %}; {{ z.small_bodies|num }} Gremien mit zusammen {{ z.small_questions|num }} Anfragen stehen nur in der Summe{% endif %}. Maßgeblich ist der letzte Eintrag nach derselben Regel wie bei den Anträgen. Gezählt ist sein Wortlaut, keine geprüfte Klasse: die Kodierung der Beschlusslage galt den Anträgen. Ob in der Sitzung wirklich geantwortet wurde, zeigt nur die Niederschrift.</p>
+{% else %}
+<ul class="note">
+{% for line in z.missing %}
+<li>{{ line }}</li>
+{% endfor %}
+</ul>
+{% endif %}
+{% endif %}

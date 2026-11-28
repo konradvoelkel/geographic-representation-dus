@@ -1,0 +1,35 @@
+{% if data.antragserfolg %}
+{#
+  Vorhaben 26, Stufe 3 (docs/plans/26-beschluesse.md, § 3.10, § 7, Frage 9.5): ein Gast auf
+  vorgaenge.html, explorativ in jedem Datensatz. Das Modell ist ``report.outcomes.SuccessModel``.
+  Je Fraktion nur beobachtet gegen erwartet mit n und Intervall, getrennt nach Rat mit Ausschüssen
+  und nach Bezirksvertretungen, für alle Fraktionen gleich, nach Namen sortiert und ohne Spalte,
+  die sortiert oder aus der eine rohe Quote folgte (Frage 14).
+#}
+{% set s = data.antragserfolg %}
+<h2>Erfolg der Anträge je Fraktion (explorativ)</h2>
+{% if s.on %}
+<p>Ob ein Antrag angenommen wird, hängt zuerst am Gremium: in den Bezirksvertretungen wird fast jeder angenommen, im Rat viel weniger. Darum steht hier keine rohe Quote, sondern <em>beobachtet gegen erwartet</em>: erwartet ist, wie viele Anträge einer Fraktion angenommen worden wären, wenn jeder so oft durchkäme wie alle Anträge seines Gremiums. Über 1 heißt öfter als in diesen Gremien üblich. Gezählt sind die Anträge mit einer Entscheidung in der Sache (angenommen oder abgelehnt); ein gemeinsamer Antrag zählt für jede beteiligte Fraktion. Explorativ heißt: nach dem Ansehen der Daten gerechnet, ohne vorab festgelegte Hypothese.</p>
+{% if s.majority %}
+<p><strong>Im Rat und in seinen Ausschüssen heißt Erfolg fast nur, zur Mehrheit zu gehören.</strong> Die Ratsmehrheit dieser Periode bilden {{ s.majority|join(" und ") }}{% if s.majority_since %} (ab {{ s.majority_since|date_de }}){% endif %}.{% for g in s.groups %}{% if g.majority_ratio is not none and g.others_ratio is not none %} {{ g.label }}: die Fraktionen der Ratsmehrheit zusammen {{ g.majority_ratio|num(2) }}, die übrigen {{ g.others_ratio|num(2) }}.{% endif %}{% endfor %} Die Rechnung nach dem Gremium nimmt den Unterschied zwischen Rat und Bezirksvertretung heraus, nicht den zwischen Mehrheit und Opposition: der ist im Rat das Ergebnis selbst. Ob andere einem Antrag zugestimmt haben, sagt das Ergebnis nicht; davon handelt der Abschnitt Abstimmungen auf der Seite <a href="akteure.html">Akteure</a>.</p>
+{% endif %}
+<div class="zwei">
+{% for g in s.groups %}
+<div class="scroll"><table id="antragserfolg-{{ g.key }}">
+<caption>{{ g.label }}</caption>
+<thead><tr><th scope="col">Fraktion</th><th scope="col" class="num">Anträge</th><th scope="col" class="num">beob./erw. (95 %)</th>{% if s.majority %}<th scope="col">Ratsmehrheit</th>{% endif %}</tr></thead>
+<tbody>
+{% for r in g.rows %}
+<tr><th scope="row">{{ r.label }}</th><td class="num">{{ r.motions|num }}</td>{% if r.ratio is not none %}<td class="num">{{ r.ratio|num(2) }} <span class="note">({{ r.interval[0]|num(2) }}–{{ r.interval[1]|num(2) }})</span></td>{% else %}<td class="num"><span class="note">{% if r.motions < s.min_success %}unter {{ s.min_success }}{% else %}erwartet unter {{ s.min_expected }}{% endif %}</span></td>{% endif %}{% if s.majority %}<td>{% if r.majority %}ja{% endif %}</td>{% endif %}</tr>
+{% else %}
+<tr><td colspan="{{ 4 if s.majority else 3 }}" class="note">kein Antrag einer Fraktion</td></tr>
+{% endfor %}
+</tbody></table></div>
+{% endfor %}
+</div>
+<p class="note">Nach dem Namen der Fraktion sortiert, nicht nach dem Verhältnis: eine Rangfolge wäre keine. In Klammern steht das exakte 95-%-Intervall nach Poisson für die Zahl der angenommenen Anträge; wo es 1 enthält, unterscheidet sich die Fraktion nicht von der Praxis ihrer Gremien. Unter {{ s.min_success }} Anträgen oder unter {{ s.min_expected }} erwarteten Annahmen steht kein Verhältnis. Die Gremienart ist die der Drucksache{% if s.elsewhere %}; Anträge in {% for label, n in s.elsewhere %}{{ label }} ({{ n|num }}){{ " und " if not loop.last }}{% endfor %} stehen nicht in den Tabellen{% endif %}. Nicht gezählt sind Anträge ohne Ergebnis und solche, deren Eintrag in einem Gremium-Jahr keine Aussage trägt (Praxiszellen, oben). Die Zählung je Fraktion und Gremienart steht auf den Details unter den <a href="details.html#downloads">Downloads</a> (<code>antragserfolg</code>).</p>
+{% for alone, joint, since in s.split %}
+<p class="note">{{ alone }} und {{ joint }} stehen in zwei Zeilen, wie die Antragsteller sie nennen: die Fraktion {{ joint }} gibt es ab {{ since|date_de }}.</p>
+{% endfor %}
+{% endif %}
+{% endif %}

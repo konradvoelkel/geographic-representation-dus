@@ -55,8 +55,11 @@ from georep.prep.bodies import organization_key
 from georep.settings import OUTCOME_STAGES, OutcomeReview, Outcomes
 
 # Version 1: die drei Ausgaben aus dem Bauplan (Messdokument § 6, § 10): beratungsverlauf,
-# beschlusslage, antragserfolg. Erhöhen, wenn sich eine Spalte oder ein Typ ändert.
-OUTCOMES_SCHEMA_VERSION = 1
+# beschlusslage, antragserfolg. Version 2 (Stufe 3, docs/todo.md, Punkt 15 (d)): ``rolle`` heißt im
+# Beratungsverlauf ``beratung_rolle`` und in der Beschlusslage ``dokument_rolle``; mit
+# ``dokumente_vorgang.rolle`` von 14 bedeutete derselbe Name sonst dreierlei. Erhöhen, wenn sich eine
+# Spalte oder ein Typ ändert.
+OUTCOMES_SCHEMA_VERSION = 2
 # Version 1 der Tabelle „Paper × Tagesordnungspunkt" im Paket (``georep pack --outcomes``). Eigene
 # Konstante wie bei Punkt 58: das Paket ist eine Eingabe, kein Ergebnis eines Schritts.
 AGENDA_SCHEMA_VERSION = 1
@@ -93,7 +96,8 @@ AGENDA_SCHEMA: dict[str, PolarsDataType] = {
     "top": pl.String,  # OParl AgendaItem; null = Beratung ohne Tagesordnungspunkt im Datensatz
     "organisationen": pl.List(pl.String),  # der Sitzung, sonst der Beratung (``organization_key``)
     # ``rolle`` ist hier die Rolle der **Beratung** (OParl ``role``: „Entscheidung", „-" …), nicht die
-    # des Dokuments; die steht in ``OUTCOME_SCHEMA`` (Review 2026-11-24, N9)
+    # des Dokuments (Review 2026-11-24, N9). Das Paket behält den Namen; veröffentlicht wird er
+    # erst im Beratungsverlauf, und dort heißt er ``beratung_rolle`` (Schema-Version 2).
     "rolle": pl.String,
     "sitzung": pl.Datetime("us"),  # Beginn der Sitzung, Ortszeit des Servers ohne Zone
     "nummer": pl.String,  # Nummer des Punkts auf der Tagesordnung, etwa „Ö 5.1"
@@ -105,7 +109,7 @@ PROGRESS_SCHEMA: dict[str, PolarsDataType] = {
     "beratung": pl.String,
     "top": pl.String,
     "gremium": pl.String,  # Kürzel aus ``[bodies.organizations]``, mehrere mit „+"; sonst der Schlüssel
-    "rolle": pl.String,  # Rolle der Beratung wie in ``AGENDA_SCHEMA``, nicht die des Dokuments
+    "beratung_rolle": pl.String,  # ``rolle`` aus ``AGENDA_SCHEMA``: die der Beratung, nicht des Dokuments
     "sitzung": pl.Datetime("us"),
     "nummer": pl.String,
     "ordnung": pl.Int32,
@@ -119,8 +123,9 @@ PROGRESS_ORDER = ("id", "sitzung", "ordnung", "top", "beratung")
 OUTCOME_SCHEMA: dict[str, PolarsDataType] = {
     "id": pl.String,
     # Rolle des **Dokuments** aus Vorhaben 14 (antrag, vorlage, anfrage …), nicht die der Beratung im
-    # Beratungsverlauf (Review 2026-11-24, N9)
-    "rolle": pl.String,
+    # Beratungsverlauf (Review 2026-11-24, N9) und nicht die Stellung im Vorgang
+    # (``dokumente_vorgang.rolle``); seit Schema-Version 2 mit eigenem Namen
+    "dokument_rolle": pl.String,
     "klasse": pl.String,  # eine aus ``CLASSES``
     "grob": pl.String,  # ``COARSE[klasse]``
     "result": pl.String,  # der maßgebliche Eintrag; null genau bei ohne_ergebnis
@@ -282,7 +287,8 @@ def progress(
     ]
     stage = {value: stage for value, (stage, _) in results.items()}
     return (
-        agenda.with_columns(
+        agenda.rename({"rolle": "beratung_rolle"})
+        .with_columns(
             pl.Series("gremium", gremium, dtype=pl.String),
             pl.col("result")
             .replace_strict(stage, default=None, return_dtype=pl.String)
@@ -540,7 +546,9 @@ def practice_cells(outcomes: pl.DataFrame, share: float, minimum: int) -> pl.Dat
     sortiert. Hängt nur von Gremium, Jahr und Klasse der Anträge ab.
     """
     return (
-        outcomes.filter((pl.col("rolle") == MOTION) & pl.col("entscheidung_datum").is_not_null())
+        outcomes.filter(
+            (pl.col("dokument_rolle") == MOTION) & pl.col("entscheidung_datum").is_not_null()
+        )
         .group_by(
             pl.col("entscheidung_gremium").alias("gremium"),
             pl.col("entscheidung_datum").dt.year().alias("jahr"),
@@ -587,8 +595,8 @@ def _complete_fits(
     result: pl.DataFrame | None = None,
 ) -> bool:
     assert result is not None
-    motion = (pl.col("rolle") == MOTION) & pl.col("klasse").is_in(list(ANGENOMMEN))
-    entered = (pl.col("rolle") == MOTION) & (pl.col("klasse") != NO_RESULT)
+    motion = (pl.col("dokument_rolle") == MOTION) & pl.col("klasse").is_in(list(ANGENOMMEN))
+    entered = (pl.col("dokument_rolle") == MOTION) & (pl.col("klasse") != NO_RESULT)
     return (
         result.schema == pl.Schema(OUTCOME_SCHEMA)
         and one_row_per_document(result, base.get_column("id").to_list())
@@ -624,19 +632,22 @@ def complete_outcomes(
 ) -> pl.DataFrame:
     """Die Beschlusslage mit dem, was an Vorhaben 14 hängt.
 
-    ``roles`` (``id``, ``rolle``) aus Vorhaben 14; ``review`` (``id``, ``pruefauftrag``) aus
-    ``review_only`` für die Anträge; ``followups`` aus ``first_followups``. Der beantragte
+    ``roles`` (``id``, ``rolle``) aus Vorhaben 14, in der Ausgabe ``dokument_rolle``; ``review``
+    (``id``, ``pruefauftrag``) aus ``review_only`` für die Anträge; ``followups`` aus
+    ``first_followups``. Der beantragte
     Prüfauftrag steht nur bei angenommenen Anträgen (sonst null), die Folgevorlage nur bei
     Anträgen, die Tragfähigkeit des Eintrags nur bei Anträgen mit Ergebnis: false, wo der Antrag
     „erledigt" ist und in einer Praxiszelle liegt, sonst true. Sortiert nach ``id``.
     """
-    with_roles = base.join(roles.select("id", "rolle"), on="id", how="left").sort("id")
+    with_roles = base.join(
+        roles.select("id", pl.col("rolle").alias("dokument_rolle")), on="id", how="left"
+    ).sort("id")
     cells = practice_cells(with_roles, rules.practice_share, rules.practice_min).select(
         pl.col("gremium").alias("entscheidung_gremium"),
         pl.col("jahr").alias("__jahr"),
         pl.lit(True).alias("__zelle"),
     )
-    motion = pl.col("rolle") == MOTION
+    motion = pl.col("dokument_rolle") == MOTION
     accepted = motion & pl.col("klasse").is_in(list(ANGENOMMEN))
     practice = (pl.col("klasse") == DONE) & pl.col("__zelle").fill_null(False)
     return (
@@ -647,7 +658,7 @@ def complete_outcomes(
         .sort("id")
         .select(
             "id",
-            "rolle",
+            "dokument_rolle",
             *BASE_COLUMNS[1:],
             pl.when(accepted)
             .then(pl.col("pruefauftrag").fill_null(False))
@@ -689,7 +700,7 @@ def _success_fits(
 
 @deal.pre(
     lambda outcomes, cosponsors, bodies, period: (
-        has_columns(outcomes, "id", "rolle", "klasse", "eintrag_tragfaehig")
+        has_columns(outcomes, "id", "dokument_rolle", "klasse", "eintrag_tragfaehig")
         and has_columns(cosponsors, "id", "fraktionen")
         and has_columns(bodies, "id", "gremium", "gremium_art")
     )
@@ -716,7 +727,7 @@ def motion_success(
     """
     decided = (
         outcomes.filter(
-            (pl.col("rolle") == MOTION)
+            (pl.col("dokument_rolle") == MOTION)
             & pl.col("klasse").is_in([*ANGENOMMEN, "abgelehnt"])
             & pl.col("eintrag_tragfaehig").fill_null(True)
         )

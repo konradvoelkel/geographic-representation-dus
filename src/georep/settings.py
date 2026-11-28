@@ -2480,6 +2480,10 @@ class Outcomes(_Strict):
     practice_min: int = Field(default=10, ge=1)
     followup_roles: list[ProcedureRole] = []  # Rollen aus Vorhaben 14
     review: OutcomeReview = OutcomeReview()
+    # Stufe 3 (Messdokument § 3.9, § 7): die Werte aus ``results``, mit denen die Sitzungsleitung
+    # einträgt, dass eine Anfrage beantwortet ist, und davon die schriftlichen; Wortlaut, keine Klasse
+    answered: list[str] = []
+    answered_written: list[str] = []
 
     @field_validator("package", mode="before")
     @classmethod
@@ -2509,6 +2513,16 @@ class Outcomes(_Strict):
             raise ValueError(
                 "outcomes.enabled braucht den Wortschatz [outcomes.results] im Stadtprofil"
             )
+        return self
+
+    @model_validator(mode="after")
+    def _answers_are_entries(self) -> Outcomes:
+        unknown = sorted(set(self.answered) - set(self.results))
+        if unknown:
+            raise ValueError(f"outcomes.answered: {unknown} stehen nicht in [outcomes.results]")
+        loose = sorted(set(self.answered_written) - set(self.answered))
+        if loose:
+            raise ValueError(f"outcomes.answered_written: {loose} stehen nicht in answered")
         return self
 
 

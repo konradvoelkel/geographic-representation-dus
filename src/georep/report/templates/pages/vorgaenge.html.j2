@@ -5,7 +5,8 @@
   ``guete.json``. Je Fraktion steht nur beobachtet gegen erwartet und die Antwortzeit, nie eine
   rohe Quote (Frage 14), für jede Fraktion gleich. Ein Datensatz, an dem nicht gemessen ist, heißt
   in jeder Überschrift „explorativ" (docs/plan-zeigen-2026-11.md, § 8). Der Hinweis auf die
-  Niederschrift weicht, wenn der Abschnitt von Vorhaben 26 auf der Seite steht (``guests``, Punkt 86).
+  Niederschrift weicht, wenn der Abschnitt von Vorhaben 26 auf der Seite steht (``guests``, Punkt 86);
+  das Verzeichnis oben nennt die Gäste von 26, wo sie stehen.
 #}
 {% from "macros.html.j2" import more %}
 {% set m = data.vorgaenge %}
@@ -21,7 +22,10 @@
 <li><a href="#fraktionen">Je Fraktion</a></li>
 <li><a href="#kandidaten">Ohne gefundene Antwort</a></li>
 <li><a href="#vorgaenge">Vorgänge</a></li>
-</ul>
+{% if "beschlusslage" in guests %}<li><a href="#beschlusslage">Beschlusslage je Gremium</a></li>
+{% endif %}{% if "antragserfolg" in guests %}<li><a href="#antragserfolg">Erfolg der Anträge je Fraktion</a></li>
+{% endif %}{% if sitzung %}<li><a href="#{{ data.session_guest }}">In der Sitzung beantwortet</a></li>
+{% endif %}</ul>
 <div class="pruefung" id="pruefung">
 <h2>Wie geprüft</h2>
 <ul>

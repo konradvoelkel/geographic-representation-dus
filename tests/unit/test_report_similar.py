@@ -160,9 +160,9 @@ def test_eine_leere_tabelle_zeigt_nichts(
     assert not dialog_shown(layout, default_settings)
     assert not table_shown(embedding_files(layout).neighbors, default_settings)
     assert DIALOG_NAME not in dialog_names(default_settings, layout)
-    # die Mini-Kette hat kein Paket ihrer IDs, ihr Dialog lädt nur die Vorgänge
+    # die Mini-Kette hat kein Paket ihrer IDs, ihr Dialog lädt die Vorgänge und die Beschlüsse
     details = mini_run.site_details.read_text(encoding="utf-8")
-    assert 'data-extras="vorgaenge"' in details
+    assert 'data-extras="vorgaenge beschluesse"' in details
     assert not (mini_run.site_data / f"{DIALOG_NAME}.json").exists()
     assert TABLE_NAME not in {t.name for t in published(mini_run, default_settings)}
 

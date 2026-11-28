@@ -227,6 +227,20 @@ def test_an_unknown_entry_stops_with_its_wording() -> None:
         oc.progress(agenda, ORGS, RESULTS)
 
 
+def test_the_three_roles_have_three_names() -> None:
+    """Rückstand 15 (d): ``rolle`` hieß im Beratungsverlauf die Rolle der Beratung, in der
+    Beschlusslage die des Dokuments und in ``dokumente_vorgang`` von 14 die Stellung im Vorgang.
+    Vor der Veröffentlichung tragen die beiden Tabellen von 26 eigene Namen, mit neuer
+    Schema-Version; das Paket (``AGENDA_SCHEMA``) behält ``rolle``, es ist kein Download."""
+    assert oc.OUTCOMES_SCHEMA_VERSION == 2
+    assert "rolle" not in oc.PROGRESS_SCHEMA and "rolle" not in oc.OUTCOME_SCHEMA
+    assert list(oc.PROGRESS_SCHEMA)[4] == "beratung_rolle"
+    assert list(oc.OUTCOME_SCHEMA)[1] == "dokument_rolle"
+    verlauf = oc.progress(_agenda(_step("d", "t1", "2021-03-01T17:00", "vertagt")), ORGS, RESULTS)
+    assert verlauf.get_column("beratung_rolle").to_list() == ["Entscheidung"]
+    assert "rolle" in oc.AGENDA_SCHEMA
+
+
 # --- Die Verbindung aus den OParl-Objekten (Punkt 70) ---------------------------------------------
 
 
@@ -494,7 +508,7 @@ def test_success_is_observed_against_the_practice_of_the_bodies() -> None:
     outcomes = pl.DataFrame(
         {
             "id": ["1", "2", "3", "4", "5", "6"],
-            "rolle": ["antrag"] * 5 + ["vorlage"],
+            "dokument_rolle": ["antrag"] * 5 + ["vorlage"],
             "klasse": [
                 "beschlossen",
                 "abgelehnt",
@@ -597,7 +611,7 @@ def test_success_spreads_exactly_the_observed_over_the_fractions() -> None:
     outcomes = pl.DataFrame(
         {
             "id": ["1", "2", "3", "4", "5"],
-            "rolle": ["antrag"] * 5,
+            "dokument_rolle": ["antrag"] * 5,
             "klasse": ["beschlossen", "beschlossen", "abgelehnt", "abgelehnt", "abgelehnt"],
             "eintrag_tragfaehig": [True] * 5,
         }

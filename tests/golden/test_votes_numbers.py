@@ -151,8 +151,8 @@ def test_die_wortregel_trifft_die_labels_wie_gemessen(periods: dict[str, Period]
 # Sitzung (12 570, 10 856 und 1 633 in der Hauptperiode).
 DECIDED = {
     "duesseldorf-2014": (28_092, 12_687, 11_685, 1_462),
-    "duesseldorf": (25_439, 12_573, 10_863, 1_646),
-    "duesseldorf-2025": (4_979, 2_513, 2_250, 348),
+    "duesseldorf": (25_439, 12_573, 10_863, 1_783),
+    "duesseldorf-2025": (4_979, 2_513, 2_250, 470),
 }
 
 
@@ -204,8 +204,10 @@ def test_h28_2_ist_in_der_hauptperiode_bestaetigt(periods: dict[str, Period]) ->
     main = tests.filter((pl.col("hypothese") == "H28.2") & (pl.col("rechnung") == MAIN)).row(
         0, named=True
     )
-    p = stats.binomtest(41, 389, 0.25, alternative="less").pvalue
-    assert (main["angenommen"], main["n"]) == (41, 389)  # n wie § 3.7
+    p = stats.binomtest(41, 458, 0.25, alternative="less").pvalue
+    # § 3.7 zählte 389: dort fehlten die 69 Haushaltsanträge aus den Sitzungen von gr/400224, die
+    # seit Frage 9.17 von 26 Ratsbeschlüsse sind (alle abgelehnt)
+    assert (main["angenommen"], main["n"]) == (41, 458)
     assert main["p"] == pytest.approx(p)
     assert main["p_holm"] == pytest.approx(3 * p)
     assert (main["ergebnis"], main["entscheidung"]) == ("bestätigt", "bestätigt")
@@ -214,13 +216,13 @@ def test_h28_2_ist_in_der_hauptperiode_bestaetigt(periods: dict[str, Period]) ->
         for row in tests.filter(pl.col("rechnung") != MAIN).iter_rows(named=True)
     }
     assert side == {
-        (R1, None): (159, 446),
-        (R3, None): (41, 481),
-        (R4, "SPD"): (21, 84),
-        (R4, "FDP"): (7, 57),
-        (R4, "Die_Linke"): (9, 131),
+        (R1, None): (164, 459),
+        (R3, None): (41, 551),
+        (R4, "SPD"): (21, 99),
+        (R4, "FDP"): (7, 78),
+        (R4, "Die_Linke"): (9, 163),
         (R4, "T_FW"): (0, 66),
-        (R4, "PARTEI"): (6, 57),
+        (R4, "PARTEI"): (6, 61),
     }
     for hypothesis in ("H28.1", "H28.3"):
         row = tests.filter((pl.col("hypothese") == hypothesis) & (pl.col("rechnung") == MAIN)).row(
@@ -249,10 +251,10 @@ def test_kein_antrag_von_h28_2_hat_den_eintrag_passieren_lassen(periods: dict[st
         dt.date(2021, 1, 1),
         dt.date(2025, 9, 14),
     )
-    assert units.height == 389
+    assert units.height == 458
     assert units.filter(pl.col("result") == "passieren lassen").is_empty()
     assert dict(Counter(units.get_column("result").to_list())) == {
-        "mehrheitlich abgelehnt": 347,
+        "mehrheitlich abgelehnt": 416,
         "mehrheitlich beschlossen": 18,
         "abweichend beschlossen": 15,
         "einstimmig beschlossen": 8,
@@ -268,5 +270,5 @@ def test_r2_seit_dezember_2025_und_ohne_pruefung_vor_2020(periods: dict[str, Per
         ("H28.3", R2),
     ]
     r2 = tests.filter(pl.col("hypothese") == "H28.2").row(0, named=True)
-    assert (r2["angenommen"], r2["n"], r2["entscheidung"]) == (0, 47, None)
+    assert (r2["angenommen"], r2["n"], r2["entscheidung"]) == (0, 153, None)
     assert periods["duesseldorf-2014"].tests.is_empty()

@@ -314,7 +314,9 @@ def test_the_consultation_confirms_the_numbers_of_the_main_period(
     und ``test_the_two_kinds_of_disagreement`` hält sie auseinander.
     """
     rules = BodyRules.from_settings(default_settings.bodies)
-    assert len(default_settings.bodies.organizations) == 38
+    # 38 gelernte, dazu gr/400224 und gr/65 aus Frage 9.17 von Vorhaben 26: sie tragen nur Sitzungen
+    # und stehen in keiner Beratungsfolge, darum ändert sich keine Zahl unten
+    assert len(default_settings.bodies.organizations) == 40
     folge = pl.read_parquet(PACKAGE / "raw" / "beratungsfolge.parquet").select(ID, CONSULTATION)
     corpus = _reference_corpus(reference_root)
     frame = classify_papers(corpus, rules, folge)

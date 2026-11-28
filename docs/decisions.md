@@ -5931,3 +5931,216 @@ Sitze ins Profil (keine Prüfung braucht sie); der Gast ohne Eintrag im Verzeich
   Skripte, in allen vier Fällen (Hauptperiode, seit 2025 mit R2, 2014–2020 ohne Prüfung, zweite Stadt).
   Bei 390 px scrollen beide Tabellen waagrecht wie jede breite Tabelle der Seiten.
 
+
+## NN. Die Beschlusslage auf `vorgaenge.html`: drei Gäste, ein Wort je Antrag im Dialog, die Kürzel aus Frage 9.17 belegt, `rolle` dreimal benannt (Vorhaben 26, Stufe 3, 2026-11-28)
+
+Stufe 3 von Vorhaben 26 nach `docs/plans/26-beschluesse.md` (§ 7, § 10, mit Rückfall 1 aus § 5) und
+`docs/plan-zeigen-2026-11.md` (§ 4 V5, § 6), im Muster von 28 auf `akteure.html` (Punkt 98). Davor
+zwei Vorarbeiten in eigenen Commits. Gebaut auf `feat/26-beschluesse-seite` ab `main` `f835431`
+(`v0.45.0`). Die Nummer bekommt der Eintrag beim Merge.
+
+**Vorarbeit 1: die Kürzel aus Frage 9.17** (`docs/todo.md`, Punkt 15 (e); Commit `34f5a16`). Beide
+Organisationen tragen nur Sitzungen und stehen in keiner Beratungsfolge; `learn-bodies` (Punkt 58)
+fand sie darum nicht, und der Schritt `bodies` merkt nichts von ihnen. Belegt aus den Sitzungen des
+Netzlaufs von F6 (`raw/meetings.jsonl` der drei Perioden, Abruf 2026-11-23): Name der Sitzungen und
+Kopf der Drucksachen auf ihren Tagesordnungspunkten.
+
+| Schlüssel | Kürzel | Sitzungen | Dokumente mit diesem Kürzel |
+|---|---|---|---|
+| `gr/400224` | RAT | 4, „Eingereichte Haushaltsanträge zu den Etatberatungen 2024“ bis „… 2027/2028“, 2023-12-15 bis 2026-12-17; „Es handelt sich um keine eigene Sitzung“, die Anträge zur Ratssitzung (Einladung „Haushaltsanträge der Liste B - RAT 14.12.2023“). Dieselben Sitzungen für 2022 und 2023 stehen unter `gr/6`, dem Rat | Hauptperiode 138 von 138 (`RAT/394/2024` …), laufende Periode 122 von 122 |
+| `gr/65` | GLA | 91, „Ausschuss für Gleichstellung“, 2014-09-09 bis 2026-02-03; danach `gr/400242`, das schon GLA ist | Hauptperiode 148 von 160 (die übrigen 12 mitberaten: JHA und INTR je 4, AGS, RAT, AWIR, HFA), laufende 7 von 7, 2014 bis 2020 31 von 157 (123 mit der Amtsnummer 02) |
+
+Beide sind damit eindeutig belegt. Das Paket `snapshots/duesseldorf-beschluesse/` trägt die Schlüssel,
+nicht die Kürzel (Punkt 79), und braucht kein neues Packen. Was sich ändert, steht nur in den Tabellen
+von 26 und 28, die die Organisation der Sitzung lesen:
+
+- *Beratungsverlauf* (`gremium`): 2014–2020 164 Zeilen `gr/65` → GLA (2 davon GLA+SPOA),
+  Hauptperiode 310 (138 RAT, 168 GLA, 4 GLA+INTR), seit 2025 129 (122 RAT, 7 GLA). *Beschlusslage*
+  (`entscheidung_gremium`): 147, 281 und 128 Dokumente, davon Anträge 27, 169 und 123; Klasse,
+  Tag, Praxiszellen und `antragserfolg` gleich (dessen Gremium ist das der Drucksache).
+- *28, Beschlüsse je Gremienart* (`abstimmungen_gremien`, Gast auf `akteure.html`): „Gremium
+  unbekannt“ 47 → 2 (2014–2020), **192 → 12** (Hauptperiode), **126 → 1** (seit 2025); Rat 1 462
+  gleich, 1 646 → 1 783, 348 → 470; Ausschüsse 4 185 → 4 230, 3 948 → 3 991, 703 → 706.
+- *28, H28.2*: der Haupttest **41 von 389 → 41 von 458** angenommen (10,5 % → 9,0 %, obere Grenze
+  13,5 % → 11,5 %, p 5,5 · 10⁻¹³ → 1,4 · 10⁻¹⁸, nach Holm 1,6 · 10⁻¹² → 4,1 · 10⁻¹⁸), **bestätigt
+  wie vorher**. Die 69 neuen Einheiten sind Haushaltsanträge allein der Opposition aus den Sitzungen
+  von `gr/400224` (2023-12-15 und 2024-12-12), alle abgelehnt. Die Einheit von H28.2 („mit seinem
+  letzten entschiedenen Beschluss im Rat“, `docs/plans/28-abstimmungen.md`, § 8.6) verlangt sie;
+  die Messung und Punkt 98 sahen sie nur nicht, weil das Kürzel fehlte, und der Satz in Punkt 98,
+  H28.2 „hängt nicht daran“, gilt damit nicht mehr. Nebenrechnungen: R1 159/446 → 164/459 (GLA ist
+  ein Ausschuss), R3 41/481 → 41/551, R4 SPD 21/84 → 21/99, FDP 7/57 → 7/78, Linke 9/131 → 9/163,
+  PARTEI 6/57 → 6/61, T_FW 0/66 gleich; R2 seit 2025-12-01 0/47 → 0/153.
+- Gleich bleiben `papers_gremien` und damit jede Gremientabelle auf `details.html`, die Startkarte
+  mit ihrem Filter und die Kurzfassung K4; `details.html` von 2014–2020 und seit 2025 ändert sich nur
+  in den gerundeten Größen zweier Downloads.
+
+A/B-Bau aller fünf Profile wie `pages.yml` (`scripts/ab_bau.sh`, `POLARS_MAX_THREADS=4
+OMP_NUM_THREADS=2`), A aus `main` `f835431` (`ab/26k-a`), B aus `34f5a16` (`ab/26k-b`; gebaut vor dem Nachtrag im slow-Test
+`test_bodies_reference.py`, der die Seite nicht berührt): unter `site/`
+356 Dateien in beiden, 18 Abweichungen (je Düsseldorfer Periode `akteure.html` und die Downloads von
+28, dazu die zwei `details.html`); über die Datenwurzeln 1 289 in beiden, 205 Abweichungen (143
+Stamps, die Seiten und Downloads, unter `processed/` je Periode nur `beratungsverlauf`,
+`beschlusslage` und die Tabellen von 28). Ein zweiter Bau desselben Baums (`ab/26s-a`) ist gleich bis
+auf die Stamps: das Rauschen ist null.
+
+**Vorarbeit 2: `rolle` dreimal benannt** (Punkt 15 (d); Commit `15dba90`). Im Beratungsverlauf hieß
+`rolle` die Rolle der Beratung (OParl `role`), in der Beschlusslage die des Dokuments (14), in
+`dokumente_vorgang` die Stellung im Vorgang. `dokumente_vorgang` ist veröffentlicht und behält den
+Namen; die Tabellen von 26 heißen vor ihrer Veröffentlichung `beratung_rolle` und `dokument_rolle`
+(`OUTCOMES_SCHEMA_VERSION` 1 → 2). Das Paket (`AGENDA_SCHEMA`) behält `rolle`: kein Download, und ein
+neuer Name hieße ein neues Paket. Die Spaltendoku aller drei nennt die beiden anderen
+(`schema.json`, `spalten.html`); `dokumente_vorgang.rolle` heißt dort „die Stellung im Vorgang“.
+
+**Was Stufe 3 zeigt** (Commit `c412cc5`; `report/outcomes.py`, `templates/pages/vorgaenge/`, registriert
+in `enrich/outcomes`):
+
+1. *Beschlusslage je Gremium* (`#beschlusslage`, Rang 30): je Gremium der Drucksache ab 30 Anträgen
+   angenommen, davon mit Änderungen, abgelehnt, zurückgezogen, ohne Abstimmung erledigt, offen, ohne
+   Ergebnis, dazu der Median der Tage bei mehr als einer Beratung ab 10 Anträgen; darüber, was „ohne
+   Ergebnis“ heißt, mit der Sitzung, in der die meisten liegen (ab 10, aus dem Beratungsverlauf; in der
+   Hauptperiode 155 von 289 im Rat am 05.02.2021), und der Prüfsatz. Anträge einer Praxiszelle
+   (`eintrag_tragfaehig` falsch, 240 in 2014–2020) zählen in keinem Anteil und stehen mit Gremium,
+   Jahr und Zahl als Fußnote (Messdokument § 5, Punkt 2).
+2. *Erfolg der Anträge je Fraktion* (`#antragserfolg`, Rang 31), explorativ in jedem Datensatz:
+   beobachtet gegen erwartet aus `antragserfolg`, über Rat und Ausschüsse und über die
+   Bezirksvertretungen summiert (Σ beobachtet durch Σ erwartet ist die Standardisierung der
+   Vereinigung), mit n und dem Poisson-Intervall von 14 (`poisson_ratio_interval`), ab 30 Anträgen
+   und 10 erwarteten Annahmen; nach Namen, nicht sortierbar, ohne beobachtete oder erwartete Zahl
+   (mit n folgte daraus die rohe Quote). Die Fraktionen der Ratsmehrheit der längsten Zeit der Periode
+   (`majority_fractions`) sind markiert und zusammengefasst; darüber der Satz, dass im Rat und in
+   seinen Ausschüssen Erfolg fast nur Mehrheit heißt (Hauptperiode: Mehrheit zusammen 1,72, die
+   übrigen 0,41; in den Bezirksvertretungen 1,00 und 1,00).
+3. *In der Sitzung beantwortet* (`#in-der-sitzung`, Rang 32, der Name, den 14 als `SESSION_GUEST`
+   erwartet, Punkt 91): je Gremium der Anfragen (dieselben Zeilen wie bei 14) der Anteil mit Antwort
+   im System (14), der Anteil, dessen maßgeblicher Eintrag eine Antwort einträgt, davon schriftlich,
+   und weder noch. Der Wortlaut steht im Stadtprofil (`outcomes.answered`, `answered_written`, geprüft
+   gegen `results`), keine geprüfte Klasse (Frage 9.9). Steht der Gast da, fällt auf der Seite von 14
+   der Hinweis „†“ auf die Niederschrift weg.
+
+Kein Abschnitt zu Prüfaufträgen. Das Verzeichnis oben auf `vorgaenge.html` nennt die Gäste, wo sie
+stehen (`{% if "<name>" in guests %}`), wie 15 den Gast von 28.
+
+**Der Prüfsatz** kommt aus `validierung/26-beschluesse/guete.json` (Satz mit Modellen, von der
+Übereinstimmung der Kodierer nur `ergebnis`, nur mit `alpha_genuegt`) und `OUTCOMES_CHECK`: die Regel
+gegen die Endlabels nach Rückfall 1, 150 von 150 (Wilson 0,975–1,000), gewichtet nach Schicht 1,000
+(0,962–1,000 bei Kishs n_eff 96,9), und die 17 Fälle, die mehr verlangten als das Nachschlagen eines
+Eintrags (17 von 17, 0,816–1,000). `read_check` bricht ab, wenn `guete.json` eine andere Kodierung
+beschreibt; `test_outcomes_check_follows_from_the_labels_and_the_progress` rechnet alles aus Labels,
+Stichprobe und gebautem Verlauf nach wie `--auswertung`. Jeder Satz sagt, dass nur die Niederschrift
+zeigt, ob der Eintrag stimmt. Ohne genügendes α nennt er keine Zahl.
+
+*Gemessen sind die drei Düsseldorfer Perioden*: die Stichprobe zieht aus allen dreien (91, 42 und 17
+Anträge) und nennt sie in `stichprobe.json` unter `profile`; `profil` trägt dort nur die Hauptperiode.
+`report.downloads.measured` liest nur `profil`, darum liest `sample_profiles` die Liste zuerst. Das ist
+anders als bei 14 und 28, wo nur die Hauptperiode gemessen ist.
+
+**Im Dokumentdialog** (Haken `beschluesse`, Format 3): je Antrag ein Wort, „angenommen (Rat,
+12.03.2024)“, mit Klasse, Gremium beim Namen (mehrere mit „und“, eine Organisation ohne Kürzel
+„Gremium unbekannt“) und Tag der Entscheidung; ohne Ergebnis „kein Ergebnis eingetragen“, in einer
+Praxiszelle der Satz, dass der Eintrag dort keine Aussage trägt. Nur Anträge (validiert sind nur sie,
+Frage 9.9); jedes andere Dokument bekommt keine Zeile. Der Satz der Datei ist der kurze Prüfsatz. Die
+Wörter stehen je einmal in `labels`, auch für Anträge, die `dokumente.json` nicht zeigt: der Haken kennt
+die Folge von `dokumente.json` nicht (Punkt 91), und die Datei bleibt weit unter dem Budget.
+
+**Downloads**: `beschlusslage` nur als Parquet, als Sicht `without_review` ohne
+`pruefauftrag_beantragt` (Rückfall 1: die Regel verfehlte die Präzision, Recall 0,73; die Spalte bleibt
+im Lauf, wie die verworfenen Spannen von 12, Punkt 89), mit dem kurzen Prüfsatz unter den Downloads;
+`beratungsverlauf` nur als Parquet (je Punkt, Rückstand 35); `antragserfolg` als Parquet und CSV, mit
+dem Hinweis „explorativ“ in der Beschreibung. `beschlusslage` und `antragserfolg` sind `optional` wie
+die Tabellen von 28: ohne den Schritt `outcomes` fehlt die Datei, nicht die Seite. Die Spalten stehen
+auf `spalten.html`.
+
+**Je Profil** (Plan § 6, Messdokument § 10.6): die drei Düsseldorfer Perioden und ihr Vergleich zeigen
+alles; Mönchengladbach (`outcomes` aus, Punkt 79) zeigt nur den ersten Gast mit dem Satz, was fehlt,
+keinen Haken und keinen Download.
+
+**Bewusst anders als § 7 oder der Auftrag.**
+
+1. *Ein Prüfsatz unter den Downloads, nicht zwei*: der Satz steht bei `beschlusslage`; `antragserfolg`
+   rechnet aus denselben Klassen und sagt „explorativ“. Zwei gleiche Sätze hießen rund 1 KB mehr auf
+   `details.html` für nichts.
+2. *Die Wörter des Hakens für alle Anträge* (siehe oben).
+3. *Die Gremien der Zeilen sind die der Drucksache*, nicht die der Entscheidung: auch ein Antrag ohne
+   Ergebnis hat eines, und so stehen die Zeilen wie die Anfragen von 14.
+4. *Sortieren* nur nach Gremium, Anträgen, angenommen, abgelehnt, ohne Ergebnis und dem Median; die
+   übrigen Anteile nicht (rund 2 KB weniger).
+5. *Die Mehrheit als Spalte und als Satz* mit den zusammengefassten Verhältnissen: der Satz aus § 7
+   braucht eine Zahl, und eine Zahl je Lager ist keine Rangfolge der Fraktionen.
+
+**Verworfen.** Der Prüfauftrag auf der Seite oder im Download (Rückfall 1); eine rohe Quote je Fraktion
+oder eine sortierbare Spalte mit dem Verhältnis (Frage 9.5); das Wort im Dialog für Vorlagen und
+Anfragen (nicht kodiert, Frage 9.9); die Zahl „beantwortet“ als Klasse (der Wortlaut genügt, und er
+steht im Profil); `gr/400224` als eigenes Gremium ohne Kürzel (die Anträge entscheidet der Rat, und die
+Sitzungen davor stehen unter dessen Organisation); die Kanten aus den Nachbarperioden für die
+Folgevorlage (`docs/todo.md`, Punkte 15 (a) und 12 (g); die Spaltendoku nennt die Untergrenze).
+
+**Geprüft.**
+
+- Tests: `tests/unit/test_report_outcomes.py` (Prüfsatz aus `guete.json` je Paketprofil, gemessen in
+  den drei Düsseldorfer Perioden, ohne genügendes α keine Zahl, `OUTCOMES_CHECK` gilt nur für die
+  Kodierung aus `guete.json`, die kurze Fassung unter 800 Byte; die drei Gäste an erfundenen Tabellen:
+  Praxiszellen in keinem Anteil, die größte Sitzung ohne Eintrag, kleine Gremien nur in der Summe, der
+  Erfolg nach Namen ohne beobachtete Zahl und mit der Mehrheit der längsten Zeit, die Antworten nach
+  dem Wortlaut, der Validator von `answered`; der Haken nur mit Anträgen; Register, Vorlagen mit
+  `{% if data.`, die drei Rollen in `schema.json`, Downloads und Spalten, die Gäste mit Anker und
+  Verzeichnis auf der Mini-Seite, keine Partei in Vorlagen und Spaltendoku; nach den Fotos die
+  umbrechenden Köpfe und die Aufzählung der Zellen). Slow: `tests/golden/test_outcomes_page.py`
+  (Hauptperiode 5 099 Anträge, 3 245 angenommen, davon 660 mit Änderungen, 1 028 abgelehnt, 406
+  zurückgezogen, 88 erledigt, 43 offen, 289 ohne Ergebnis, 155 davon im Rat am 05.02.2021; 2014–2020
+  die vier Praxiszellen mit 240 Anträgen; Erfolg und Antworten der Hauptperiode; die zweite Stadt nur
+  mit dem ersten Gast; jede Seite unter 500 KB, die Gäste unter 32 KB, `beschluesse.json` unter 300 KB
+  auch mit jedem Dokument des Korpus) und in `tests/golden/test_outcomes.py` `OUTCOMES_CHECK` aus
+  Labels und Verlauf. Angepasst, weil es jetzt eine Tabelle mit Sicht, einen zweiten Haken und einen
+  dritten Prüfsatz gibt: `test_report_build`, `test_report_model`, `test_report_downloads`,
+  `test_report_procedures` (auch der Ordner `vorgaenge/`), `test_report_similar` und der
+  Schnappschuss von `georep steps`. Rot vor den Änderungen: Exit 1 mit sieben Tests (Vorarbeit 1, darunter die Zahl der
+  Organisationen in `test_bodies_reference.py`, 38 → 40),
+  sechs (Vorarbeit 2), einem Sammelfehler und fünf Tests (Stufe 3), zwei (nach den Fotos); die Namen
+  stehen in den Commits.
+- A/B-Bau der Stufe 3 aller fünf Profile wie `pages.yml`, A aus `34f5a16` (Stand nach Vorarbeit 1,
+  `ab/26s-a`), B aus dem Baum von `dec062e` vor der Kürzung der Bemerkung in `beschlusslage.css`
+  (`ab/26s-b`; die gekürzte Bemerkung macht jede `vorgaenge.html` 202 Byte kleiner, sonst nichts). Unter `site/` 356 Dateien in
+  A, 371 in B, 34 Abweichungen, alle erwartet: neu je Düsseldorfer Datensatz `beschluesse.json` und die
+  vier Downloads (15); anders je Düsseldorfer Datensatz `vorgaenge.html` (drei Gäste, Verzeichnis, der
+  Hinweis † fällt weg), `details.html` (fünf Downloadzeilen, ihre Zahl 88 → 93, der Prüfsatz, die Größe
+  von `schema.json`, `data-extras`), die Startseite (nur `data-extras`, +12 Byte), `spalten.html` und
+  `schema.json` (die drei Tabellen; die Spaltendoku von `dokumente_vorgang.rolle`); in Mönchengladbach
+  `vorgaenge.html` (der erste Gast mit dem Satz, was fehlt), `spalten.html`, `schema.json` (nur
+  `dokumente_vorgang.rolle`, +150 Byte) und `details.html` (nur die gerundete Größe von `schema.json`).
+  Gleich: `vorgaenge.json` und `aehnlich.json` (die Zeilen von 14 und 18), `akteure.html`, `zeit.html`,
+  `bedarf.html`, `karte.html`, `vergleich.html`, jede `summary.json` und die Startseite von
+  Mönchengladbach. Über die Datenwurzeln 1 289 und 1 329 Dateien, 238 Abweichungen: unter `processed/`
+  nur `beratungsverlauf` und `beschlusslage` der drei Düsseldorfer Perioden (die umbenannte Spalte,
+  Vorarbeit 2; jede andere Spalte gleich), **kein anderes Parquet**, die Seiten und Downloads oben, und
+  143 Stamps: 106 nur Settings-Fingerprint (`outcomes.answered`) und Schreibzeit, 15 dazu `extra`
+  (`report_fingerprint` zählt die neuen Vorlagen), 11 dazu die Eingaben (`report` und `page_vorgaenge`
+  lesen die Tabellen von 26), 5 die Eingaben von `votes` (der Verlauf hat einen neuen Hash, seine
+  Ausgaben sind gleich), 6 die Schema-Version. `georep publish --strict-budget` lief in beiden Bauten
+  durch.
+- Größen, veröffentlicht (A → B, `vorgaenge.html` mit der gekürzten Bemerkung):
+
+  | | `vorgaenge.html` | davon Gäste | `details.html` | `beschluesse.json` (gzip) | nachgeladen je Profil |
+  |---|---|---|---|---|---|
+  | Hauptperiode | 83 118 → 112 269 (+29 151) | 28 853 | 930 580 → 933 351 (+2 771) | 133 877 (18 878) | 1 140 173 |
+  | `2014-2020/` | 133 005 → 162 892 (+29 887) | 29 537 | 812 135 → 814 905 (+2 770) | 85 907 (12 612) | 130 986 |
+  | `2025/` | 50 306 → 69 396 (+19 090) | 18 768 | 711 466 → 714 228 (+2 762) | 23 777 (4 243) | 44 392 |
+  | `moenchengladbach/` | 36 773 → 37 533 (+760) | 481 | 797 429 (gleich) | – | 6 661 |
+
+  `spalten.html` +7 510 Byte, `schema.json` +7 053 (Mönchengladbach je +150). Die Downloads je
+  Düsseldorfer Datensatz 0,56, 0,57 und 0,11 MB (fast alles die beiden Parquet je Dokument und je
+  Punkt); die veröffentlichte Seite wächst von 64,0 auf 65,6 MB.
+- Im Browser (headless Chrome über Port 8783 auf dem B-Bau): `vorgaenge.html` der Hauptperiode an einer
+  Kopie, die mit dem Verzeichnis und den Gästen beginnt, bei 1 280 Pixeln hell und dunkel und bei 390;
+  2014–2020 mit der Fußnote der Praxiszellen; Mönchengladbach mit dem Satz, was fehlt. Die Fotos fanden
+  die zehn Spalten, die bei 1 280 über die Breite gingen, die Zellen ohne „und“ und den Verweis „(*,
+  oben)“ ohne Zellen; behoben in `dec062e`. Der Dokumentdialog von `details.html` für „brahmsplatz“
+  (acht Dokumente, sieben Anträge) in A und B: in B trägt jeder Antrag unter „Ähnliche Dokumente“ die
+  Zeile „Beschlusslage: …“, die Informationsvorlage keine; ohne diese Zeilen und ohne den Satz von 26
+  ist der Text des Dialogs in A und B gleich, die Zeilen von 14 und 18 also unverändert. Bei 390 Pixeln
+  scrollt die Tabelle der Beschlusslage waagrecht wie jede breite Tabelle der Seiten.
+
+**Offen.** Die Folgevorlage bleibt je Profil eine Untergrenze, und eine Kante, die eine Drucksache einer
+späteren Periode legt, fehlt im Dialog des früheren (`docs/todo.md`, Punkte 15 (a) und 12 (g)); die
+Spaltendoku nennt das. Ein Wortschatz für Mönchengladbach ist eine eigene Messung (Punkt 15 (b)). Punkt
+98 und das Messdokument von 28 nennen für H28.2 noch 41 von 389 und „Gremium unbekannt“ 192 und 126;
+ob sie einen Nachtrag bekommen, entscheidet der Supervisor.
