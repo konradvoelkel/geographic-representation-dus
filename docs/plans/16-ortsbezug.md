@@ -955,3 +955,43 @@ Tabelle 5 sind zehn weitere Tests derselben Frage.
 | 9.18 | Fassung 2 zählt Gegenstände in einem anderen Stadtteil als „kein Bezug" (Regel (a)); der Anteil „kein Bezug" steigt dadurch von 2,5 auf 8,0 % | Die Fehltrefferquote ist eine Definitionsfrage: Fassung 1 misst Fehltreffer des Wortes, Fassung 2 auch die der Lage | die Seite nennt beide mit ihrer Fassung; durchlaufende Straßen sind der Fall, den die Hausnummer (§ 3.4) entscheidet |
 
 ## 10. Änderungen durch die Synergie (füllt der Supervisor)
+
+Geschrieben am 2026-11-28 vom Supervisor der Phase „Zeigen“ vor dem Start der Stufe 2, nach Konrads
+„weiter“ zu 16 und 28 (2026-11-27). Quellen: [00-synergien-2026-11.md](00-synergien-2026-11.md), § 1,
+§ 2.2 (Konflikte 1, 2, 6, 9, 11) und § 4 „16 Ortsbezug“, und was seither auf `main` liegt. Wo dieser
+Abschnitt § 6 oder § 7 widerspricht, gilt er.
+
+1. **Bausteine von `main` statt eigener.** `store_view` entfällt zugunsten von
+   `prep.raw_texts.flatten_with_offsets` (F1, mit `flatten_with_offsets(...)[0] == flatten(...)`);
+   Zeilen aus `prep.raw_texts.split_lines`; der Abschnitt einer Spanne aus `spans.section_of` und der
+   Rumpf aus 11 (`sections`, Punkt 81, `struktur-1` unverändert); Spannen nach F3 mit `sort_spans` und
+   `check_spans`, `start`, `end` als Int64 in der Folge `id, start, end, kind` (Konflikt 2). Jede
+   Korpus-ID einer geteilten Datei bekommt ihre Zeilen (Synergie § 1).
+2. **Adresse → Wahlbezirk über `crosswalk.point_shares` mit Band 0** (22, Punkt 80), keine eigene
+   Punkt-in-Fläche-Logik. Das Adresspaket trägt zusätzlich den Stimmbezirk.
+3. **Eine Quelle für GebRef.** Seit der Startseite (Punkt 93) holt der Netzschritt `street_points`
+   das Archiv der Gebäudereferenzen nach `cache_root/startkarte/`; das Adresspaket entsteht aus
+   derselben Datei, ohne zweiten Abruf und ohne zweite URL in den Settings. Paket
+   `snapshots/duesseldorf-adressen/` über `georep pack --addresses`, mit README (Quelle, Lizenz
+   dl-de/zero-2.0, Größe, SHA-256), unter `TOTAL_LIMIT`; Frage 9.3 gilt mit der Annahme (ja).
+4. **Einhängepunkt.** Der Beitrag heißt `16-ortsbezug`, sein Schritt `places` steht in
+   `Contribution.early_steps` hinter `sections` (11) und vor `weights`; die Fabrik bekommt `http`
+   (F7, Punkt 74) und braucht es nicht. Pfade im Modul (`places_files(layout)`), nicht in `layout.py`.
+5. **Varianten.** `ortsbezug` (Nebenregel C, bestätigt in Runde 2, § 5.5) und `stelle` (explorativ)
+   am Ende von `settings.FIXED_VARIANTS`; mit allen Gewichten 1 reproduziert die Variante `einheit`
+   exakt. Die Rückfallregel braucht es nicht, C hat bestanden. Die Grenzstraße (Frage 9.8) bleibt eine
+   Spalte (`wahlkreis_adresse`), keine Variante und kein Standard.
+6. **Stufe 2 und die kleine Stufe 3 in einem Bau** (Ressourcen; Plan der Phase § 5, `v0.44.0`): die
+   zwei Zeilen `ortsbezug` und `stelle` in der Tabelle „Was ändert die Gewichtung?“ von
+   `details.html`, der eine Satz in „Methode und Grenzen“ mit dem Prüfsatz aus
+   `validierung/16-ortsbezug-2-f4/guete.json` (Bestätigung, zwei KI-Kodierer desselben Modells) und
+   `16-ortsbezug-f4` (Runde 1), und der Download `dokumente_wahlbezirke_stelle` nur als Parquet (die
+   CSV wäre rund 3 MB; Rückstand 35). Kein Radio im Kartenumschalter (Frage 9.16, Annahme gilt), keine
+   Unterseite `orte.html`. Spannen und Adressen werden nicht veröffentlicht (Frage 9.7).
+7. **Profile.** An in den drei Düsseldorfer Profilen (die Perioden erben); Mönchengladbach bleibt aus
+   (Frage 9.12: Stelle ginge, aber ohne Adresspaket und ohne Messung dort). Die Laufzeit des Schritts
+   auf Pages (rund 40 s je Profil) wird gemessen und im Commit-Body genannt; die Grenze der Phase sind
+   8 Minuten je Pages-Lauf.
+8. **Validierung auf der Seite** kommt aus `guete.json` (F4); die Zahlen des Messdokuments (F1 0,828,
+   κ 0,249, α 0,974) nur, soweit `guete.json` sie trägt, sonst mit Verweis auf dieses Dokument.
+

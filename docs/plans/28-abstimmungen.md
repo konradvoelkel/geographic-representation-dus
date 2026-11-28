@@ -751,4 +751,43 @@ nicht angewendet, die Labels oben gelten unverändert):
 
 ## 10. Änderungen durch die Synergie (füllt der Supervisor)
 
-folgt
+Geschrieben am 2026-11-28 vom Supervisor der Phase „Zeigen“ vor dem Start der Stufe 2 (nur Ebene A,
+§ 5.1), nach Konrads „weiter“ zu 16 und 28 (2026-11-27). Die Synergie
+([00-synergien-2026-11.md](00-synergien-2026-11.md)) hat für 28 keinen Abschnitt in § 4; was seither
+auf `main` liegt, geht dem Bauplan (§ 6, § 7) vor.
+
+1. **Eingabe aus 26, kein eigenes Paket.** Die Tabelle „Paper × Tagesordnungspunkt“ von 26
+   (`analysis.outcomes.AGENDA_SCHEMA`, unter `raw/tagesordnungspunkte.parquet`, auf Pages aus
+   `snapshots/duesseldorf-beschluesse/`) trägt je Beratung jeden Tagesordnungspunkt mit `result`
+   wörtlich. Die Einheit aus § 8.1 (ein Punkt mit Beratung) ist eine Zeile dort mit `top` nicht null;
+   steht dieselbe Drucksache zweimal in einer Sitzung, sind es zwei Zeilen. `georep pack --votes`
+   entfällt; deckt das Paket von 26 eine Periode nicht, fehlt 28 dort, mit Namen im Log.
+2. **Frage 9.2, entschieden: die Wortregel aus § 8.1 bleibt das Verfahren von 28.** Gemessen und
+   bestätigt ist genau sie (Präzision 0,982, 0,928–0,995); der Wortschatz von 26
+   (`[outcomes.results]`) ist eine andere Regel für eine andere Einheit (die Beschlusslage je
+   Dokument). Ein Test vergleicht beide je Punkt (`angenommen` ⇔ Stufe `sache` mit `beschlossen` oder
+   `geaendert`, `abgelehnt` ⇔ `abgelehnt`, `zurueckgezogen` ⇔ `zurueckgezogen`); jede Abweichung wird
+   gezählt und im Entscheidungseintrag mit Beispielen genannt, nicht still angeglichen.
+3. **Nur Ebene A** (§ 5.1): `ergebnis`, `geaendert`, `form`, `form_quelle = "result"`. Ohne
+   `positionen`, `vollstaendig`, `niederschrift` und ohne die Schritte `minutes` und `minutes_text`;
+   kein Netz. H28.2 wird gerechnet, H28.1 und H28.3 stehen als `nicht entscheidbar` in der
+   Hypothesentabelle.
+4. **Bausteine von `main`.** Gremium und Gremiumsart über `prep.bodies.organization_key` und
+   `[bodies.organizations]` wie bei 26; Mehrheiten und Sitze aus `[[majorities.terms]]` des
+   Stadtprofils (15, Punkt 75); die Hypothesentabelle mit dem Spaltenkern und `family` aus
+   `analysis.hypotheses` (17, Punkt 78), wie 22. Beitrag `28-abstimmungen` am Ende von
+   `CONTRIBUTIONS` (hinter 26), Fabrik mit `http` (F7), Pfade im Modul, Settings nach der
+   Anhängeregel, Schalter in `defaults.toml` aus, an in den Düsseldorfer Profilen, deren Paket von 26
+   die Punkte trägt; Mönchengladbach aus (Frage 9.9).
+5. **Stufe 2 und Stufe 3 in einem Bau** (Ressourcen; Plan der Phase § 5): der Abschnitt
+   „Abstimmungen“ auf `akteure.html` über `Contribution.sections` (V1, Punkt 86), nur die Punkte 1 und 2
+   aus § 7 nach der Kodierung: Einstimmig, mehrheitlich, geändert je Gremiumsart und Periode mit dem
+   Satz aus `validierung/28-abstimmungen/guete.json`, und die Hypothesentabelle (H28.2 mit Ergebnis,
+   H28.1 und H28.3 `nicht entscheidbar`, festgelegt mit Commit `97ebb52`). Rund 10 KB. Downloads
+   `abstimmungen_gremien` und `abstimmungen_hypothesen` (Parquet und CSV, je klein), Spalten auf
+   `spalten.html` (Punkt 94). `abstimmungen.parquet` je Punkt nur als Parquet (Rückstand 35). Keine
+   Personen, keine Positionen je Fraktion.
+6. **Validierung.** `guete.json` stammt von zwei KI-Kodierern desselben Modells (Labels vor dem
+   2026-11-26, F4-Nachzug V3); die Seite nennt nur die Kennzahlen mit `alpha_genuegt = true`, für
+   Ebene A die Fragen `ergebnis` und `form`.
+
