@@ -72,7 +72,7 @@ from georep.prep.raw_texts import RAW_SUFFIX
 from georep.prep.streets import Agreement, directory_agreement
 from georep.prep.voters import ELIGIBLE_TOTAL, PRECINCT, TURNOUT, VOTERS
 from georep.report.literature import literature
-from georep.report.places import variant_texts
+from georep.report.places import PlacesFinding, places_finding, variant_texts
 from georep.report.search import SearchEntry, search_entries
 from georep.report.tables import GEOJSON_COLUMNS, GEOJSON_TABLE, PublishedTable, published
 from georep.search.dictionary import all_terms
@@ -804,6 +804,9 @@ class ReportModel:
     # Vorarbeit V2: die Dateien der Dialog-Haken (``report.dialog``), als ``data-extras`` am
     # Dokumentdialog; leer heißt kein Attribut, und die Seite bleibt bytegleich.
     dialogs: tuple[str, ...] = ()
+    # Vorhaben 16, kleine Stufe 3: der Befund der Kodierung in „Methode und Grenzen"; None, wo
+    # nicht gemessen ist oder es keine Stelle gibt, und die Seite bleibt bytegleich.
+    places: PlacesFinding | None = None
 
 
 @dataclass(frozen=True)
@@ -2051,6 +2054,7 @@ def build_report_model(
         preview_rows=settings.report.table_preview_rows,  # Punkt 48
         extraction=extraction_figures(layout),  # docs/todo.md, Punkt 7; Fundament F1
         table_checks=table_checks(layout, settings),  # Vorhaben 11 und 12, Stufe 3
+        places=places_finding(layout, settings),  # Vorhaben 16, kleine Stufe 3
     )
 
 

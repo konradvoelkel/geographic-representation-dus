@@ -162,6 +162,24 @@ def test_the_downloads_of_11_and_12_stay_small(published: PublishedRun) -> None:
     assert all(len(line.encode("utf-8")) < 1_000 for line in lines)
 
 
+def test_the_small_stage_three_of_16_stays_small(published: PublishedRun) -> None:
+    """Vorhaben 16 (Messdokument § 7 mit § 10, Punkt 6): zwei Zeilen der Gewichtung, ein Satz in
+    „Methode und Grenzen", der Download nur als Parquet; keine Spanne und keine Adresse."""
+    page = published.layout.site_details.read_text(encoding="utf-8")
+    ortsbezug = '<th scope="row">Ortsbezug<span class="formula">'
+    stelle = '<th scope="row">nach Stelle<span class="formula">'
+    assert page.count(ortsbezug) == 1 and page.count(stelle) == 1
+    row = next(line for line in page.splitlines() if line.startswith(ortsbezug))
+    assert "bestätigt an 100 Paaren (F1 0,83)" in row and "(F1 0,88)" in row
+    assert "explorativ" in next(line for line in page.splitlines() if line.startswith(stelle))
+    [sentence] = [line for line in page.splitlines() if line.startswith("<p>Ortsbezug:")]
+    assert "nicht von Menschen" in sentence and len(sentence.encode("utf-8")) < 600
+    data = published.layout.site_data
+    assert (data / "dokumente_wahlbezirke_stelle.parquet").stat().st_size < 300_000
+    assert not (data / "dokumente_wahlbezirke_stelle.csv").exists()
+    assert not any(data.glob("treffer_stellen*")) and not any(data.glob("adressen*"))
+
+
 def test_publish_reports_no_page_over_budget(published: PublishedRun, tmp_path: Path) -> None:
     """``PublishSummary.over_budget`` ist die Prüfung, die ``--strict-budget`` in CI rot macht."""
     summary = publish_sites(

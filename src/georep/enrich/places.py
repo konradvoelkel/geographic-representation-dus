@@ -42,6 +42,9 @@ from georep.io import write_parquet
 from georep.layout import Layout
 from georep.pipeline import Step
 from georep.prep.addresses import LOCATED, AddressBook, address_files
+from georep.report.downloads import has_extracted_rows, measured
+from georep.report.places import CONFIRMATION
+from georep.report.tables import DISTRICT_COLUMN, PublishedTable
 from georep.search.dictionary import TERMS, all_terms, normalise_terms
 from georep.search.matcher import FlashTextMatcher
 from georep.search.positions import (
@@ -361,4 +364,56 @@ def places_steps(settings: Settings, layout: Layout, http: Transport) -> list[St
     return [Step("places", inputs, tuple(files), run, PLACES_SCHEMA_VERSION)]
 
 
-CONTRIBUTION: Contribution = Contribution("16-ortsbezug", early_steps=places_steps)
+# --- kleine Stufe 3: das Paar als Download (Messdokument § 7 mit § 10, Punkt 6) ------------------
+
+
+def pairs_shown(path: Path, settings: Settings) -> bool:
+    """Nur gemessen und mit Rohtext, wie die Downloads von 11 und 12: auf Pages die Hauptperiode."""
+    return measured(settings, CONFIRMATION.project) and has_extracted_rows(path)
+
+
+PAIR_COLUMNS_DOC: dict[str, tuple[str, str]] = {
+    "id": ("OParl-URL des Dokuments", ""),
+    "wahlkreis_id": DISTRICT_COLUMN,
+    "stelle": (
+        "vorderste Stelle eines Begriffs des Wahlbezirks im Dokument: titel (steht auch im "
+        "OParl-Titel), betreff, kern (Beschlussvorschlag, Fragen), begleittext (Sachdarstellung, "
+        "Begründung, Stellungnahme, zitierter Beschluss, Text ohne Überschrift), rest; leer ohne "
+        "Rohtext",
+        "",
+    ),
+    "erwaehnungen": ("Vorkommen der Begriffe des Wahlbezirks im Text", "Anzahl"),
+    "n_begleit": ("davon im Begleittext", "Anzahl"),
+    "n_liste": ("davon im Begleittext in einer Listenzeile oder mit Hausnummer dahinter", "Anzahl"),
+    "handelt_von": (
+        "Nebenregel C: ein Begriff steht im Titel, im Betreff oder im Kern oder im Begleittext in "
+        "einer Listenzeile oder mit Hausnummer; leer ohne Rohtext",
+        "",
+    ),
+    "wahlkreis_adresse": (
+        "eine Adresse im Text (ein Begriff des Wahlbezirks mit Hausnummer) liegt nach dem "
+        "Adresspaket in diesem Wahlbezirk; leer ohne Rohtext oder ohne Hausnummern im Profil",
+        "",
+    ),
+    "extractor": (
+        "Verfahren und Extraktor des Rohtexts, etwa ortsbezug-1/pypdf-7.1.0+roh; leer ohne Rohtext",
+        "",
+    ),
+}
+
+TABLES = (
+    PublishedTable(
+        "dokumente_wahlbezirke_stelle",
+        lambda layout: places_files(layout).pairs,
+        "Stelle je Paar aus Dokument und Wahlbezirk: wo die Begriffe des Bezirks stehen, ob das "
+        "Dokument von einem Ort im Bezirk handelt (Nebenregel C) und ob eine Adresse dort liegt; "
+        "ohne Adressen und Textstellen",
+        PAIR_COLUMNS_DOC,
+        optional=True,
+        enabled=lambda settings: settings.places.enabled,
+        csv=None,  # als CSV rund 3 MB (Rückstand 35); die Spannen und Adressen nie
+        shown=pairs_shown,
+    ),
+)
+
+CONTRIBUTION: Contribution = Contribution("16-ortsbezug", early_steps=places_steps, tables=TABLES)
