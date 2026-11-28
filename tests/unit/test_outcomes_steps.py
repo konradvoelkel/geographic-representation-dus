@@ -324,7 +324,7 @@ def test_the_mini_run_writes_one_row_per_corpus_id(mini_run: Layout) -> None:
         "offen": 1,
         "ohne_ergebnis": 4,
     }
-    motions = lage.filter(pl.col("rolle") == "antrag")
+    motions = lage.filter(pl.col("dokument_rolle") == "antrag")
     assert motions.height == 33
     assert motions.filter(pl.col("klasse") != "ohne_ergebnis").height == 32
     assert set(erfolg.get_column("periode").to_list()) == {"2020-2025"}

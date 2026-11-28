@@ -207,7 +207,7 @@ def _outcomes(found: list[tuple[str | None, int, str, str]], prefix: str) -> pl.
     return pl.DataFrame(
         {
             "id": [f"{prefix}{i:03d}" for i in range(len(found))],
-            "rolle": [role for *_, role in found],
+            "dokument_rolle": [role for *_, role in found],
             "klasse": [name for _, _, name, _ in found],
             "entscheidung_gremium": [body for body, *_ in found],
             "entscheidung_datum": [
@@ -217,7 +217,7 @@ def _outcomes(found: list[tuple[str | None, int, str, str]], prefix: str) -> pl.
         },
         schema={
             "id": pl.String,
-            "rolle": pl.String,
+            "dokument_rolle": pl.String,
             "klasse": pl.String,
             "entscheidung_gremium": pl.String,
             "entscheidung_datum": pl.Date,
@@ -264,7 +264,7 @@ def test_success_spreads_the_observed_over_each_stratum(
     outcomes = pl.DataFrame(
         {
             "id": ids,
-            "rolle": ["antrag"] * len(ids),
+            "dokument_rolle": ["antrag"] * len(ids),
             "klasse": [name for _, name, _ in found],
             "eintrag_tragfaehig": [True] * len(ids),
         }

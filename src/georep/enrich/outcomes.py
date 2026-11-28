@@ -234,7 +234,7 @@ def outcome_steps(settings: Settings, layout: Layout, http: Transport) -> list[S
             period_key(settings.period.start, settings.period.end),
         )
         write_parquet(success, files.success, schema_version=OUTCOMES_SCHEMA_VERSION)
-        motions = frame.filter(pl.col("rolle") == MOTION)
+        motions = frame.filter(pl.col("dokument_rolle") == MOTION)
         entered = motions.filter(pl.col("klasse") != "ohne_ergebnis").height
         practice = motions.filter(~pl.col("eintrag_tragfaehig").fill_null(True)).height
         figures = outcome_figures(frame)

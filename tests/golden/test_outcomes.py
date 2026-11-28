@@ -131,7 +131,7 @@ WITH_RESULT = {"duesseldorf-2014": 2_990, "duesseldorf": 4_810, "duesseldorf-202
 def test_the_motions_of_each_period_have_the_classes_of_the_measurement(
     periods: dict[str, Period], profile: str
 ) -> None:
-    motions = periods[profile].outcomes.filter(pl.col("rolle") == "antrag")
+    motions = periods[profile].outcomes.filter(pl.col("dokument_rolle") == "antrag")
     counts = dict(motions.group_by("klasse").len().iter_rows())
     assert tuple(counts.get(name, 0) for name in CLASSES) == MOTIONS[profile]
     assert motions.filter(pl.col("klasse") != "ohne_ergebnis").height == WITH_RESULT[profile]
@@ -141,7 +141,7 @@ def test_the_main_period_has_a_result_for_more_than_eighty_percent(
     periods: dict[str, Period],
 ) -> None:
     """Das zweite Kriterium des Briefings: 94,3 % der Anträge der Hauptperiode (§ 5)."""
-    motions = periods["duesseldorf"].outcomes.filter(pl.col("rolle") == "antrag")
+    motions = periods["duesseldorf"].outcomes.filter(pl.col("dokument_rolle") == "antrag")
     assert motions.height == 5_099
     assert WITH_RESULT["duesseldorf"] / motions.height == pytest.approx(0.9433, abs=1e-4)
 
@@ -150,7 +150,7 @@ def test_the_budget_meeting_of_2021_carries_no_entry(periods: dict[str, Period])
     """155 der 289 Anträge ohne Ergebnis stehen in der Haushaltssitzung des Rates (§ 3.3)."""
     period = periods["duesseldorf"]
     without = period.outcomes.filter(
-        (pl.col("rolle") == "antrag") & (pl.col("klasse") == "ohne_ergebnis")
+        (pl.col("dokument_rolle") == "antrag") & (pl.col("klasse") == "ohne_ergebnis")
     ).select("id")
     in_meeting = (
         period.progress.filter(
@@ -205,7 +205,7 @@ def test_success_counts_every_decided_motion_of_a_fraction_once_per_fraction(
     """
     for profile, period in periods.items():
         decided = period.outcomes.filter(
-            (pl.col("rolle") == "antrag")
+            (pl.col("dokument_rolle") == "antrag")
             & pl.col("klasse").is_in(["beschlossen", "geaendert", "abgelehnt"])
         )
         counted = (
