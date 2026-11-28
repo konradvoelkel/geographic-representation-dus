@@ -42,6 +42,7 @@ aus dieser Fixture rechnet, eine Charakterisierung der eigenen Kette. Für Düss
 | `raw/streets_per_district.json` | drei Overpass-Antworten (`tests/fixtures/http/overpass_mg_{10404,10906,32301}.json`) | ein Stimmbezirk je Wahlbezirk; 39 Straßennamen |
 | `raw/wikipedia_dict.json` | SPARQL Q2758 (erste 25 von 1 190 Bindings) und die drei GeoSearch-Antworten | 75 Orte, 51 einem der drei Bezirke zugeordnet |
 | `raw/papers.jsonl` | eine OParl-Seite von Body 0011 (`tests/fixtures/oparl/papers_page_0011.json`) | 6 Paper: die fünf mit PDF unten und eines ohne `mainFile` |
+| `raw/politikfelder_paket.parquet` | erfunden (`make_mini_mg.write_policy_areas`, Vorhaben 19, seit 2026-11-28): die Paper stehen im Paket der Stadt nicht | 6 Zeilen in der Form des Pakets, alle mit Feld (jedes Paper trägt einen Dateinamen); keine Aussage über die Paper |
 | `text/texts.parquet` | fünf PDFs unter 110 KB daraus (`tests/fixtures/pdf/mg/`) | 5 Texte, mit pypdf extrahiert |
 
 Lizenzen: die votemanager-Dateien der ITK Rheinland tragen **keine Lizenzangabe** (`config.json`

@@ -12,7 +12,11 @@ kommt nie ins Paket (Plan § 2.8, ``uv.lock``). Darum hat das Vorhaben zwei Teil
    Trainingsskript ``docs/plans/19-politikfelder-training.py --vorhersage <eingabe>`` sagt daraus im
    Trainings-Venv unter der GPU-Sperre vorher.
 2. **Im Paket nur das Ergebnis**: ``georep pack --policy-areas --from <datei>`` friert es je Profil
-   ein, ``bootstrap`` kopiert es, und der Beitrag reicht es geprüft weiter (unten).
+   ein, ``bootstrap`` kopiert es nach ``raw/politikfelder_paket.parquet``, und der Schritt
+   ``policy_areas`` dieses Beitrags (offline, ohne Modell) prüft es gegen den Korpus
+   (``check_areas``: fehlende oder doppelte IDs, fremde Codes und eine fremde Kennung der Gewichte
+   sind ein ``SchemaError``) und reicht es weiter: ``processed/politikfelder.parquet``, eine Zeile
+   je Korpus-ID, und ``processed/politikfelder_anteile.parquet``, die Anteile je Gremiumsart.
 
 Die Pfade gehören diesem Modul (Synergien 2026-11, § 2.1): wer die Tabellen liest, nimmt sie aus
 ``policy_area_files``.
@@ -20,6 +24,8 @@ Die Pfade gehören diesem Modul (Synergien 2026-11, § 2.1): wer die Tabellen li
 
 from __future__ import annotations
 
+import hashlib
+import json
 from collections.abc import Sequence
 from pathlib import Path
 from typing import NamedTuple
@@ -28,8 +34,13 @@ import deal
 import polars as pl
 
 from georep.contracts import one_row_per_document
+from georep.enrich import Contribution
 from georep.errors import MissingInputError, SchemaError
+from georep.http import Transport
+from georep.io import write_parquet
 from georep.layout import Layout
+from georep.pipeline import Step
+from georep.prep.bodies import KINDS
 from georep.settings import POLICY_AREA_CODES, Settings
 
 POLICY_AREAS_SCHEMA_VERSION = 1  # erhöhen, wenn sich Spalten oder Typen der Tabellen ändern
@@ -238,3 +249,113 @@ def export_input(layout: Layout, settings: Settings) -> pl.DataFrame:
     corpus = pl.read_parquet(layout.corpus, columns=["id", "name", "file_name"])
     raw = pl.read_parquet(layout.raw_texts, columns=["name", "text"])
     return classifier_input(corpus, raw, settings.policy_areas.chars)
+
+
+# --- Anteile je Gremiumsart -------------------------------------------------------------------------
+ALL_BODIES = "alle"  # die Zeilen über alle Dokumente der Periode, vor den Gremiumsarten
+SHARES_SCHEMA = {
+    "periode": pl.String,
+    "gremium_art": pl.String,
+    "politikfeld": pl.String,
+    "dokumente": pl.Int64,
+    "anteil": pl.Float64,
+    "anteil_mit_feld": pl.Float64,
+}
+
+
+def _shares_complete(
+    areas: pl.DataFrame, bodies: pl.DataFrame, period: str, result: pl.DataFrame
+) -> bool:
+    totals = result.group_by("gremium_art").agg(pl.col("dokumente").sum())
+    return dict(result.schema) == SHARES_SCHEMA and all(
+        n == areas.height for kind, n in totals.iter_rows() if kind == ALL_BODIES
+    )
+
+
+@deal.ensure(
+    _shares_complete, message="je Gremiumsart alle Codes, die Summe über alle ist der Korpus"
+)
+def shares_table(areas: pl.DataFrame, bodies: pl.DataFrame, period: str) -> pl.DataFrame:
+    """Je Gremiumsart (``alle`` zuerst, dann ``prep.bodies.KINDS``) jedes Feld mit Zahl und Anteil.
+
+    ``areas`` ist ``politikfelder.parquet``, ``bodies`` ``papers_gremien.parquet`` (``id``,
+    ``gremium_art``); ein Dokument ohne Zeile dort zählt als ``unbekannt``. Je Gremiumsart mit
+    mindestens einem Dokument stehen alle 22 Codes und die Zeile ohne Rohtext (``politikfeld``
+    leer) da, auch mit null Dokumenten, damit die Tabelle zwischen Perioden vergleichbar bleibt.
+    ``anteil`` teilt durch alle Dokumente der Gremiumsart, ``anteil_mit_feld`` nur durch die mit
+    Feld (leer in der Zeile ohne Rohtext).
+    """
+    joined = (
+        areas.select("id", "politikfeld")
+        .join(bodies.select("id", "gremium_art"), on="id", how="left")
+        .with_columns(pl.col("gremium_art").fill_null(KINDS[-1]))
+        .sort("id")
+    )
+    order = (*CODES, UNDETERMINED)
+    rows: list[tuple[str, str, str, int, float, float | None]] = []
+    for kind in (ALL_BODIES, *KINDS):
+        part = joined if kind == ALL_BODIES else joined.filter(pl.col("gremium_art") == kind)
+        if part.is_empty():
+            continue
+        counts = dict(part.group_by("politikfeld").len().iter_rows())
+        filled = part.height - int(counts.get(UNDETERMINED, 0))
+        for code in order:
+            n = int(counts.get(code, 0))
+            with_area = None if code == UNDETERMINED else (n / filled if filled else 0.0)
+            rows.append((period, kind, code, n, n / part.height, with_area))
+    return pl.DataFrame(rows, schema=SHARES_SCHEMA, orient="row")
+
+
+# --- Register: Schalter, Schritt ----------------------------------------------------------------------
+def policy_areas_enabled(settings: Settings) -> bool:
+    """Der Schalter des Schritts, der Tabellen und der Seite: ``policy_areas.enabled``."""
+    return settings.policy_areas.enabled
+
+
+def policy_areas_extra(settings: Settings) -> str:
+    """Der Zusatz im Stamp (Muster Punkt 53): was den Schritt bestimmt, steht nicht im Fingerprint."""
+    areas = settings.policy_areas
+    payload = {"chars": areas.chars, "weights_sha256": areas.weights_sha256}
+    return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:16]
+
+
+def policy_area_steps(settings: Settings, layout: Layout, http: Transport) -> list[Step]:
+    """Der Schritt ``policy_areas``, wenn das Profil ihn einschaltet; offline, ``http`` bleibt ungenutzt."""
+    if not policy_areas_enabled(settings):
+        return []
+    files = policy_area_files(layout)
+
+    def policy_areas() -> str:
+        from georep.report.model import period_info
+
+        ids = pl.read_parquet(layout.corpus, columns=["id"]).get_column("id").to_list()
+        frame = check_areas(pl.read_parquet(files.package), ids, settings.policy_areas.model_id)
+        write_parquet(frame, files.areas, schema_version=POLICY_AREAS_SCHEMA_VERSION)
+        bodies = pl.read_parquet(layout.papers_bodies, columns=["id", "gremium_art"])
+        shares = shares_table(frame, bodies, period_info(settings).title)
+        write_parquet(shares, files.shares, schema_version=POLICY_AREAS_SCHEMA_VERSION)
+        counts = (
+            frame.filter(pl.col("politikfeld") != UNDETERMINED)
+            .group_by("politikfeld")
+            .len()
+            .sort("len", "politikfeld", descending=[True, False])
+        )
+        top = ", ".join(f"{code} {SHORT_NAMES[code]} {n}" for code, n in counts.head(3).iter_rows())
+        return (
+            f"{frame.height} Dokumente, {counts.get_column('len').sum()} mit Politikfeld "
+            f"({top}, …); {shares.height} Zeilen Anteile"
+        )
+
+    return [
+        Step(
+            "policy_areas",
+            (files.package, layout.corpus, layout.papers_bodies),
+            (files.areas, files.shares),
+            policy_areas,
+            POLICY_AREAS_SCHEMA_VERSION,
+            extra=policy_areas_extra(settings),
+        )
+    ]
+
+
+CONTRIBUTION = Contribution("19-politikfelder", steps=policy_area_steps)

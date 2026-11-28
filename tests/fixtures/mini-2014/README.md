@@ -24,6 +24,7 @@ deterministisch, und jede Zahl steht dort als Konstante mit ihrem Grund.
 | `external/Wahlbezirk_Wahlergebnis.csv` | drei Zeilen, jede exakt die Summe ihrer Stimmbezirks- und Briefwahlzeilen. Dadurch gehen die drei Summenproben des Schritts `voters` auf, und ein Fehler in der Zuordnung fällt auf. |
 | `raw/papers.jsonl` | 100 Dokumente: jedes zweite der 200 aus `tests/fixtures/mini/`, Datum um sechs Jahre zurück (2014-09-14 bis 2019-09-12, ganz in der Periode), Kennungen und URLs unverändert. |
 | `cache/text/texts.parquet` | die Texte dieser 100 Dokumente, Herkunft `fixture`. |
+| `raw/politikfelder_paket.parquet` | Vorhaben 19: die Politikfelder dieser 100 Dokumente aus dem Paket der Hauptperiode (`make_mini.write_period_policy_areas`, seit 2026-11-28); sie gilt vor dem Paket des Profils. Die Codes stehen unter CC BY-NC-SA 4.0 wie im Paket. |
 
 Zusammen rund 330 KB. `bootstrap` erkennt an `raw/papers.jsonl` und `cache/text/texts.parquet`
 das native Format und kopiert beide, statt einen Korpus im Altformat umzurechnen — genau wie

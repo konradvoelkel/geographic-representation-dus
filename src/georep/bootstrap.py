@@ -24,6 +24,7 @@ from loguru import logger
 
 from georep.enrich.embeddings import embedding_files
 from georep.enrich.outcomes import outcome_files
+from georep.enrich.policy_areas import policy_area_files
 from georep.enrich.procedures import procedure_files
 from georep.io import atomic_path
 from georep.layout import Layout
@@ -321,6 +322,8 @@ def bootstrap_from_settings(
             if settings.places.enabled and settings.places.house_numbers
             else None
         ),
+        # Vorhaben 19: die Politikfelder je Dokument, nur mit eingeschaltetem Schritt
+        policy_areas=settings.policy_areas.package if settings.policy_areas.enabled else None,
     )
 
 
@@ -340,6 +343,7 @@ def bootstrap(
     need: Path | None = None,
     street_points: Path | None = None,
     addresses: Path | None = None,
+    policy_areas: Path | None = None,
 ) -> BootstrapReport:
     """Die Eingaben aus ``reference_root`` übernehmen.
 
@@ -378,6 +382,10 @@ def bootstrap(
     ``addresses`` ist die Naht von Vorhaben 16: das Adresspaket (``[places].package``, Straße,
     Nummer, Zusatz, Stimm- und Wahlbezirk je Hausnummer), kopiert nach ``external/adressen/``, wo
     der Schritt ``places`` es liest; bringt der eingefrorene Datensatz eigenes mit, gilt seins.
+    ``policy_areas`` ist die Naht von Vorhaben 19: das Paket der Politikfelder
+    (``[policy_areas].package``), kopiert nach ``raw/politikfelder_paket.parquet``, wo der Schritt
+    ``policy_areas`` es gegen den Korpus prüft; bringt der eingefrorene Datensatz eine eigene Datei
+    mit (die Mini-Fixture), gilt seine, wie bei der Beratungsfolge.
     """
     reference = layout.reference_view()
     layout.ensure_dirs()
@@ -434,6 +442,10 @@ def bootstrap(
             own = reference.external / ADDRESS_DIR / name
             source = own if own.is_file() else addresses / "external" / ADDRESS_DIR / name
             pairs.append((source, layout.external / ADDRESS_DIR / name))
+    if policy_areas is not None:  # Vorhaben 19
+        areas = policy_area_files(layout).package
+        own = policy_area_files(reference).package
+        pairs.append((own if own.is_file() else policy_areas, areas))
     for source, target in pairs:
         _copy_input(layout, source, target, report, force=force)
     # Option 02: die zwei Eingaben des Crosswalks, wenn der Schnappschuss sie mitbringt

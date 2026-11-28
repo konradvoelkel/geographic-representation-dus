@@ -155,6 +155,8 @@ def test_pipeline_runs_skips_and_reruns(
         # Vorhaben 28: liest Beratungsverlauf, Korpus und Urheber; parties schreibt dieselben
         # Urheber noch einmal, die Orte ändern keines davon
         "votes": "übersprungen",
+        # Vorhaben 19: die Politikfelder lesen Paket, Korpus und Gremien, alle unverändert
+        "policy_areas": "übersprungen",
         "report": "ausgeführt",
         # Vorhaben 15, Stufe 3: die Unterseite liest Korpus, Urheber, Gremien, die beiden Tabellen
         # von 15 und die Prüfung im Repo; die Orte ändern keines davon

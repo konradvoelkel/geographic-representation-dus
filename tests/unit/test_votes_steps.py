@@ -154,7 +154,8 @@ def test_der_tag_der_festlegung_ist_anzeige_der_commit_zaehlt() -> None:
 def test_der_schritt_steht_hinter_26_und_liest_den_beratungsverlauf(
     tmp_path: Path, default_settings: Settings
 ) -> None:
-    assert [c.name for c in CONTRIBUTIONS][-1] == "28-abstimmungen"
+    # hinter 28 steht seit Vorhaben 19 nur noch 19 (Plan der Phase „Zeigen“, § 10 Punkt 3 von 19)
+    assert [c.name for c in CONTRIBUTIONS][-2:] == ["28-abstimmungen", "19-politikfelder"]
     layout = _layout(tmp_path)
     names = [s.name for s in build_steps(default_settings, layout)]
     assert names.index("council_results") < names.index("votes") < names.index("report")

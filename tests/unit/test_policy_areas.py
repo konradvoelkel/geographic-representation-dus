@@ -283,3 +283,87 @@ def test_pack_refuses_a_prediction_of_another_corpus(tmp_path: Path) -> None:
 def test_pack_command_wants_policy_areas_and_from_together(tmp_path: Path) -> None:
     assert main(["pack", "--policy-areas", str(tmp_path / "ziel")]) == 2
     assert main(["pack", "--from", "x.parquet", str(tmp_path / "ziel")]) == 2
+
+
+# --- Der Beitrag: Schritt policy_areas, bootstrap, Anteile -----------------------------------------
+def test_the_contribution_stands_last_and_only_where_the_profile_switches_it_on() -> None:
+    from georep.enrich import CONTRIBUTIONS
+    from georep.enrich.policy_areas import policy_area_steps
+
+    assert CONTRIBUTIONS[-1].name == "19-politikfelder"
+    layout = Layout(NOWHERE / "data", NOWHERE / "cache", NOWHERE / "reference")
+    for profile in ("duesseldorf", "duesseldorf-2014", "duesseldorf-2025", "moenchengladbach",
+                    "duesseldorf-vergleich"):  # fmt: skip
+        settings = load_settings(cwd=NOWHERE, profile=profile)
+        assert settings.policy_areas.enabled, profile
+        assert settings.policy_areas.package is not None
+        assert (REPO / settings.policy_areas.package).is_file(), profile
+        [step] = policy_area_steps(settings, layout, None)  # type: ignore[arg-type]
+        assert step.name == "policy_areas" and step.extra
+    off = load_settings(cwd=NOWHERE).model_copy(update={"policy_areas": PolicyAreas()})
+    assert policy_area_steps(off, layout, None) == []  # type: ignore[arg-type]
+    main_period = load_settings(cwd=NOWHERE, profile="duesseldorf").policy_areas.package
+    assert load_settings(cwd=NOWHERE, profile="duesseldorf-vergleich").policy_areas.package == (
+        main_period
+    )  # der Vergleich ist die Hauptperiode (Punkt 52)
+
+
+def test_the_mini_run_checks_and_passes_the_package_on(mini_run: Layout) -> None:
+    from georep.enrich.policy_areas import (
+        POLICY_AREAS_SCHEMA_VERSION,
+        SHARES_SCHEMA,
+        policy_area_files,
+    )
+    from georep.stores import stored_schema_version
+
+    files = policy_area_files(mini_run)
+    corpus = pl.read_parquet(mini_run.corpus, columns=["id"]).get_column("id").to_list()
+    areas = pl.read_parquet(files.areas)
+    assert areas.get_column("id").to_list() == sorted(corpus)
+    assert areas.equals(
+        pl.read_parquet(REPO / "tests/fixtures/mini/raw/politikfelder_paket.parquet")
+    )
+    assert stored_schema_version(files.areas) == str(POLICY_AREAS_SCHEMA_VERSION)
+    shares = pl.read_parquet(files.shares)
+    assert dict(shares.schema) == SHARES_SCHEMA
+    everything = shares.filter(pl.col("gremium_art") == "alle")
+    assert everything.get_column("dokumente").sum() == len(corpus)
+    assert everything.get_column("politikfeld").to_list() == [*CODES, ""]
+
+
+def test_the_shares_count_every_body_kind_and_document() -> None:
+    from georep.enrich.policy_areas import shares_table
+
+    areas = _areas()
+    bodies = pl.DataFrame({"id": IDS[:3], "gremium_art": ["rat", "rat", "bezirksvertretung"]})
+    shares = shares_table(areas, bodies, "Wahlperiode X")
+    kinds = shares.get_column("gremium_art").unique(maintain_order=True).to_list()
+    assert kinds == ["alle", "bezirksvertretung", "rat", "unbekannt"]
+    rat = shares.filter(pl.col("gremium_art") == "rat", pl.col("dokumente") > 0)
+    assert rat.select("politikfeld", "dokumente", "anteil").rows() == [("1", 1, 0.5), ("2", 1, 0.5)]
+    unknown = shares.filter(pl.col("gremium_art") == "unbekannt")
+    assert unknown.filter(pl.col("politikfeld") == "").get_column("anteil_mit_feld").to_list() == [
+        None
+    ]
+    assert unknown.filter(pl.col("politikfeld") == "").get_column("dokumente").item() == 1
+    assert set(shares.get_column("periode").to_list()) == {"Wahlperiode X"}
+
+
+def test_bootstrap_takes_the_package_of_the_profile(tmp_path: Path) -> None:
+    from georep.bootstrap import bootstrap
+    from georep.enrich.policy_areas import policy_area_files
+
+    reference = tmp_path / "reference"
+    (reference / "raw").mkdir(parents=True)
+    layout = Layout(tmp_path / "data", tmp_path / "cache", reference)
+    package = tmp_path / "paket.parquet"
+    _areas().write_parquet(package)
+    report = bootstrap(layout, seed_corpus=False, needs_dictionary=False, policy_areas=package)
+    assert pl.read_parquet(policy_area_files(layout).package).equals(_areas())
+    assert "politikfelder_paket.parquet" in report.copied
+    # eine eigene Datei des eingefrorenen Datensatzes gilt vor dem Paket
+    own = _areas().head(2)
+    own.write_parquet(reference / "raw" / "politikfelder_paket.parquet")
+    other = Layout(tmp_path / "data2", tmp_path / "cache2", reference)
+    bootstrap(other, seed_corpus=False, needs_dictionary=False, policy_areas=package)
+    assert pl.read_parquet(policy_area_files(other).package).equals(own)

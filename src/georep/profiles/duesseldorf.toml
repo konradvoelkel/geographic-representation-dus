@@ -1192,3 +1192,8 @@ end = 2025-09-14
 [[votes.windows]]
 calculation = "R2"             # Nebenrechnung ab dem Koalitionsvertrag; rechnet im Profil duesseldorf-2025
 start = 2025-12-01
+
+# --- Vorhaben 19: Politikfelder nach dem CAP (docs/plans/19-politikfelder.md, § 10)
+[policy_areas]                 # die Vorhersage des Klassifikators (Weg 3b) für diesen Datensatz: die Hauptperiode, die einzige geprüfte (Messdokument § 4.2, Makro-F1 0,704)
+enabled = true
+package = "snapshots/duesseldorf-politikfelder/processed/politikfelder.parquet"  # georep pack --policy-areas (README dort, CC BY-NC-SA 4.0); bootstrap kopiert nach raw/politikfelder_paket.parquet

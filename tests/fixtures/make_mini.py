@@ -115,8 +115,33 @@ def write_inputs() -> None:
     write_context()
     write_consultations(keep)
     write_agenda(keep)
+    write_policy_areas(keep)
     write_need()
     write_addresses()
+
+
+def write_policy_areas(keep: set[str]) -> int:
+    """Vorhaben 19: die Politikfelder dieser 200 Dokumente aus dem Paket der Hauptperiode.
+
+    Wie die Tabelle von Vorhaben 26: ``bootstrap`` nimmt die Datei des eingefrorenen Datensatzes
+    vor dem Paket aus ``policy_areas.package``, und der Schritt ``policy_areas`` prüft sie gegen
+    genau diesen Korpus. Liefert die Zahl der Zeilen.
+    """
+    import polars as pl
+
+    from georep.enrich.policy_areas import POLICY_AREAS_SCHEMA_VERSION
+    from georep.io import write_parquet
+
+    package = (
+        REPO / "snapshots" / "duesseldorf-politikfelder" / "processed" / "politikfelder.parquet"
+    )
+    frame = pl.read_parquet(package).filter(pl.col("id").is_in(sorted(keep))).sort("id")
+    write_parquet(
+        frame,
+        MINI / "raw" / "politikfelder_paket.parquet",
+        schema_version=POLICY_AREAS_SCHEMA_VERSION,
+    )
+    return frame.height
 
 
 def write_need() -> tuple[int, int, int]:
@@ -608,6 +633,35 @@ def _write_documents(root: Path) -> tuple[int, int]:
 FIXTURE_EXTRACTOR = "Mini-Fixture (synthetisch)"
 
 
+def write_period_policy_areas() -> int:
+    """Vorhaben 19: die Politikfelder der 100 Dokumente von ``mini-2014`` aus dem Paket der Hauptperiode.
+
+    Die Dokumente tragen ihre Kennungen aus ``mini/`` (nur das Datum ist verschoben), also stehen
+    ihre Felder im Paket der Hauptperiode, nicht in dem von 2014 bis 2020. Wie bei ``mini/`` gilt die
+    Datei des eingefrorenen Datensatzes vor dem Paket des Profils.
+    """
+    import polars as pl
+
+    from georep.enrich.policy_areas import POLICY_AREAS_SCHEMA_VERSION
+    from georep.io import write_parquet
+
+    ids = [
+        json.loads(line)["id"]
+        for line in (MINI_2014 / "raw" / "papers.jsonl").open()
+        if line.strip()
+    ]
+    package = (
+        REPO / "snapshots" / "duesseldorf-politikfelder" / "processed" / "politikfelder.parquet"
+    )
+    frame = pl.read_parquet(package).filter(pl.col("id").is_in(sorted(ids))).sort("id")
+    write_parquet(
+        frame,
+        MINI_2014 / "raw" / "politikfelder_paket.parquet",
+        schema_version=POLICY_AREAS_SCHEMA_VERSION,
+    )
+    return frame.height
+
+
 def write_period_fixture() -> str:
     """Schreibt ``tests/fixtures/mini-2014/`` deterministisch; liefert eine Zeile mit den Zahlen."""
     precincts = _merge_across_districts(_pieces())
@@ -652,6 +706,7 @@ def write_period_fixture() -> str:
         "\n".join([RESULT_HEADER, *district_rows]) + "\n", encoding="utf-8"
     )
     papers, texts = _write_documents(MINI_2014)
+    write_period_policy_areas()
     return (
         f"{len(precincts)} Stimmbezirke in {len(groups)} Wahlbezirken, "
         f"{len(precinct_rows)} Ergebniszeilen, {papers} Dokumente, {texts} Texte"

@@ -228,6 +228,41 @@ def write_corpus(settings: Any) -> None:
     print(f"  papers.jsonl: {len(records)} Paper; texts.parquet: {stored} Texte")
 
 
+def write_policy_areas(settings: Any) -> int:
+    """Vorhaben 19: erfundene Politikfelder für die sechs Paper, nur in der Form des Pakets.
+
+    Die Paper stammen aus einer älteren OParl-Seite und stehen im Paket der Stadt nicht; die Zeilen
+    sind darum erfunden (jedes Paper mit Datei bekommt der Reihe nach ein Feld, das ohne Datei eine
+    leere Zeile), damit der Schritt ``policy_areas`` in der Kette läuft. Keine Aussage über die Paper.
+    """
+    from georep.enrich.policy_areas import AREAS_SCHEMA, CODES, POLICY_AREAS_SCHEMA_VERSION, SOURCE
+    from georep.io import write_parquet
+
+    rows = []
+    for n, record in enumerate(
+        sorted(PaperStore(MG / "raw" / "papers.jsonl").load().values(), key=lambda r: r.id)
+    ):
+        filled = bool(record.file_name)
+        rows.append(
+            {
+                "id": record.id,
+                "politikfeld": CODES[n % 21] if filled else "",
+                "quelle": SOURCE if filled else "",
+                "modell": settings.policy_areas.model_id if filled else "",
+                "prompt": "",
+                "wahrscheinlichkeit": 0.9 if filled else None,
+                "abgeschnitten": False if filled else None,
+            }
+        )
+    frame = pl.DataFrame(rows, schema=AREAS_SCHEMA)
+    write_parquet(
+        frame,
+        MG / "raw" / "politikfelder_paket.parquet",
+        schema_version=POLICY_AREAS_SCHEMA_VERSION,
+    )
+    return frame.height
+
+
 def main() -> None:
     settings = load_settings(profile="moenchengladbach")
     layout = Layout.from_settings(settings)
@@ -282,6 +317,7 @@ def main() -> None:
     write_streets_json(precincts)
     write_pois_json(precincts, settings)
     write_corpus(settings)
+    write_policy_areas(settings)
 
 
 if __name__ == "__main__":

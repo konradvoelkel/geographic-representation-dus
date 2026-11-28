@@ -30,6 +30,7 @@ from georep.analysis.outcomes import OUTCOMES_SCHEMA_VERSION
 from georep.analysis.votes import VOTES_SCHEMA_VERSION
 from georep.council import COUNCIL_SCHEMA_VERSION
 from georep.enrich.places import PLACES_SCHEMA_VERSION
+from georep.enrich.policy_areas import POLICY_AREAS_SCHEMA_VERSION
 from georep.enrich.procedures import PROCEDURES_SCHEMA_VERSION
 from georep.enrich.summaries import SUMMARIES_SCHEMA_VERSION
 from georep.errors import MissingInputError
@@ -122,6 +123,8 @@ VERSIONS = {
     "places": PLACES_SCHEMA_VERSION,
     # Vorhaben 28: ein Schritt, drei Dateien (``georep.enrich.votes``)
     "votes": VOTES_SCHEMA_VERSION,
+    # Vorhaben 19: ein Schritt, zwei Dateien aus dem Paket (``georep.enrich.policy_areas``)
+    "policy_areas": POLICY_AREAS_SCHEMA_VERSION,
 }
 
 
@@ -271,7 +274,9 @@ def test_only_the_report_topics_and_vocabulary_steps_carry_an_extra(
     """Der Zusatz ist die Ausnahme, nicht die Regel: ein alter Stamp bleibt sonst gültig.
 
     ``vocabulary`` (Vorhaben 17) trägt wie ``topics`` eine Paketdatei, die in keinem Eingabe-Hash
-    steht: Name, Version und Prüfsumme des Lexikons.
+    steht: Name, Version und Prüfsumme des Lexikons. ``policy_areas`` (Vorhaben 19) trägt den
+    Block ``[policy_areas]``, der nicht im Settings-Fingerprint steht (Länge der Eingabe,
+    Prüfsumme der Gewichte).
     """
     layout = _layout(tmp_path)
     found = {s.name: s.extra for s in build_steps(default_settings, layout)}
@@ -288,6 +293,7 @@ def test_only_the_report_topics_and_vocabulary_steps_carry_an_extra(
         "page_bedarf",
         "page_vorgaenge",
         "page_zeit",
+        "policy_areas",
         "report",
         "topics",
         "vocabulary",
@@ -463,9 +469,6 @@ SCHEMA_CONSTANTS_WITHOUT_A_STEP = {
     # Vorhaben 19: die Eingabe des Klassifikators, die ``georep policy-areas export`` schreibt; sie
     # gehört zu einem Befehl, und der Klassifikator läuft außerhalb des Pakets.
     "georep.enrich.policy_areas.INPUT_SCHEMA_VERSION",
-    # ... und die Version des Pakets aus ``georep pack --policy-areas``, bis der Schritt
-    # ``policy_areas`` sie für seine Ausgabe nennt (dann fällt diese Zeile)
-    "georep.enrich.policy_areas.POLICY_AREAS_SCHEMA_VERSION",
 }
 
 
