@@ -1,6 +1,6 @@
 # Vorhaben 19: Politikfelder nach dem Comparative Agendas Project
 
-**Stand 2026-11-28: Urteil bauen mit Weg 3b (§ 5), gemessen; § 10 geschrieben, Stufe 2 und 3 im Bau.** Stufe 2 braucht die
+**Stand 2026-11-28: Stufe 2 und 3 mit Weg 3b auf `main` (`v0.47.0`, Punkt 100), nach § 10.** Stufe 2 braucht die
 GPU unter 15 Minuten (Gewichte lokal unter `messdaten/19-politikfelder/training-3b/`); Paket und Seite
 erst nach Frage 37 (Lizenz der CAP-Codes, `fragen-2026-11.md`). **§ 10 vor dem Bau durch den
 Supervisor.**

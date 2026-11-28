@@ -57,6 +57,9 @@ Stand 2026-11-26, `main` auf `v0.32.0`.
 - **Beschlusslage** (`v0.46.0`, Punkt 99): drei Abschnitte auf `vorgaenge.html` (Beschlusslage je Gremium, Erfolg je
   Fraktion explorativ, Anfragen in der Sitzung beantwortet) und je Antrag Klasse, Gremium und Tag der Entscheidung im
   Dokumentdialog (`beschluesse.json`); nachgeladene Dateien der Hauptperiode zusammen rund 1,14 MB von 1,5 MB.
+- **Politikfelder** (`v0.47.0`, Punkt 100): je Dokument eines der 21 Hauptthemen des CAP aus dem Klassifikator 3b
+  (Vorhersage außerhalb des Pakets, Ergebnis als Paket), auf `themen.html` je Profil; die Codes stehen unter
+  CC BY-NC-SA 4.0, der Rest der Seite bleibt CC0. Geprüft nur in der Hauptperiode, Mönchengladbach explorativ.
 - **`vorgaenge.html`** (`v0.38.0`): Antworten auf Anfragen, Kandidaten, Vorgänge; dazu der Dialog-Haken der
   Hauptseite, der Zeilen je Dokument beim Öffnen nachlädt. Die Hauptseite liegt damit bei 966 522 Byte,
   rund 29 KB über dem Stand vor der Phase (Ziel höchstens 30 KB, `docs/todo.md`, Punkt 36).

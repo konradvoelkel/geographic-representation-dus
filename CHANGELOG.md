@@ -2,6 +2,17 @@
 
 Ein Eintrag je Version, die Änderungen aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
+## 0.47.0 (2026-11-28), Politikfelder
+
+- **Unterseite `themen.html`** (Vorhaben 19, Stufe 2 und 3, `docs/decisions.md`, Punkt 100): je Ratsdokument
+  eines der 21 Hauptthemen des Comparative Agendas Project, je Gremiumsart, Fraktion und Wahlbezirk, mit
+  einem Vergleich zum Bundestag. Das Feld kommt aus einem Klassifikator (XLM-RoBERTa, Weg 3b), der außerhalb
+  des Pakets auf der GPU vorhersagt; im Repo liegt nur das Ergebnis (`snapshots/<profil>-politikfelder/`,
+  `georep policy-areas export`, `georep pack --policy-areas`).
+- **Lizenz**: die Politikfelder und alles, was aus ihnen abgeleitet ist, stehen unter CC BY-NC-SA 4.0 (Frage
+  37); der Fuß von `details.html` und der Startseite nennt die Ausnahme. Neue Downloads `politikfelder` (nur
+  Parquet) und `politikfelder_anteile`.
+
 ## 0.46.0 (2026-11-28), Beschlusslage
 
 - **Beschlusslage auf `vorgaenge.html` und im Dialog** (Vorhaben 26, Stufe 3, `docs/decisions.md`, Punkt 99):

@@ -6154,7 +6154,7 @@ Spaltendoku nennt das. Ein Wortschatz für Mönchengladbach ist eine eigene Mess
 98 und das Messdokument von 28 nennen für H28.2 noch 41 von 389 und „Gremium unbekannt“ 192 und 126;
 ob sie einen Nachtrag bekommen, entscheidet der Supervisor.
 
-## NN. Politikfelder nach dem CAP: der Klassifikator außerhalb des Pakets, sein Ergebnis als Paket, `themen.html` unter CC BY-NC-SA 4.0 (Vorhaben 19, Stufe 2 und 3, 2026-11-28)
+## 100. Politikfelder nach dem CAP: der Klassifikator außerhalb des Pakets, sein Ergebnis als Paket, `themen.html` unter CC BY-NC-SA 4.0 (Vorhaben 19, Stufe 2 und 3, 2026-11-28)
 
 Stufe 2 mit Weg 3b und Stufe 3 in einem Bau nach `docs/plans/19-politikfelder.md`, § 6 und § 7 mit
 § 10 (Supervisor der Phase „Zeigen“, 2026-11-28), Fragen 37 (Lizenz) und 46 (andere Perioden).
