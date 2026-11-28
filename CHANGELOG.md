@@ -2,6 +2,15 @@
 
 Ein Eintrag je Version, die Änderungen aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
+## 0.43.0 (2026-11-28), Ähnliche Dokumente
+
+- **Ähnliche Dokumente im Dokumentdialog** (Vorhaben 18, Stufe 3, `docs/decisions.md`, Punkt 96): je Dokument
+  die fünf mit der ähnlichsten Einbettung, als Liste zum Aufklappen, mit Modell, Lizenz (Apache-2.0),
+  Präzision@5 und Prüfsatz; nur in der Hauptperiode, wo die Nachbarn gemessen sind.
+- Der Dialog-Haken schreibt seine Dateien im Format 3 und lässt Haken ohne Zeilen weg; der Inhalt von
+  `vorgaenge.json` ist unverändert.
+- Neuer Download `aehnliche_dokumente` (nur Parquet).
+
 ## 0.42.0 (2026-11-27), Bedarf
 
 - **Unterseite `bedarf.html`** (Vorhaben 22, Stufe 3, `docs/decisions.md`, Punkt 95): amtliche Zahlen zum

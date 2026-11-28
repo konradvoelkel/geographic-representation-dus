@@ -5510,7 +5510,7 @@ verlinkt ihren Abschnitt, und die Seite verweist auf `spalten.html#wahlbezirke_b
   Karten, Streudiagramme und der Kasten die Farben des Rahmens. Bei 1280 brach der Name des
   Wahlbezirks in drei bis vier Zeilen; eine Mindestbreite der Spalte hält ihn bei zwei.
 
-## NN. Ähnliche Dokumente im Dokumentdialog: die fünf nächsten als Liste zum Aufklappen, Format 3 des Hakens, nur in der Hauptperiode (Vorhaben 18, Stufe 3, 2026-11-28)
+## 96. Ähnliche Dokumente im Dokumentdialog: die fünf nächsten als Liste zum Aufklappen, Format 3 des Hakens, nur in der Hauptperiode (Vorhaben 18, Stufe 3, 2026-11-28)
 
 Stufe 3 von Vorhaben 18 nach `docs/plans/18-einbettungen.md` (§ 7, § 10) und
 `docs/plan-zeigen-2026-11.md` (§ 4, V2 und V5; § 6). Kein Abschnitt und keine Unterseite: eine Zeile
