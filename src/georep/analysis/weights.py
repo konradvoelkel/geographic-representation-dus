@@ -3,7 +3,7 @@
 Die Trefferquote der Arbeit ist binär: ein Dokument zählt für einen Wahlbezirk, sobald ein Begriff
 seines Wörterbuchs darin vorkommt. Hier bekommt jedes Paar (Wahlbezirk, Dokument) ein Gewicht
 
-    g(d, p) = max über die getroffenen Begriffe t von w_begriff(t) · w_art(p) · w_thema(p),
+    g(d, p) = max über die getroffenen Begriffe t von w_begriff(t) · w_stelle(p, t) · w_art(p) · w_thema(p),
 
 und die gewichteten Treffer eines Wahlbezirks sind die Summe der Gewichte seiner Dokumente. Jeder
 Faktor liegt in [0, 1], also ist ``g ≤ 1``: ein Dokument zählt je Bezirk höchstens einmal, wie die
@@ -14,13 +14,19 @@ Vereinigung in ``analysis.hits``. Bei Einheitsgewichten ist ``g = 1`` und die Su
 Alles hier ist eine reine Funktion von Frames auf Frames: das Modul kennt keine Dateien und keine
 Settings-Objekte, Regeln und Zahlen kommen als Argumente (``TypeRules``), damit dieselbe Rechnung
 von außen mit jedem Frame läuft.
+
+Vorhaben 16 (``docs/plans/16-ortsbezug.md``, § 6) bringt den Faktor ``w_stelle``, der an Dokument
+**und** Begriff hängt und darum vor dem Maximum mit dem Begriffsgewicht multipliziert wird: die
+Gewichtung ``ortsbezug`` (1, wo der Begriff nach Nebenregel C von seinem Ort handelt, sonst 0) und
+``stelle`` (ein Gewicht je vorderster Stelle des Begriffs, explorativ). Ein Paar ohne Stelle (ein
+Dokument ohne Rohtext) zählt in beiden 1.
 """
 
 from __future__ import annotations
 
 import math
 import sys
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 
 import deal
@@ -48,7 +54,12 @@ UNIT = "einheit"
 BY_DISTRICTS = "bezirke"
 BY_IDF = "idf"
 COMBINED = "kombiniert"
+# Vorhaben 16: die Stelle je Treffer (``enrich.places``); nur mit Stellen in der Tabelle
+ORTSBEZUG = "ortsbezug"
+STELLE = "stelle"
 TOPIC_PREFIX = "thema_"
+POSITION = "stelle"  # beste Stelle je (Dokument, Begriff), wie ``search.positions.POSITION``
+ABOUT = "handelt_von"  # Nebenregel C je (Dokument, Begriff), wie ``search.positions.ABOUT``
 
 
 def topic_variant(index: int) -> str:
@@ -262,6 +273,7 @@ def _one_row_per_pair(
     term_weights: pl.DataFrame | None = None,
     type_weights: pl.DataFrame | None = None,
     topic_weights: pl.DataFrame | None = None,
+    position_weights: pl.DataFrame | None = None,
     result: pl.DataFrame | None = None,
 ) -> bool:
     assert result is not None
@@ -269,18 +281,21 @@ def _one_row_per_pair(
 
 
 @deal.pre(
-    lambda pairs, term_weights=None, type_weights=None, topic_weights=None: (
+    lambda pairs, term_weights=None, type_weights=None, topic_weights=None, position_weights=None: (
         has_columns(pairs, DISTRICT, DOC, TERM)
         and (term_weights is None or has_columns(term_weights, TERM, WEIGHT))
         and (type_weights is None or has_columns(type_weights, DOC, WEIGHT))
         and (topic_weights is None or has_columns(topic_weights, DOC, WEIGHT))
+        and (position_weights is None or has_columns(position_weights, DOC, TERM, WEIGHT))
     )
 )
 @deal.pre(
-    lambda pairs, term_weights=None, type_weights=None, topic_weights=None: all(
-        in_unit_interval(frame, WEIGHT)
-        for frame in (term_weights, type_weights, topic_weights)
-        if frame is not None
+    lambda pairs, term_weights=None, type_weights=None, topic_weights=None, position_weights=None: (
+        all(
+            in_unit_interval(frame, WEIGHT)
+            for frame in (term_weights, type_weights, topic_weights, position_weights)
+            if frame is not None
+        )
     ),
     message="jeder Faktor liegt in [0, 1]",
 )
@@ -292,13 +307,15 @@ def document_weights(
     term_weights: pl.DataFrame | None = None,
     type_weights: pl.DataFrame | None = None,
     topic_weights: pl.DataFrame | None = None,
+    position_weights: pl.DataFrame | None = None,
 ) -> pl.DataFrame:
-    """Gewicht je Paar: Maximum über die Begriffe, mal Dokumentart, mal Thema.
+    """Gewicht je Paar: Maximum über die Begriffe (mal Stelle), mal Dokumentart, mal Thema.
 
     Ein fehlender Faktor gilt als 1, auch für einen Begriff oder ein Dokument, das im Faktorframe
     nicht vorkommt. Das Maximum steht vor den Faktoren je Dokument: die sind in der Gruppe
     konstant und nicht negativ, darum ist ``max(w_t · c) = max(w_t) · c``, und ein ``sum`` an
-    dieser Stelle würde die Schranke 1 sofort brechen.
+    dieser Stelle würde die Schranke 1 sofort brechen. Der Faktor nach Stelle (Vorhaben 16) hängt
+    an (Dokument, Begriff) und steht darum **vor** dem Maximum, bei ``w_t``.
     """
     per_term = (
         pairs.select(DISTRICT, DOC, TERM).with_columns(pl.lit(1.0, dtype=pl.Float64).alias(WEIGHT))
@@ -307,6 +324,16 @@ def document_weights(
         .join(term_weights.select(TERM, WEIGHT), on=TERM, how="left")
         .with_columns(pl.col(WEIGHT).fill_null(1.0))
     )
+    if position_weights is not None:
+        per_term = (
+            per_term.join(
+                position_weights.select(DOC, TERM, pl.col(WEIGHT).alias("_stelle")),
+                on=[DOC, TERM],
+                how="left",
+            )
+            .with_columns((pl.col(WEIGHT) * pl.col("_stelle").fill_null(1.0)).alias(WEIGHT))
+            .drop("_stelle")
+        )
     weights = per_term.group_by(DISTRICT, DOC).agg(pl.col(WEIGHT).max())
     for factor in (type_weights, topic_weights):
         if factor is None:
@@ -417,15 +444,23 @@ def _unit_and_topics_reproduce_the_count(
     type_rules: Sequence[TypeRules] = (),
     combined: Sequence[str] = (),
     topic_shares: pl.DataFrame | None = None,
+    positions: pl.DataFrame | None = None,
+    position_weights: Mapping[str, float] | None = None,
     result: pl.DataFrame | None = None,
 ) -> bool:
-    """Einheitsgewichte zählen wie die Arbeit, und die Themen zerlegen genau diese Zählung."""
+    """Einheitsgewichte zählen wie die Arbeit, die Themen zerlegen genau diese Zählung, und die
+    Gewichtungen nach Stelle (Vorhaben 16) zählen je Bezirk nie mehr als sie."""
     assert result is not None
     unit = dict(result.filter(pl.col(VARIANT) == UNIT).select(DISTRICT, WEIGHTED_HITS).iter_rows())
     counted = dict(hits_by_district(dictionary, index).select(DISTRICT, HITS).iter_rows())
     for district, hits in unit.items():
         if hits != float(counted.get(district, 0)):
             return False
+    by_position = result.filter(pl.col(VARIANT).is_in([ORTSBEZUG, STELLE]))
+    if any(
+        row[WEIGHTED_HITS] > unit[row[DISTRICT]] + 1e-9 for row in by_position.iter_rows(named=True)
+    ):
+        return False
     if topic_shares is None:
         return True
     per_topic = (
@@ -440,16 +475,29 @@ def _unit_and_topics_reproduce_the_count(
 
 
 @deal.pre(
-    lambda dictionary, index, paper_types, voters, eligible_column, n_documents, type_rules=(), combined=(), topic_shares=None: (
+    lambda dictionary, index, paper_types, voters, eligible_column, n_documents, type_rules=(), combined=(), topic_shares=None, positions=None, position_weights=None: (
         has_columns(paper_types, DOC, PAPER_TYPE)
         and (topic_shares is None or has_columns(topic_shares, DOC, SHARES))
+        and (positions is None or has_columns(positions, DOC, TERM, POSITION, ABOUT))
     )
 )
 @deal.pre(
-    lambda dictionary, index, paper_types, voters, eligible_column, n_documents, type_rules=(), combined=(), topic_shares=None: (
+    lambda dictionary, index, paper_types, voters, eligible_column, n_documents, type_rules=(), combined=(), topic_shares=None, positions=None, position_weights=None: (
         set(combined) <= {BY_DISTRICTS, BY_IDF, *(rule.name for rule in type_rules)}
     ),
     message="kombiniert multipliziert nur bekannte Faktoren",
+)
+@deal.pre(
+    lambda dictionary, index, paper_types, voters, eligible_column, n_documents, type_rules=(), combined=(), topic_shares=None, positions=None, position_weights=None: (
+        positions is None
+        or positions.is_empty()
+        or (
+            position_weights is not None
+            and set(positions.get_column(POSITION).unique().to_list()) <= set(position_weights)
+            and all(0.0 <= w <= 1.0 for w in position_weights.values())
+        )
+    ),
+    message="jede Stelle hat ein Gewicht in [0, 1]",
 )
 @deal.post(lambda result: result.columns == [DISTRICT, VARIANT, WEIGHTED_HITS, WEIGHTED_RATE])
 @deal.post(lambda result: _sorted_by_variant_and_district(result))
@@ -473,11 +521,18 @@ def variants(
     type_rules: Sequence[TypeRules] = (),
     combined: Sequence[str] = (),
     topic_shares: pl.DataFrame | None = None,
+    positions: pl.DataFrame | None = None,
+    position_weights: Mapping[str, float] | None = None,
 ) -> pl.DataFrame:
     """Alle Gewichtungsvarianten als lange Tabelle: eine Zeile je Wahlbezirk und Variante.
 
     Varianten sind Zeilen, nicht Spalten: eine neue Variante kommt ohne Schemaänderung hinzu, und
     ``wahlbezirke_auswertung.parquet`` bleibt byteidentisch (Golden Master der Arbeit).
+
+    ``positions`` (Vorhaben 16) trägt je (Dokument, Begriff) mit Rohtext die beste Stelle und
+    Nebenregel C; ``position_weights`` das Gewicht je Stelle. Nur wenn es Stellen gibt, kommen
+    ``ortsbezug`` und ``stelle`` hinter ``kombiniert``: ohne Rohtext wären beide Kopien von
+    ``einheit``.
     """
     pairs = document_pairs(dictionary, index)
     terms = term_weights(dictionary, index, n_documents)
@@ -495,9 +550,10 @@ def variants(
         term: pl.DataFrame | None = None,
         paper_type: pl.DataFrame | None = None,
         topic: pl.DataFrame | None = None,
+        position: pl.DataFrame | None = None,
     ) -> None:
         hits = weighted_hits(
-            document_weights(pairs, term, paper_type, topic), voters, eligible_column
+            document_weights(pairs, term, paper_type, topic, position), voters, eligible_column
         )
         rows.append(hits.with_columns(pl.lit(name, dtype=pl.String).alias(VARIANT)))
 
@@ -511,6 +567,21 @@ def variants(
             COMBINED,
             term=_product([term_factors[f] for f in combined if f in term_factors], TERM),
             paper_type=_product([type_factors[f] for f in combined if f in type_factors], DOC),
+        )
+    if positions is not None and not positions.is_empty():
+        add(
+            ORTSBEZUG,
+            position=positions.select(DOC, TERM, pl.col(ABOUT).cast(pl.Float64).alias(WEIGHT)),
+        )
+        add(
+            STELLE,
+            position=positions.select(
+                DOC,
+                TERM,
+                pl.col(POSITION)
+                .replace_strict(dict(position_weights or {}), return_dtype=pl.Float64)
+                .alias(WEIGHT),
+            ),
         )
     if topic_shares is not None:
         for topic in range(topic_count(topic_shares)):

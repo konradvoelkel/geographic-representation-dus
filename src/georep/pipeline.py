@@ -133,6 +133,7 @@ from georep.report.build import (
 from georep.report.dialog import contributed_dialog_files
 from georep.report.geometry import district_shapes
 from georep.report.pages import Page, build_page, page_inputs, pages_for, sections_for
+from georep.report.places import places_check_files
 from georep.report.tables import contributed_check_files, contributed_table_files
 
 # Punkt 45: nur die zwei Zahlen, nicht die Modelle -- ``analysis.topics`` und
@@ -1027,6 +1028,7 @@ def build_steps(
     # --- Option 06: Gewichtete Trefferquoten
     def weights() -> str:
         from georep.analysis.weights import TypeRules, term_weights, variants
+        from georep.enrich.places import position_table  # Vorhaben 16, Punkt 74
 
         with_text = int(
             pl.scan_parquet(layout.corpus).select((pl.col("text") != "").sum()).collect().item()
@@ -1050,6 +1052,9 @@ def build_steps(
             ],
             settings.weights.combined,
             pl.read_parquet(layout.topic_shares) if settings.topics.k > 0 else None,
+            # Vorhaben 16: ortsbezug und stelle, nur wo ``places`` Stellen gefunden hat
+            positions=position_table(layout) if settings.places.enabled else None,
+            position_weights=settings.places.position_weights,
         )
         write_parquet(frame, layout.weighted, schema_version=1)
         write_parquet(
@@ -1163,6 +1168,11 @@ def build_steps(
 
     contributed_http = http if http is not None else DeferredTransport(transport)
     contributed_early = contributed_early_steps(settings, layout, contributed_http)
+    # Vorhaben 16: ``weights`` liest die Stellen des frühen Schritts ``places`` als optionale
+    # Eingabe (Punkt 74); ohne Rohtext ist die Datei leer, und die beiden Varianten fehlen
+    from georep.enrich.places import places_files
+
+    place_spans = (places_files(layout).spans,) if settings.places.enabled else ()
     contributed = contributed_steps(settings, layout, contributed_http)
 
     attached = sections_for(settings)  # Vorarbeit V1: Abschnitte fremder Beiträge je Seite
@@ -1507,6 +1517,7 @@ def build_steps(
             + ((layout.topic_shares,) if with_topics else ()),
             (layout.weighted, layout.term_weights),
             weights,
+            optional=place_spans,
         ),
         # --- Option 03
         *(
@@ -1638,6 +1649,9 @@ def build_steps(
             # Vorhaben 11 und 12, Stufe 3: guete.json und stichprobe.json der Prüfsätze unter
             # den Downloads; sie liegen im Repo wie die Eingaben von page_akteure
             + contributed_check_files(settings)
+            # Vorhaben 16, kleine Stufe 3: der Satz in „Methode und Grenzen" kommt aus beiden
+            # guete.json; wie die Prüfsätze oben baut eine neue Kodierung die Seite neu
+            + places_check_files(settings)
             # Vorarbeit V2: was die Dialog-Haken lesen; ``report`` schreibt ihre ``data/<name>.json``.
             # Eine Datei, die schon als Tabelle oder Prüfsatz dasteht (14: die Kanten), nur einmal.
             + tuple(

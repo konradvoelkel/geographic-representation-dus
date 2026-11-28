@@ -312,28 +312,46 @@ TABLES: list[PublishedTable] = [
 # Seite ohne den Abschnitt bauen statt mit einem Schemafehler abzubrechen (der Schritt ``report``
 # nennt beide Dateien als Eingabe, meldet also vorher, was fehlt). Die Anteilsmatrix selbst bleibt
 # ein Zwischenstand unter ``interim/`` und wird nicht veröffentlicht.
+_WEIGHTED_COLUMNS: dict[str, tuple[str, str]] = {
+    "wahlkreis_id": DISTRICT_COLUMN,
+    "variante": (
+        "Name der Gewichtung: einheit (wie die Arbeit), bezirke, idf, ein Regelsatz der "
+        "Dokumentart, kombiniert oder thema_NN",
+        "",
+    ),
+    "anzahl_treffer_gewichtet": (
+        "Summe der Dokumentgewichte; bei der Variante einheit gleich anzahl_treffer",
+        "Dokumente",
+    ),
+    "trefferquote_gewichtet": (
+        "anzahl_treffer_gewichtet geteilt durch Wahlberechtigte_insgesamt",
+        "Dokumente je Person",
+    ),
+}
+
+
+def weighted_columns(settings: Settings) -> dict[str, tuple[str, str]]:
+    """Die Spaltendoku von ``wahlbezirke_gewichtet``; mit ``[places]`` nennt sie die beiden
+    Gewichtungen nach Stelle (Vorhaben 16), ohne bleibt sie, wie sie war (Mönchengladbach)."""
+    if not settings.places.enabled:
+        return dict(_WEIGHTED_COLUMNS)
+    names, unit = _WEIGHTED_COLUMNS["variante"]
+    with_places = names.replace(
+        "kombiniert oder thema_NN",
+        "kombiniert, ortsbezug und stelle (nach der Stelle je Treffer, nur wo es Rohtext gibt) "
+        "oder thema_NN",
+    )
+    return {**_WEIGHTED_COLUMNS, "variante": (with_places, unit)}
+
+
 TABLES.append(
     PublishedTable(
         "wahlbezirke_gewichtet",
         lambda layout: layout.weighted,
         "Gewichtete Treffer und Quoten je Wahlbezirk, eine Zeile je Gewichtungsvariante",
-        {
-            "wahlkreis_id": DISTRICT_COLUMN,
-            "variante": (
-                "Name der Gewichtung: einheit (wie die Arbeit), bezirke, idf, ein Regelsatz der "
-                "Dokumentart, kombiniert oder thema_NN",
-                "",
-            ),
-            "anzahl_treffer_gewichtet": (
-                "Summe der Dokumentgewichte; bei der Variante einheit gleich anzahl_treffer",
-                "Dokumente",
-            ),
-            "trefferquote_gewichtet": (
-                "anzahl_treffer_gewichtet geteilt durch Wahlberechtigte_insgesamt",
-                "Dokumente je Person",
-            ),
-        },
+        _WEIGHTED_COLUMNS,
         optional=True,
+        describe=weighted_columns,
     )
 )
 TABLES.append(

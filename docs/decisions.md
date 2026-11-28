@@ -5644,3 +5644,121 @@ im Download); Vektoren oder eine freie Suche auf der Seite (Fragen 9.1, 9.3, 9.7
   ähnliche Dokumente, ohne Meldung in der Konsole und ohne Abruf von `aehnlich.json`. Die Zeilen
   „Vorgang" sind in A (Format 2) und B (Format 3) für denselben Begriff gleich, in der Hauptperiode
   (acht) und in 2014 bis 2020 (vier).
+
+## NN. Ortsbezug: die Stelle aus den Abschnitten von 11, die Hausnummer entscheidet die Grenzstraße und erzeugt keinen Treffer, zwei Gewichtungen statt einer neuen Zählung (Vorhaben 16, Stufe 2 und kleine Stufe 3, 2026-11-28)
+
+Vorhaben 16 nach `docs/plans/16-ortsbezug.md`, § 6 und § 7 mit § 10 (Supervisor, 2026-11-28), in
+einem Bau (`docs/plan-zeigen-2026-11.md`, § 5). Gebaut auf `feat/16-ortsbezug` ab `main` `6accc37`.
+Die Nummer bekommt der Eintrag beim Merge.
+
+**Die Stelle kommt aus den Abschnitten von 11, nicht aus eigenen Regeln.** Das Messskript baute den
+Textstore nach (`store_view`) und schloss zwei Lücken des Regelwerks von 11 selbst (Rumpf ohne
+Überschrift, Text hinter der Grußformel). Beides gibt es auf `main`: `flatten_with_offsets` (F1,
+Punkt 74) legt jedes Vorkommen aus dem Textstore auf den Rohtext, und `sections` (Punkt 81) trägt den
+Rumpf als Abschnitt. `search.positions` liest den Abschnitt eines Vorkommens mit `spans.section_of`
+und bildet ihn auf fünf grobe Stellen ab (Titel, Betreff, Kern, Begleittext, Rest; der Titel zählt
+nur für einen Begriff, der auch im Text steht, Frage 9.10). Ein Prototyp mit diesen Bausteinen ergab
+vor dem ersten Commit die Zahlen der Messung, und der Schritt ergibt sie jetzt auf der Hauptperiode
+aus den Paketen: 66 004 Erwähnungen in genau der Verteilung von § 3.1 (Sachdarstellung 25 431,
+Beschlussvorschlag 9 977, Betreff 8 293, Rumpf 7 512 …), 30 695 Paare (Dokument, Begriff) mit Stelle,
+genau die des Index für die Dokumente mit Rohtext, keines zusätzlich (die übrigen 164 aus dem einen
+Dokument ohne Rohtext), 29 330 Paare (Dokument, Wahlbezirk), davon 29 289 mit Stelle, beste Stelle
+11 903 / 194 / 5 060 / 12 050 / 82, Nebenregel C 21 951. An den 300 kodierten Paaren beider Runden
+sagt `handelt_von` Paar für Paar dasselbe wie das Messskript (`validierung/16-ortsbezug/verfahren.csv`,
+nur IDs und Wahrheitswerte; `tests/golden/test_places_numbers.py`).
+
+**Nebenregel C unverändert, mit allen Konstanten im Profil.** `list_max_line = 60`,
+`list_max_lead = 12` und das Muster der Hausnummer stehen in `[places]` und sind die des Messskripts;
+ein Test liest sie aus dem Skript und vergleicht. Das Muster nimmt einen einzelnen Buchstaben hinter
+der Zahl als Zusatz, auch die Einheit „m“ („150 m entfernt“ wird 150m); „km“, „qm“ und Wörter
+schließt es aus. Das ist so gemessen und bestätigt, ein Test hält es fest, und eine Änderung wäre ein
+neues Verfahren mit neuer Stichprobe (§ 6) -- ein Kandidat für eine spätere Fassung.
+
+**Die Hausnummer entscheidet die Grenzstraße und erzeugt keinen Treffer.** Hinter einem
+Straßenbegriff schlägt `places` die Nummer im Adresspaket nach (genau, Hauptnummer bei unbekanntem
+Zusatz, wie § 3.4): 10 944 Adressen, 10 097 verortet (92,3 %, Untergrenze im Test 0,90). Das Ergebnis
+ist eine Spalte je Paar (`wahlkreis_adresse`: eine verortete Adresse eines Begriffs des Bezirks liegt
+im Bezirk), keine Variante und kein Standard (Frage 9.8, § 10, Punkt 5). Welche Adresse ein Dokument
+nennt, steht nur lokal (`adressen_wahlbezirke`); veröffentlicht wird nur das Paar (Frage 9.7).
+
+**Eine Quelle für GebRef, Stimmbezirke über `point_shares`.** Das Adresspaket entsteht mit
+`georep pack --addresses` aus demselben Archiv wie die Straßenpunkte der Startseite
+(`cache_root/startkarte/`, Punkt 93), ohne zweiten Abruf; der Stimmbezirk jeder Hausnummer kommt aus
+`crosswalk.point_shares` mit Band 0 (Punkt 80), ein Punkt auf einer Grenze stünde mit beiden da (es
+gibt keinen). `snapshots/duesseldorf-adressen/`: 84 193 Hausnummern an 2 652 Straßen, 104 329 Bytes,
+keine Koordinate; alle Pakete zusammen 168,74 MiB. Anders als die übrigen `pack`-Befehle kopiert
+dieser keine Ausgabe eines Schritts: es gibt keinen Schritt, der das Paket schreibt, und ein
+Netzschritt für dieselbe Datei wäre ein zweiter Leser des Archivs mit eigenem Stamp. `bootstrap`
+legt es nach `external/adressen/`; die Mini-Fixture trägt ihren Auszug (5 920 Zeilen) wie die
+Bedarfsdaten.
+
+**Zwei Gewichtungen statt einer neuen Zählung.** `document_weights` bekommt den Faktor nach Stelle je
+(Dokument, Begriff), vor dem Maximum mit dem Begriffsgewicht multipliziert; ein Paar ohne Stelle zählt
+1. `ortsbezug` ist Nebenregel C (1 oder 0), `stelle` das Gewicht der vordersten Stelle (1 / 1 / 1 /
+0,5 / 0,25, explorativ). Beide stehen nur in der Tabelle, wo es Stellen gibt: ohne Rohtext (auf Pages
+jedes Profil außer der Hauptperiode) wären sie Kopien von `einheit`, und eine Zeile, die so heißt und
+nichts trennt, läse man als Befund. Mit allen Gewichten 1 sind beide `einheit` exakt (hypothesis);
+der Vertrag von `variants` sagt dazu, dass beide je Bezirk nie mehr zählen. Hauptperiode: `ortsbezug`
+21 992 (21 951 nach C und die 41 ohne Stelle), `stelle` 23 243,5 mit Steigung 105,87 wie § 3.3.
+
+**Kleine Stufe 3.** Zwei Zeilen in „Was ändert die Gewichtung?“: `ortsbezug` „bestätigt an 100
+Paaren (F1 0,83), trennt aber nicht besser als alle Treffer (F1 0,88)“, `stelle` mit den Gewichten
+und „explorativ“. Beide F1 trägt `guete.json` nicht; sie stehen als Konstanten in `report.places`,
+und ein Test rechnet sie aus `validierung/16-ortsbezug-2-f4/` und `verfahren.csv` nach (0,828 und
+0,878, wie `f1_weighted` im Messskript). Ein Satz in „Methode und Grenzen“ mit dem Befund beider
+Kodierungen, alle Zahlen aus ihren `guete.json` (78,3 % und 82,1 % handeln von einem Ort im Bezirk,
+10 von 100 und 5 von 200 Fehltreffer, α 0,974 und 0,917, der Prüfsatz der Bestätigung mit der
+Schlichtung), 505 Byte, nur gemessen und mit Stellen. Der Download `dokumente_wahlbezirke_stelle`
+nur als Parquet (138 KB; als CSV rund 3 MB), nur gemessen und mit Rohtext wie bei 11 und 12. Kein
+Radio im Kartenumschalter, keine `orte.html` (Frage 9.16). Zwei Sätze ändern sich mit, wo die Zeilen
+stehen: die Formel über der Tabelle nennt den Faktor der Stelle, und der Satz zum Rohtext sagt nicht
+mehr „keine Zahl dieser Seite rechnet mit ihm“, sondern nennt die beiden Gewichtungen. Die
+Spaltendoku von `wahlbezirke_gewichtet` nennt beide Namen nur mit `[places]`.
+
+**Profile und Laufzeit.** An in den drei Düsseldorfer Profilen (die Perioden erben), aus in
+Mönchengladbach (§ 10, Punkt 7). `places` brauchte im Worktree auf der Hauptperiode 9,1 s (nice 10,
+`POLARS_MAX_THREADS=4`).
+
+**Verworfen.** Ein eigener Nachbau des Textstores (`store_view`, § 10, Punkt 1); eigene Regeln für
+Rumpf und Schluss (11 trägt sie, Punkt 81); `start`, `end` als UInt32 und die Folge `id, start`
+(F3); `value` als Begriff (F3: wörtlich, der Begriff steht in `norm`); eine eigene Punkt-in-Fläche
+für die Adressen; die Adressen als Treffer („Hausnummer vor Straßenname“ als Standard, Frage 9.8);
+Flächen (Stadtteile, Bebauungspläne; § 3.5) -- dafür gibt es keinen Schalter, solange nichts gebaut
+ist; die ursprüngliche Regel ohne Listen und Adressen (F1 0,772 und 0,755); ein Prüfsatz unter dem
+Download zusätzlich zum Satz in „Methode und Grenzen“.
+
+**Geprüft, dass keine bestehende Zahl sich ändert.** A/B-Bau aller fünf Profile aus den Datenpaketen
+wie in Punkt 66 (`ab/ab_bau.sh`, `ab/ab_vergleich.py`, `POLARS_MAX_THREADS=4`,
+`OMP_NUM_THREADS=2`), A aus `main` `6accc37` (`ab/16o-a`, 5:46 Wanduhr), B aus `887f6b9`
+(`ab/16o-b`, 5:50). Unter `site/` 340 Dateien in A, 341 in B, 12 Abweichungen, alle aus diesem Bau:
+
+- neu `data/dokumente_wahlbezirke_stelle.parquet` (Hauptperiode, 29 330 Zeilen, 138,0 KB);
+- `data/wahlbezirke_gewichtet.parquet` und `.csv` der Hauptperiode: 1 066 → 1 148 Zeilen, die 82 der
+  beiden Gewichtungen kommen dazu, die 1 066 bestehenden sind gleich;
+- `details.html` der Hauptperiode (923 125 → 926 425 Byte): die zwei Zeilen und der Satz, die Formel
+  über der Tabelle, der Satz zum Rohtext, die Downloadzeile; dazu, weil sie über die Zeilen zählen,
+  „alle 26 Zeilen“ → 28, „Von den 26 Gewichtungen … ohne die Wahlbezirke 1 und 10 in 8“ → „28 … in 9“
+  (`stelle` hat ohne 1 und 10 p = 0,028) und dasselbe „2 of 26 weightings“ → „2 of 28“ in der
+  englischen Kurzfassung oben; die Zahl der Downloadzeilen (80 → 81), die Zeilen und Größen von
+  `wahlbezirke_gewichtet` und die Größe von `schema.json`;
+- `spalten.html` und `data/schema.json` der drei Düsseldorfer Seiten (die neue Tabelle in der
+  Hauptperiode, überall die Doku von `variante`); `details.html` der beiden Perioden nur in der Größe
+  von `schema.json` (39,3 → 39,4 KB und 36,6 → 36,7 KB).
+
+Gleich sind die Startseiten, Mönchengladbach, `vergleich.html`, jede andere Zahl und jedes andere
+Parquet. Über die Datenwurzeln 1 219 und 1 239 Dateien, 186 Abweichungen: neu je Düsseldorfer Profil
+die drei Dateien von `places` mit Stamp und die Kopie des Adresspakets, anders sonst nur
+`processed/wahlbezirke_gewichtet.parquet` der Hauptperiode (neue Zeilen), die Seiten unter den
+Profilordnern und 137 Stamps: 106 tragen nur den neuen Fingerprint (der Block `[places]` steht in
+jedem Profil) und die Schreibzeit, 20 dazu den Zusatz der Unterseiten, 3 (`weights`) die optionale
+Eingabe `treffer_stellen`, die Startseiten der Düsseldorfer Profile die neuen Eingaben von `report`
+(Download und beide `guete.json`), und 4 nur die Wurzel der absoluten Pfade. In den Perioden findet
+`places` auf Pages keinen Rohtext (0 Erwähnungen, 0,6 und 0,8 s), und `wahlbezirke_gewichtet` bleibt
+dort gleich. `places` brauchte im Bau 10,1 s (Hauptperiode) und 8,9 s (Vergleich); der Pages-Lauf
+wird damit rund 20 s länger.
+
+Bildschirmfotos mit headless Chrome über `http://127.0.0.1:8780` (eine Kopie der Seite von B, die
+Abschnitte „Was ändert die Gewichtung?“ und „Methode und Grenzen“ einzeln, ohne Skripte, damit die
+ganze Tabelle dasteht) bei 1280 und 390 Pixeln, hell und dunkel: die Zeile `ortsbezug` bricht ihren
+Halbsatz bei 1280 in sechs Zeilen unter der Beschriftung, die Zahlen stehen in der ersten; dunkel
+tragen beide Zeilen die Farben des Rahmens.
