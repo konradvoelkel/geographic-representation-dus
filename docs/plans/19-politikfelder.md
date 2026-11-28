@@ -1,6 +1,6 @@
 # Vorhaben 19: Politikfelder nach dem Comparative Agendas Project
 
-**Stand 2026-11-26: Urteil bauen mit Weg 3b (§ 5), gemessen, nicht gebaut.** Stufe 2 braucht die
+**Stand 2026-11-28: Urteil bauen mit Weg 3b (§ 5), gemessen; § 10 geschrieben, Stufe 2 und 3 im Bau.** Stufe 2 braucht die
 GPU unter 15 Minuten (Gewichte lokal unter `messdaten/19-politikfelder/training-3b/`); Paket und Seite
 erst nach Frage 37 (Lizenz der CAP-Codes, `fragen-2026-11.md`). **§ 10 vor dem Bau durch den
 Supervisor.**
@@ -775,4 +775,43 @@ Vorhabens, hinter der Menschen stehen.
 
 ## 10. Änderungen durch die Synergie (füllt der Supervisor)
 
-—
+Geschrieben am 2026-11-28 vom Supervisor der Phase „Zeigen“ vor dem Start der Stufe 2, nach Konrads
+„Yes, start 19“ (2026-11-28). Die Synergie ([00-synergien-2026-11.md](00-synergien-2026-11.md)) hat für
+19 keinen Abschnitt in § 4; was seither feststeht und auf `main` liegt, geht dem Bauplan (§ 6, § 7) vor.
+
+1. **Weg 3b, wie in § 6.** Die Vorhersage läuft außerhalb des Pakets im Venv
+   `/media/konrad/xtraspace/venvs/cap-train` mit den Gewichten `training-3b/beste` (SHA-256 `80ca2a82…`,
+   vor dem Lauf nachrechnen), **nur unter `flock /media/konrad/xtraspace/georep/gpu-queue/gpu.lock`**,
+   höchstens 30 Minuten je gesperrtem Lauf, alle Profile zusammen geschätzt unter 15 Minuten. Vor und
+   nach dem Lauf `nvidia-smi` und das Tempo prüfen (läuft torch wirklich auf der GPU); ein Lauf auf der
+   CPU wird abgebrochen, nicht abgewartet. torch kommt nie ins Lock des Pakets.
+2. **Lizenz (Frage 37, Konrad 2026-11-26: „unter NC-SA zeigen“).** `politikfelder.parquet` und jede
+   Tabelle, die die Codes trägt, stehen unter **CC BY-NC-SA 4.0** mit Zitat des CAP (Comparative
+   Agendas Project; deutsches Codebuch), getrennt vom Rest der Seite, der CC0 bleibt: das Paket
+   `snapshots/<profil>-politikfelder/` mit Lizenz im README, die Downloads mit eigener Lizenzzeile,
+   `themen.html` mit dem Vermerk oben und im Fuß. Frage 9.4 ist damit beantwortet.
+3. **Bausteine von `main`.** Beitrag `19-politikfelder` am Ende von `CONTRIBUTIONS` (offline, prüft
+   das Paket gegen den Korpus und reicht es weiter), Fabrik mit `http` (F7, Punkt 74), Pfade im Modul,
+   Settings nach der Anhängeregel (`enabled = false` in `defaults.toml`, an in den Profilen mit Paket).
+   Die Eingabe je Dokument (Titel und 1 500 Zeichen Rohtext) kommt aus F1 (Punkt 73) nach Dateiname,
+   eine Zeile je Korpus-ID; der Export ist bytegleich zu `schreibe_eingabe()` (Test). Befehl
+   `georep policy-areas export <profil>` (englische Befehle, wie `search`). Die Fraktionen kommen aus
+   den Antragstellern von 15 (`processed/dokumente_antragsteller.parquet`, Punkt 75), für alle gleich,
+   ab 30 Dokumenten.
+4. **Profile.** Alle vier Datensätze bekommen eine Vorhersage. Geprüft ist nur die Hauptperiode;
+   2014–2020 und ab 2025 nennen das (Frage 46, Annahme gilt, keine eigene Stichprobe in dieser Runde),
+   Mönchengladbach heißt „explorativ“ (Frage 9.10).
+5. **Stufe 2 und Stufe 3 in einem Bau** (Ressourcen): `themen.html` nach § 7, aber **ohne Karte** je
+   Wahlbezirk (nur die Tabelle), damit die Unterseiten der Hauptperiode zusammen unter 1 MB bleiben
+   (Plan der Phase § 6; heute rund 640 KB ohne `themen.html`). Abschnitt 4 (Vergleich mit dem Bundestag)
+   nur mit abgeleiteten Anteilen und Quelle, unter derselben Lizenz. Downloads `politikfelder` je Dokument
+   nur als Parquet (Rückstand 35) und eine kleine Tabelle der Anteile je Periode und Gremiumsart als
+   Parquet und CSV, beide CC BY-NC-SA 4.0; Spalten auf `spalten.html` (Punkt 94).
+6. **Validierung auf der Seite.** Der Satz aus `validierung/19-politikfelder/guete.json` (zwei
+   KI-Kodierer desselben Modells, nicht von Menschen); Makro-F1 von 3b mit Intervall (0,704,
+   0,620–0,807) und die zweite Prüfung an menschlich kodierten Bundestagstiteln (0,688) als geprüfte
+   Konstanten, die ein Test aus den Dateien der Messung nachrechnet, soweit sie im Repo liegen; sonst mit
+   Verweis auf dieses Dokument. Dazu der Satz aus § 5, dass 3b eine Destillation von Weg 1 ist.
+7. **Nicht in dieser Runde:** Weg 1 (der Rückweg), das Codebuch Fassung 2 (Frage 9.16), die Klasse 10
+   als Maß für H1 von 22 (H1 bleibt vorab festgelegt an `OVA`), Unterthemen.
+
