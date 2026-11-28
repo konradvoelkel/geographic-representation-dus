@@ -32,6 +32,16 @@ class FlashTextMatcher:
         found: list[str] = self._processor.extract_keywords(text)
         return set(found)
 
+    def spans(self, text: str) -> list[tuple[str, int, int]]:
+        """Jedes Vorkommen als (Begriff, Anfang, Ende) in ``text``, halboffen und nach Anfang.
+
+        Derselbe Durchlauf wie ``extract`` (Vorhaben 16): die Menge der Begriffe ist dieselbe,
+        nur mit Stelle. ``text`` ist kleingeschrieben wie der Textstore; FlashText schreibt
+        sonst selbst klein, und eine Kleinschreibung, die die Länge ändert, verschöbe die Stellen.
+        """
+        found: list[tuple[str, int, int]] = self._processor.extract_keywords(text, span_info=True)
+        return found
+
     def __len__(self) -> int:
         size: int = len(self._processor)
         return size

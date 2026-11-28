@@ -1156,3 +1156,10 @@ package = "snapshots/duesseldorf-strassenpunkte"  # georep pack --street-points;
 [street_points.labels]         # Stadtteilgrenzen 2025 des Portals, dl-de/zero-2.0 (license_title des Datensatzes, geprüft am 2026-11-23); als Paket nur Name und Punkt auf der Fläche
 url = "https://opendata.duesseldorf.de/sites/default/files/Stadtteile_2025_WGS84_EPSG4326_1.geojson"
 name = "Name"                  # die Eigenschaft mit dem Namen; daneben steht "Nummer"
+
+# --- Vorhaben 16: Ortsbezug (docs/plans/16-ortsbezug.md, § 6 und § 10)
+[places]                       # an in der Hauptperiode und, geerbt, in beiden Perioden (§ 10, Punkt 7); ohne Rohtext (Pages außer der Hauptperiode) läuft der Schritt ohne Stelle, und die Gewichtungen ortsbezug und stelle fehlen
+enabled = true
+package = "snapshots/duesseldorf-adressen"  # georep pack --addresses: Straße, Nummer, Zusatz, Stimm- und Wahlbezirk je Hausnummer aus GebRef NRW (dl-de/zero-2.0); bootstrap kopiert nach external/adressen/. Die Perioden erben es (dieselben Wahlbezirke)
+house_numbers = true           # § 3.4: 92,3 % (91,7–92,7) der Adressen hinter einem Straßenbegriff sind verortbar (Schwelle 80 %), 10 143 von 10 146 verorteten liegen im Wahlbezirk des Begriffs
+house_number = '\s{0,3}(?:Nr\.\s?)?(?P<nr>\d{1,3})(?:\s?(?P<zusatz>[a-zA-Z])(?![A-Za-zÄÖÜäöüß]))?(?:\s?[-–/+]\s?\d{1,3}\s?[a-zA-Z]?(?![A-Za-zÄÖÜäöüß]))?(?!\d)(?!\s?[.,]\d)(?!\s?(?:%|m\b|km\b|qm\b|m²|mm\b|cm\b|ha\b|€|Euro\b|EUR\b|Jahr|Std|Uhr|Min|Monat|Tag|Woche|Pl[äa]tz|Stellpl|Standort|Wohnung|WE\b|Stück|Stk))'  # HAUSNR des Messskripts, unverändert: bis drei Ziffern direkt hinter dem Begriff, ein Buchstabe als Zusatz, ein Bereich („50–54", „12/14"), „Nr." davor; keine Hausnummer sind Dezimalzahlen, vierstellige Zahlen und Zahlen mit Einheit (m, %, €, Uhr, Plätze, Standorte …). In der Durchsicht von 40 Treffern 37 Adressen, „Standort" seither ausgeschlossen (§ 3.4)
