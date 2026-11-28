@@ -777,3 +777,10 @@ words = ["kenntnis", "beantwortet"]
 [[votes.results]]
 result = "erledigt"
 words = ["erledigt"]
+
+# --- Vorhaben 19: Politikfelder nach dem CAP (docs/plans/19-politikfelder.md, § 6 und § 10)
+[policy_areas]                 # ein Politikfeld (21 Hauptthemen des Comparative Agendas Project, dazu 99) je Dokument aus einem Paket: der Klassifikator (Weg 3b) läuft außerhalb des Pakets, weil er torch braucht. Ein Stadtprofil schaltet ein, wenn es ein Paket nennt. Die Codes stehen unter CC BY-NC-SA 4.0, getrennt vom Rest der Seite (Frage 37). Der Block steht nicht im Settings-Fingerprint, der Stamp des Schritts policy_areas trägt ihn
+enabled = false
+package = ""                   # Paket snapshots/<profil>-politikfelder (georep pack --policy-areas --from <datei>); bootstrap kopiert nach raw/politikfelder_paket.parquet. Ein Pfad
+chars = 1500                   # Rohtext in der Eingabe des Klassifikators: Titel und so viele Zeichen, Leerraum zusammengezogen (Messdokument § 8.8, wie schreibe_eingabe() des Messskripts); geändert ist es eine andere Eingabe als die gemessene
+weights_sha256 = "80ca2a823bd191c26f6f8c4be0f425ed90c1507c657e78468391ea57f9cab309"  # SHA-256 von training-3b/beste/model.safetensors (Messdokument § 3.4: 80ca2a82…09, nachgerechnet 2026-11-28); jede Zeile des Pakets trägt xlm-roberta-large@ und die ersten acht Ziffern. Die Gewichte (2,24 GB) liegen nicht im Repo

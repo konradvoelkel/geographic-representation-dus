@@ -79,6 +79,18 @@ PACKAGES = (
     ),
     # Vorhaben 16: je Hausnummer Stimm- und Wahlbezirk, keine Koordinate (104 329 Bytes, 2026-11-28)
     Package("snapshots/duesseldorf-adressen", limit=256 * 1024, native=False, readme=True),
+    # Vorhaben 19: die Politikfelder je Dokument aus dem Klassifikator (Weg 3b), CC BY-NC-SA 4.0;
+    # 59 901, 74 004, 16 425 und 10 584 Bytes am 2026-11-28
+    Package("snapshots/duesseldorf-politikfelder", limit=256 * 1024, native=False, readme=True),
+    Package(
+        "snapshots/duesseldorf-2014-politikfelder", limit=256 * 1024, native=False, readme=True
+    ),
+    Package(
+        "snapshots/duesseldorf-2025-politikfelder", limit=256 * 1024, native=False, readme=True
+    ),
+    Package(
+        "snapshots/moenchengladbach-politikfelder", limit=256 * 1024, native=False, readme=True
+    ),
 )
 # Alle zusammen, als zweite grobe Schranke: 174 580 489 Bytes = 166,49 MiB am 2026-11-23 (92,5 %
 # der Grenze; Mönchengladbach wuchs mit Punkt 65 um 819 292 Bytes, die drei Textstores sind seit
@@ -88,7 +100,8 @@ PACKAGES = (
 # = 167,71 MiB (93,2 %, 2026-11-24), mit dem Beschlusspaket von Vorhaben 26 176 485 741 Bytes =
 # 168,31 MiB (93,5 %, 2026-11-26), mit den beiden Bedarfspaketen von Vorhaben 22 176 775 625
 # Bytes = 168,59 MiB (93,7 %, 2026-11-26), mit den Straßenpunkten der Startseite und dem
-# Adresspaket von Vorhaben 16 176 939 508 Bytes = 168,74 MiB (93,7 %, 2026-11-28). Ein einziger PDF-Ordner einer Periode (585 MB bis
+# Adresspaket von Vorhaben 16 176 939 508 Bytes = 168,74 MiB (93,7 %, 2026-11-28), mit den vier
+# Politikfeldpaketen von Vorhaben 19 (zusammen 160 914 Bytes und vier READMEs) rund 168,9 MiB. Ein einziger PDF-Ordner einer Periode (585 MB bis
 # 3,9 GB) reißt sie um ein Mehrfaches, und genau davor schützt sie.
 TOTAL_LIMIT = 180 * MIB
 

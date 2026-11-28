@@ -6153,3 +6153,149 @@ späteren Periode legt, fehlt im Dialog des früheren (`docs/todo.md`, Punkte 15
 Spaltendoku nennt das. Ein Wortschatz für Mönchengladbach ist eine eigene Messung (Punkt 15 (b)). Punkt
 98 und das Messdokument von 28 nennen für H28.2 noch 41 von 389 und „Gremium unbekannt“ 192 und 126;
 ob sie einen Nachtrag bekommen, entscheidet der Supervisor.
+
+## NN. Politikfelder nach dem CAP: der Klassifikator außerhalb des Pakets, sein Ergebnis als Paket, `themen.html` unter CC BY-NC-SA 4.0 (Vorhaben 19, Stufe 2 und 3, 2026-11-28)
+
+Stufe 2 mit Weg 3b und Stufe 3 in einem Bau nach `docs/plans/19-politikfelder.md`, § 6 und § 7 mit
+§ 10 (Supervisor der Phase „Zeigen“, 2026-11-28), Fragen 37 (Lizenz) und 46 (andere Perioden).
+Gebaut auf `feat/19-politikfelder` ab `main` `e7754b0` (`v0.46.0`). Die Nummer bekommt der Eintrag
+beim Merge.
+
+**Zwei Teile, weil torch nie ins Paket darf.** Das Urteil ist Weg 3b, ein feinjustiertes
+`xlm-roberta-large` (§ 5). Im Paket rechnet nichts davon:
+
+- `georep policy-areas export <profil>` (`enrich/policy_areas_command.py`) schreibt je Korpus-ID die
+  Eingabe des Klassifikators: Titel und die ersten 1 500 Zeichen des Rohtexts von F1, Leerraum
+  zusammengezogen (`classifier_input`), dazu `mit_text` und `gekuerzt`. Ein Test hält sie
+  bytegleich zu `schreibe_eingabe()` des Messskripts, auch bei NBSP, U+2028 und den Trennern
+  U+001C bis U+001F, die Python als Leerraum liest und Polars nicht; an den Läufen dieses Baus
+  trägt die Eingabe der Hauptperiode für alle 4 500 Dokumente aus `ratsdokumente.parquet`
+  (Test, Entwicklung, Silber) denselben Text wie Training und Messung. Das Profil ist ein Argument,
+  weil die Datei genau zu seinem Korpus gehört; `--profile` davor darf nur dasselbe sagen.
+- `docs/plans/19-politikfelder-training.py --vorhersage <eingabe> …` sagt im Trainings-Venv mit
+  `training-3b/beste` voraus. Vorher rechnet es den SHA-256 der Gewichte nach (vollständig
+  `80ca2a823bd191c26f6f8c4be0f425ed90c1507c657e78468391ea57f9cab309`, passt zu `80ca2a82…09`
+  aus § 3.4; `zustand.json` trägt ihn nicht), prüft, dass torch die GPU nimmt, und misst einen
+  Probestapel. Ein Lauf unter `flock gpu-queue/gpu.lock timeout 1800` am 2026-11-28, 11:00:45 bis
+  11:02:13: 88 s Wanduhr, 45 471 Dokumente mit Rohtext in 77 s Vorhersage (589 bis 594 je Sekunde),
+  höchstens 3,36 GB; `nvidia-smi` vorher 657 MiB und 0 %, während des Laufs 4 493 MiB und 88 %,
+  danach 657 MiB. Auf den 300 Dokumenten der Testmenge und den 200 der Entwicklungsmenge sagt er
+  dasselbe Hauptthema wie die Messung (300 von 300, 200 von 200; die Wahrscheinlichkeit weicht in
+  bf16 um höchstens 0,037 ab): die gemessene Güte gilt für genau diese Felder.
+- `georep pack --policy-areas --from <datei>` friert die Vorhersage je Profil ein
+  (`snapshots/<profil>-politikfelder/processed/politikfelder.parquet`) und schreibt das README
+  vollständig, mit Modell, Revision, Prüfsumme der Gewichte, Güte, Lizenz und Zitat des CAP.
+- Der Beitrag `19-politikfelder` steht am Ende von `CONTRIBUTIONS`. Sein Schritt `policy_areas`
+  prüft die Kopie des Pakets mit `check_areas` gegen den Korpus (Spalten und Typen, keine fehlende,
+  doppelte oder fremde ID, nur Codes des CAP, die Kennung `xlm-roberta-large@80ca2a82` und
+  `quelle = klassifikator` an jeder Zeile mit Feld, ohne Rohtext eine ganz leere Zeile; sonst
+  `SchemaError`) und schreibt `politikfelder.parquet` und `politikfelder_anteile.parquet`.
+
+*Der Block steht nicht im Settings-Fingerprint.* `[policy_areas]` (`enabled`, `package`, `chars`,
+`weights_sha256`) liest nur dieser Schritt; sein Stamp trägt `chars` und `weights_sha256` als
+Zusatz (Muster Punkt 53), das Paket als Eingabe. So bewegt sich kein bestehender Stamp, obwohl alle
+vier Datensätze einschalten. Verworfen: der Block im Fingerprint (jeder Schritt jedes Profils liefe
+neu, ohne dass sich eine Zahl ändert).
+
+*Die Fixtures bringen eigene Dateien mit* (wie bei Punkt 58): `mini/` und `mini-2014/` aus dem Paket
+der Hauptperiode gefiltert (die Kennungen von `mini-2014` sind die von `mini`), `mg/` erfunden, weil
+seine sechs Paper aus einer älteren OParl-Seite im Paket der Stadt nicht stehen.
+
+**Die Seite `themen.html`** (`report/themes.py`, `templates/pages/themen.*`) hat fünf Abschnitte
+nach § 7, ohne Karte (§ 10, Punkt 5): die Felder der Periode für Rat und Ausschüsse und für die
+Bezirksvertretungen getrennt; je Fraktion aus den Antragstellern von 15, ein gemeinsamer Antrag für
+jede beteiligte Fraktion, für alle Fraktionen gleich und erst ab 30 Dokumenten mit Feld eine
+Verteilung; je Wahlbezirk aus den Treffern der Auswertung als Tabelle mit dem Hinweis auf den
+ökologischen Fehlschluss; der Bundestag mit abgeleiteten Anteilen; wie die Felder entstehen. Der
+Prüfsatz kommt aus `validierung/19-politikfelder/guete.json`, dazu die schwächsten Felder und die
+häufigste Verwechslung aus derselben Datei; Intervall (0,620–0,807), die Prüfung an 200 menschlich
+kodierten Bundestagstiteln (0,688) und die Einigkeit mit dem Lehrer (270 von 300) stehen als
+`MEASURED`, weil ihre Dateien nicht im Repo liegen, und `read_check` bricht ab, wenn `guete.json`
+eine andere Kodierung oder ein anderes Makro-F1 beschreibt. Gemessen ist der Ordner der Stichprobe;
+die beiden anderen Düsseldorfer Perioden heißen „nur in … 2020 bis 2025 geprüft“ (Frage 46),
+Mönchengladbach „explorativ“, in jeder Überschrift mit Zahlen.
+
+**Lizenz (Frage 37).** Die Codes und alles, was aus ihnen abgeleitet ist, stehen unter CC BY-NC-SA
+4.0, getrennt vom Rest: der Vermerk steht oben auf der Seite und, über das neue Feld
+`Page.license`, im Fuß („Politikfelder und die Zahlen dieser Seite: CC BY-NC-SA 4.0 (…). Übrige
+Ergebnisse: CC0 1.0“); jede andere Unterseite und `spalten.html` behalten ihren Fuß bytegleich. Die
+Downloads `politikfelder` (je Dokument, nur Parquet, Rückstand 35) und `politikfelder_anteile`
+(Parquet und CSV) tragen die Lizenz in ihrer Beschreibung, also in jeder Downloadzeile und auf
+`spalten.html` (`schema.json` trägt keine Beschreibung je Tabelle), und `politikfelder` dazu einen
+Prüfsatz unter den Downloads, der beide nennt. Nach dem Review (2026-11-28) nennt auch der Fuß von
+`details.html` und der Startseite die Ausnahme, in jedem Profil mit Politikfeldern: „Ergebnisse: CC0
+1.0, außer den Politikfeldern (CC BY-NC-SA 4.0, siehe Themen)“, mit Link auf die Lizenz und auf
+`themen.html`. Sie kommt aus `Page.license` (`scope`, `label`) über `PageLink` in `model.pages`;
+ohne eine solche Seite bleibt der Fuß bytegleich. Ein Test sucht in jeder anderen Datei unter `site/data/` die Spalte `politikfeld`
+und findet sie nicht.
+
+**Bewusst anders als § 6 und § 7.**
+
+1. *Eine Zeile je Feld statt einer gestapelten Leiste.* 22 Kategorien trennt keine Farbe; die Seite
+   zeigt je Feld einen Balken je Gremiengruppe (Länge statt Farbe), die Zahl daneben.
+2. *Die Pakete sind 160 914 Byte groß statt unter 100 KB.* Die Wahrscheinlichkeit kostet auch auf
+   drei Stellen gerundet rund 35 KB je Hauptperiode, die IDs allein 65 KB für alle vier.
+3. *`abgeschnitten` heißt: Rohtext über 1 500 Zeichen oder Eingabe über 256 Token*, also dass der
+   Klassifikator nicht den ganzen Text sah; das trifft 16 027 der 19 032 Dokumente mit Feld der
+   Hauptperiode. Die Seite sagt es.
+4. *Je Periode eine Seite.* „Gestapelte Leiste je Periode“ zeigt jede Periodenseite für sich; den
+   Vergleich über Perioden trägt `politikfelder_anteile` mit der Spalte `periode`.
+5. *Die Fraktionen zählen in allen Gremien*, nicht nur im Rat: die Antragsteller von 15 sind je
+   Dokument bestimmt, auch in den Bezirksvertretungen.
+6. *Die Anfragen des Bundestags* stehen als Zählung je Hauptthema in `BUNDESTAG_QUERIES`
+   (10 033 Anfragen aus `anfrage_1976-2005_website-release_2.5.csv`, SHA-256 `98be16fc…`); die
+   Datei liegt nicht im Repo.
+7. *Die Seite ist 104 bis 108 KB groß statt 60 bis 90 KB* (Mönchengladbach 89 KB): die beiden
+   breiten Tabellen tragen je Zelle einen Sortierwert.
+
+**Verworfen.** Weg 1 als zweite Quelle (der Rückweg nach § 6, nicht in dieser Runde); eine Karte je
+Feld (§ 10, Punkt 5); die Felder im Dokumentdialog (`dokumente.json` stünde dann unter NC-SA); eine
+CSV je Dokument (Rückstand 35); der Text der Prüfung mit dem Datensatz der Stichprobe auf
+`details.html` (die Auswertung einer Periode nennt kein fremdes Wahljahr, die einer Stadt keine
+andere Stadt; das tut `themen.html`).
+
+**Geprüft.**
+
+- Tests: `tests/unit/test_policy_areas.py` (die Eingabe bytegleich zum Messskript, das Paket mit
+  neun Fällen, die `check_areas` abweist, das README, der Beitrag in allen Paketprofilen, `bootstrap`
+  mit und ohne eigene Datei, die Anteile), `tests/unit/test_report_themes.py` (die Prüfung gegen
+  `MEASURED` und an drei geänderten Kopien von `guete.json`, der Status je Paketprofil, die
+  Anfragen des Bundestags, die Bausteine an erfundenen Tabellen, die Seite der Mini-Fixture mit
+  Lizenz oben und im Fuß, der unveränderte Fuß der anderen Seiten, Linkblöcke, Downloads mit
+  Lizenzzeile und Spalten, keine andere Datei mit den Codes), slow `tests/golden/test_themes_page.py`
+  (Hauptperiode aus den Paketen: 19 032 von 19 108 mit Feld, Verkehr 4 990, 41 Wahlbezirke,
+  Fraktionen erst ab 30; Mönchengladbach in drei Überschriften „explorativ“; beide unter 500 KB).
+- A/B-Bau aller fünf Profile wie `pages.yml` (`scripts/ab_bau.sh`, `POLARS_MAX_THREADS=4
+  OMP_NUM_THREADS=2`), A aus `main` `e7754b0` (`v0.46.0`, `ab/19t-a`), B aus `cc2101e` (`ab/19t-b`;
+  danach nur dieser Eintrag und der Aufbau). Unter `site/` 371 Dateien in A, 387 in B, 32
+  Abweichungen, alle erwartet: je Stadtseite neu `themen.html` und die drei Downloads
+  (`politikfelder.parquet`, `politikfelder_anteile.parquet` und `.csv`); anders `index.html` (nur
+  die Zeile im Linkblock, +191 Byte), `details.html` (dieselbe Zeile, die Zahl der Downloadzeilen,
+  drei neue Zeilen, der Prüfsatz, die Größe von `schema.json`; sonst nur Prüfsummen, die an
+  `generated_at` hängen), `spalten.html` (zwei Tabellen) und `schema.json`. Gleich sind
+  `akteure.html`, `bedarf.html`, `vorgaenge.html`, `zeit.html` (also der Fuß ohne `Page.license`),
+  `karte.html`, `vergleich.html` und jede andere Datei unter `data/`. Über die Datenwurzeln 1 329
+  und 1 391 Dateien, 245 Abweichungen: 62 neue Dateien (je Datensatz die Kopie des Pakets, die
+  beiden Tabellen, ihr Stamp, `themen.html` mit Stamp, die Downloads), dieselben Seiten in den
+  Ordnern der Profile, kein Parquet unter `processed/` oder `interim/` anders; von 153 Stamps sind
+  10 neu, 115 tragen nur eine andere Schreibzeit, 20 dazu den Zusatz der Seiten (der Rahmen hat mit
+  `page_footer.html.j2` eine neue Vorlage), 6 von `index.html` die beiden Tabellen und `guete.json`
+  und `stichprobe.json` des Prüfsatzes als neue Eingaben, 2 nur die Wurzel der absoluten Pfade.
+  `georep publish --strict-budget` lief in beiden Bauten durch.
+- Größen, veröffentlicht (B): `themen.html` Hauptperiode 108 124 Byte (gzip 21 289), 2014–2020
+  106 254, ab 2025 104 667, Mönchengladbach 88 733 (Budget 500 000). Die fünf Beitragsseiten der
+  Hauptperiode (`akteure`, `bedarf`, `vorgaenge`, `zeit`, `themen`) 553 126 → 661 250 Byte, mit
+  `spalten.html` 768 281, unter 1 MB; `details.html` 933 351 → 935 458 (+2 107), `index.html`
+  93 278 → 93 469, `spalten.html` 103 817 → 107 031, `schema.json` 82 992 → 85 527. Die Downloads
+  je Datensatz 84, 106, 34 und 27 KB.
+- Im Browser (headless Chrome über Port 8784 auf dem B-Bau): `themen.html` der Hauptperiode bei
+  1 280 Pixeln hell und dunkel, bei 390 und ohne Skripte (eine Kopie ohne `<script>`, dort stehen
+  alle Zeilen der breiten Tabellen), Mönchengladbach und 2014–2020 bei 1 280. Die ersten Fotos
+  (aus `7238abe`) zeigten die Balken am Anteil selbst gemessen, der längste ein Drittel der Spur
+  und die meisten ein Strich; seit `cc2101e` bezieht sich jeder auf den größten Anteil seiner
+  Tabelle, und bei 390 Pixeln gilt die Mindestbreite der Feldnamen nicht mehr. Die breiten
+  Tabellen je Fraktion und je Wahlbezirk scrollen waagrecht wie jede breite Tabelle der Seiten.
+
+**Offen.** Die kleine Stichprobe je Periode
+aus Frage 9.17 (rund 2 GPU-Minuten) ist nicht gezogen; 2014–2020 und ab 2025 sind angenommen, nicht
+gemessen.

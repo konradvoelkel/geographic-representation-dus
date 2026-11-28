@@ -3118,6 +3118,56 @@ class Votes(_Strict):
         return self
 
 
+# --- Vorhaben 19: Politikfelder nach dem CAP (docs/plans/19-politikfelder.md, § 6 und § 10) -------
+# Die Codes des Comparative Agendas Project, wie sie im Paket stehen: die 21 Hauptthemen des
+# Master-Codebuchs und 99 (kein Politikfeld erkennbar). Namen und Kurznamen stehen im Modul
+# ``georep.enrich.policy_areas``; die Hauptthemen sind stadtneutral.
+POLICY_AREA_CODES = (
+    "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "12", "13", "14", "15", "16", "17", "18",
+    "19", "20", "21", "23", "99",
+)  # fmt: skip
+
+
+class PolicyAreas(_Strict):
+    """Politikfelder je Dokument aus einem Paket (Vorhaben 19, Weg 3b); der Schritt rechnet nichts.
+
+    Der Klassifikator läuft außerhalb des Pakets (torch). ``chars`` ist die Länge des Rohtexts in
+    seiner Eingabe (``georep policy-areas export``), vorab festgelegt in § 8.8 des Messdokuments;
+    ``weights_sha256`` die Prüfsumme der Gewichte, deren Kennung jede Zeile des Pakets tragen muss.
+    ``package`` ist das Paket aus ``georep pack --policy-areas``, das ``bootstrap`` kopiert. Der
+    Block steht nicht im Settings-Fingerprint (``fingerprint``): er betrifft nur den Schritt
+    ``policy_areas``, dessen Stamp ihn als ``extra`` trägt.
+    """
+
+    enabled: bool = False
+    package: Path | None = None
+    chars: int = Field(default=1500, ge=1)
+    weights_sha256: str = ""
+
+    @field_validator("package", mode="before")
+    @classmethod
+    def _empty_is_none(cls, value: object) -> object:
+        return None if value in ("", None) else value
+
+    @field_validator("weights_sha256")
+    @classmethod
+    def _hex(cls, value: str) -> str:
+        if value and not re.fullmatch(r"[0-9a-f]{64}", value):
+            raise ValueError(f"policy_areas.weights_sha256: 64 Hexziffern klein, nicht {value!r}")
+        return value
+
+    @model_validator(mode="after")
+    def _enabled_needs_weights(self) -> PolicyAreas:
+        if self.enabled and not self.weights_sha256:
+            raise ValueError("policy_areas.enabled braucht weights_sha256 (Kennung der Gewichte)")
+        return self
+
+    @property
+    def model_id(self) -> str:
+        """Die Kennung im Paket: Modell und die ersten acht Ziffern der Prüfsumme der Gewichte."""
+        return f"xlm-roberta-large@{self.weights_sha256[:8]}"
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="GEOREP_",
@@ -3183,6 +3233,7 @@ class Settings(BaseSettings):
     street_points: StreetPoints = StreetPoints()  # Startseite: Straßenpunkte, Ortsnamen
     places: PlacesSettings = PlacesSettings()  # Vorhaben 16: Ortsbezug
     votes: Votes = Votes()  # Vorhaben 28: Abstimmungen je Tagesordnungspunkt (Ebene A)
+    policy_areas: PolicyAreas = PolicyAreas()  # Vorhaben 19: Politikfelder nach dem CAP
 
     @property
     def base_profile(self) -> str:
@@ -3342,6 +3393,9 @@ class Settings(BaseSettings):
         Vorhaben 16: ``places.package`` ist ein Pfad; die Kopie des Pakets steht im Stamp von
         ``places``.
         Vorhaben 28: ``votes.fixed_on`` ist Anzeige wie bei 22; Wortregel, Zeiträume und Commit zählen.
+        Vorhaben 19: ``[policy_areas]`` steht ganz draußen. Der Block betrifft nur den Schritt
+        ``policy_areas``: das Paket ist ein Pfad, seine Kopie steht als Eingabe in dessen Stamp,
+        und ``chars`` und ``weights_sha256`` trägt er als ``extra`` (Muster Punkt 53).
         """
         payload = self.model_dump(
             mode="json",
@@ -3419,6 +3473,8 @@ class Settings(BaseSettings):
                 "places": {"package"},
                 # Vorhaben 28: der Tag der Festlegung ist Anzeige wie bei 22, der Commit zählt
                 "votes": {"fixed_on"},
+                # Vorhaben 19: nur der Schritt policy_areas liest den Block; sein Stamp trägt ihn
+                "policy_areas": True,
             },
         )
         return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:16]

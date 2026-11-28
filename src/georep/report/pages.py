@@ -75,6 +75,24 @@ def no_links(layout: Layout, settings: Settings) -> frozenset[str]:
 
 
 @dataclass(frozen=True)
+class PageLicense:
+    """Eine Lizenz für Ergebnisse einer Unterseite, die nicht CC0 sind (Vorhaben 19, Frage 37).
+
+    Der Fuß der Seite nennt sie vor den übrigen Ergebnissen; ``url`` muss in ``Page.links`` stehen.
+    Der Fuß von ``details.html`` und der Startseite nennt die Ausnahme kurz, mit ``scope`` und einem
+    Link mit ``label`` auf die Seite (Review 2026-11-28): „Ergebnisse: CC0 1.0, außer den
+    Politikfeldern (CC BY-NC-SA 4.0, siehe Themen)".
+    """
+
+    what: str  # „Politikfelder und die Zahlen dieser Seite"
+    name: str  # „CC BY-NC-SA 4.0"
+    url: str
+    attribution: str  # die Namensnennung, die die Lizenz verlangt
+    scope: str = ""  # im Fuß der Hauptseiten nach „außer", etwa „den Politikfeldern"
+    label: str = ""  # Text des Links auf die Seite im Fuß der Hauptseiten, etwa „Themen"
+
+
+@dataclass(frozen=True)
 class Page:
     """Eine Unterseite: Datei ``<name>.html``, Titel, ein Satz, Eingaben, Daten für die Vorlage."""
 
@@ -90,6 +108,9 @@ class Page:
     # Mit ``layout`` wie ``inputs`` und ``data`` (Vorhaben 15): die PDF-Links einer Liste von
     # Dokumenten stehen in den Daten, nicht in den Settings.
     links: Callable[[Layout, Settings], frozenset[str]] = no_links
+    # Vorhaben 19: Ergebnisse unter einer anderen Lizenz als CC0; der Fuß nennt sie. Am Ende, damit
+    # kein Aufruf mit Positionen seine Bedeutung ändert.
+    license: PageLicense | None = None
 
     def __post_init__(self) -> None:
         if not _valid_name(self.name):
@@ -200,7 +221,18 @@ def pages_for(settings: Settings) -> list[Page]:
 
 def page_links(settings: Settings) -> tuple[PageLink, ...]:
     """Die Einträge des Abschnitts „Weitere Auswertungen" auf der Hauptseite."""
-    return tuple(PageLink(f"{p.name}.html", p.title, p.lead) for p in pages_for(settings))
+    return tuple(
+        PageLink(
+            f"{p.name}.html",
+            p.title,
+            p.lead,
+            license_name=p.license.name if p.license else "",
+            license_url=p.license.url if p.license else "",
+            license_scope=(p.license.scope or p.license.what) if p.license else "",
+            license_label=(p.license.label or p.title) if p.license else "",
+        )
+        for p in pages_for(settings)
+    )
 
 
 def section_problems(

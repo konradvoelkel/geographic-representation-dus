@@ -247,7 +247,7 @@ def test_die_vorlage_beginnt_mit_if_data_und_nennt_keine_partei() -> None:
 
 # --- Register und Eingaben ------------------------------------------------------------------------
 def test_der_beitrag_steht_am_ende_mit_einem_gast_auf_akteure() -> None:
-    assert CONTRIBUTIONS[-1].name == "28-abstimmungen"
+    assert [c.name for c in CONTRIBUTIONS[-2:]] == ["28-abstimmungen", "19-politikfelder"]
     (section,) = SECTIONS
     assert (section.page, section.name) == ("akteure", SECTION)
     assert [t.name for t in TABLES] == [

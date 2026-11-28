@@ -567,3 +567,8 @@ package = "snapshots/moenchengladbach-strassenpunkte"  # georep pack --street-po
 "2" = "Ost"
 "3" = "Süd"
 "4" = "West"
+
+# --- Vorhaben 19: Politikfelder nach dem CAP (docs/plans/19-politikfelder.md, § 10)
+[policy_areas]                 # die Vorhersage des Klassifikators (Weg 3b) für diesen Datensatz: explorativ, nirgends in dieser Stadt geprüft (Frage 9.10)
+enabled = true
+package = "snapshots/moenchengladbach-politikfelder/processed/politikfelder.parquet"  # georep pack --policy-areas (README dort, CC BY-NC-SA 4.0); bootstrap kopiert nach raw/politikfelder_paket.parquet

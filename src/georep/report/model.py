@@ -816,6 +816,13 @@ class PageLink:
     href: str  # ``<name>.html`` neben ``index.html``
     title: str
     lead: str
+    # Vorhaben 19 (Review 2026-11-28): die Seite trägt Ergebnisse unter einer anderen Lizenz als CC0
+    # (``Page.license``); der Fuß von ``details.html`` und der Startseite nennt die Ausnahme. Leer:
+    # keine Ausnahme, der Fuß bleibt, wie er war.
+    license_name: str = ""
+    license_url: str = ""
+    license_scope: str = ""  # „den Politikfeldern"
+    license_label: str = ""  # Text des Links auf die Seite
 
 
 # --- Zahlenformat -----------------------------------------------------------------------------

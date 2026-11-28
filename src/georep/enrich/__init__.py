@@ -105,6 +105,7 @@ from georep.enrich.identifiers import CONTRIBUTION as IDENTIFIERS  # noqa: E402 
 from georep.enrich.need import CONTRIBUTION as NEED  # noqa: E402  (Vorhaben 22)
 from georep.enrich.outcomes import CONTRIBUTION as OUTCOMES  # noqa: E402  (Vorhaben 26)
 from georep.enrich.places import CONTRIBUTION as PLACES  # noqa: E402  (Vorhaben 16)
+from georep.enrich.policy_areas import CONTRIBUTION as POLICY_AREAS  # noqa: E402  (Vorhaben 19)
 from georep.enrich.procedures import CONTRIBUTION as PROCEDURES  # noqa: E402  (Vorhaben 14)
 from georep.enrich.sections import CONTRIBUTION as SECTIONS  # noqa: E402  (Vorhaben 11)
 from georep.enrich.summaries import CONTRIBUTION as SUMMARIES  # noqa: E402  (Vorhaben 20)
@@ -122,6 +123,7 @@ CONTRIBUTIONS: tuple[Contribution, ...] = (
     IDENTIFIERS,
     SUMMARIES,
     VOTES,
+    POLICY_AREAS,  # Vorhaben 19 am Ende (Plan der Phase „Zeigen“, § 10 Punkt 3): liest das Paket
 )
 
 

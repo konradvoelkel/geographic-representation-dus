@@ -1,0 +1,100 @@
+{#
+  Vorhaben 19, Stufe 3 (docs/plans/19-politikfelder.md, § 7 mit § 10), im Muster von akteure.html
+  und bedarf.html (Punkte 88 und 95), ohne Karte (§ 10, Punkt 5). Das Modell ist
+  ``report.themes.ThemesModel``; jede Zahl kommt aus politikfelder.parquet und den Tabellen des
+  Kerns und von 15, der Prüfsatz aus guete.json, Intervall und zweite Prüfung aus ``MEASURED``.
+  Lizenz der ganzen Seite: CC BY-NC-SA 4.0 (Frage 37), oben und im Fuß (``Page.license``).
+#}
+{% from "macros.html.j2" import more %}
+{% set m = data.themen %}
+{% set c = m.check %}
+{% set k = m.measured %}
+{% set u = data.urls %}
+{% set x = " (explorativ)" if m.explorative else "" %}
+{% macro bar(share, top) %}<span class="feldbalken" aria-hidden="true"><span style="width:{{ '%.1f'|format(share / top * 100) }}%"></span></span>{% endmacro %}
+{% macro cell(share) %}<td class="num" data-value="{{ '%.4f'|format(share) }}">{{ (share * 100)|num(1) }}</td>{% endmacro %}
+<p class="lizenz"><strong>Lizenz:</strong> Die Politikfelder und alle Zahlen dieser Seite, die aus ihnen abgeleitet sind, stehen unter <a href="{{ u.license }}">CC BY-NC-SA 4.0</a>, anders als die übrigen Ergebnisse (CC0). {{ data.attribution }}, <a href="{{ u.cap }}">comparativeagendas.net</a>, <a href="{{ u.doi }}">doi 10.1080/13572334.2021.2010395</a>.</p>
+<section id="ueberblick">
+<p>Jedes Ratsdokument der {{ model.period.title }} trägt hier eines der 21 Hauptthemen des Comparative Agendas Project (CAP), nach dem auch Bundestag, Landtage und Parlamente anderer Länder kodiert sind: {{ m.with_area|num }} von {{ m.documents|num }} Dokumenten{% if m.undetermined %}; {{ m.undetermined|num }} ohne lesbaren Text bleiben ohne Feld{% endif %}{% if m.no_area %}, {{ m.no_area|num }} lassen kein Politikfeld erkennen (99){% endif %}. Ein Dokument hat genau ein Feld, das vorherrschende: die Sache, nicht die Zielgruppe und nicht das Instrument. Wie das Feld entsteht und wie gut es trifft, steht unten.</p>
+<ul class="toc">
+<li><a href="#perioden">Politikfelder in dieser Periode</a></li>
+<li><a href="#fraktionen">Je Fraktion</a></li>
+<li><a href="#wahlbezirke">Je Wahlbezirk</a></li>
+<li><a href="#bundestag">Vergleich mit dem Bundestag</a></li>
+<li><a href="#methode">Wie die Felder entstehen</a></li>
+</ul>
+<div class="pruefung" id="pruefung">
+<h2>Wie geprüft</h2>
+<p>Das Feld je Dokument sagt ein Klassifikator voraus. {% if c.status == "gemessen" %}An diesem Datensatz ist er {{ c.sentence }}: Genauigkeit {{ c.accuracy|pct(1) }}, Makro-F1 {{ c.macro_f1|num(3) }} (95 % {{ k.interval[0]|num(3) }} bis {{ k.interval[1]|num(3) }}).{% elif c.status == "periode" %}<strong>Nur in {{ c.measured_dataset }} geprüft</strong>, nicht in dieser Periode: dort ist er {{ c.sentence }} (Makro-F1 {{ c.macro_f1|num(3) }}). Dieselbe Stadt, dieselben Dokumentarten; dass er hier ebenso trifft, ist angenommen, nicht gemessen.{% else %}<strong>Explorativ:</strong> geprüft ist er nur in {{ c.measured_dataset }}, nicht in dieser Stadt; dort ist er {{ c.sentence }} (Makro-F1 {{ c.macro_f1|num(3) }}). Für die Ratsdokumente ist er auf Labels jener Stadt trainiert.{% endif %} Die Kodierer und das Modell sind Sprachmodelle; die einzige Zahl mit menschlichem Gold ist die Prüfung an {{ k.bundestag_units|num }} Anfragen des Bundestags (Makro-F1 {{ k.bundestag_f1|num(3) }}).</p>
+</div>
+</section>
+
+<section id="perioden">
+<h2>Politikfelder in dieser Periode{{ x }}</h2>
+<p>Anteile an den Dokumenten mit Feld, getrennt für Rat und Ausschüsse ({{ m.groups[0].with_area|num }} Dokumente) und für die Bezirksvertretungen ({{ m.groups[1].with_area|num }}); die Spalte „alle“ zählt auch Beiräte und Dokumente ohne erkanntes Gremium ({{ m.groups[2].with_area|num }}). Ein Balken ist der Anteil in seiner Gruppe, gemessen am größten Anteil der Tabelle; die Felder stehen nach ihrer Zahl über alle Dokumente.</p>
+<div class="scroll"><table id="felder" class="felder">
+<thead><tr><th scope="col">Politikfeld</th><th scope="col" class="num">Rat und Ausschüsse, %</th><th scope="col" class="num">Bezirks&shy;vertretungen, %</th><th scope="col" class="num">alle Dokumente</th><th scope="col" class="num">%</th></tr></thead>
+<tbody>
+{% for a in m.areas %}
+<tr><th scope="row">{{ a.name }} <span class="note">({{ a.code }})</span></th><td class="num">{{ (a.council_share * 100)|num(1) }} {{ bar(a.council_share, m.bar_max) }}</td><td class="num">{{ (a.district_share * 100)|num(1) }} {{ bar(a.district_share, m.bar_max) }}</td><td class="num">{{ a.total|num }}</td><td class="num">{{ (a.total_share * 100)|num(1) }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+<p class="note">Ohne Feld: {% for g in m.groups %}{{ g.label }} {{ g.undetermined|num }} von {{ g.documents|num }}{% if not loop.last %}; {% endif %}{% endfor %}. Sport, Kinder und Jugend zählen nach dem deutschen CAP-Codebuch zum Sozialen (13), Parks und Denkmalschutz zu den öffentlichen Flächen (21), Verwaltungsinterna wie Sitzungstermine und Wahlen zu Staat und Verwaltung (20); das <a href="{{ u.codebook }}">Codebuch</a> nennt alle Regeln.</p>
+</section>
+
+<section id="fraktionen">
+<h2>Je Fraktion{{ x }}</h2>
+{% if m.fractions is none %}
+<p>Die Antragsteller je Dokument (Vorhaben 15) gibt es in diesem Profil nicht; ohne sie zählt die Seite nichts je Fraktion.</p>
+{% else %}
+<p>Anteile der Felder an den Dokumenten, die eine Fraktion stellt oder mitstellt; ein gemeinsamer Antrag zählt für jede beteiligte Fraktion. Unter {{ data.min_documents|num }} Dokumenten mit Feld steht keine Verteilung da. Für jede Fraktion ist die Tabelle gleich gebaut; sie sagt, worüber eine Fraktion Anträge und Anfragen stellt, nicht, wie sie abstimmt.</p>
+{{ more("fraktionen-tabelle", m.fractions|length, model.preview_rows) }}
+<div class="scroll"><table id="fraktionen-tabelle" class="preview breit">
+<thead><tr><th scope="col" data-sort="text">Fraktion</th><th scope="col" class="num" data-sort="num">Dokumente</th>{% for code, short in m.columns %}<th scope="col" class="num" data-sort="num" title="{{ code }}">{{ short }}</th>{% endfor %}</tr></thead>
+<tbody>
+{% for r in m.fractions %}
+<tr><th scope="row">{{ r.label }}</th><td class="num" data-value="{{ r.documents }}">{{ r.documents|num }}</td>{% if r.shares is not none %}{% for s in r.shares %}{{ cell(s) }}{% endfor %}{% else %}<td colspan="{{ m.columns|length }}" class="note">unter {{ data.min_documents|num }} Dokumenten</td>{% endif %}</tr>
+{% endfor %}
+</tbody></table></div>
+<p class="note">Anteile in Prozent der Dokumente der Fraktion mit Feld. Die Fraktionen stehen mit den Namen aus dem Stadtprofil; eine Fraktion aus zwei Parteien ist ein Schlüssel.</p>
+{% endif %}
+</section>
+
+<section id="wahlbezirke">
+<h2>Je Wahlbezirk{{ x }}</h2>
+<p>Anteile der Felder an den Dokumenten mit Treffer im Wahlbezirk: ein Dokument nennt einen Wahlbezirk, wenn es mindestens einen Begriff aus dessen Wörterbuch trägt, wie bei der Trefferquote der <a href="details.html">Details</a>; eines mit Treffern in zwei Wahlbezirken zählt für beide. Das sind {{ m.district_documents|num }} Dokumente mit Feld.</p>
+<p><strong>Nichts über Menschen.</strong> Eine Verteilung je Wahlbezirk sagt nichts über die Menschen in ihm (ökologischer Fehlschluss): viele Verkehrsdokumente zu einem Wahlbezirk heißen nicht, dass seine Bewohner sich zu Verkehr äußern oder es dort mehr Verkehrsprobleme gibt.</p>
+{{ more("wahlbezirke-tabelle", m.districts|length, model.preview_rows) }}
+<div class="scroll"><table id="wahlbezirke-tabelle" class="preview breit">
+<thead><tr><th scope="col" data-sort="text">Wahlbezirk</th><th scope="col" class="num" data-sort="num">Dokumente</th>{% for code, short in m.columns %}<th scope="col" class="num" data-sort="num" title="{{ code }}">{{ short }}</th>{% endfor %}</tr></thead>
+<tbody>
+{% for r in m.districts %}
+<tr><th scope="row">{{ r.label }}</th><td class="num" data-value="{{ r.documents }}">{{ r.documents|num }}</td>{% if r.shares is not none %}{% for s in r.shares %}{{ cell(s) }}{% endfor %}{% else %}<td colspan="{{ m.columns|length }}" class="note">kein Dokument mit Feld</td>{% endif %}</tr>
+{% endfor %}
+</tbody></table></div>
+<p class="note">Anteile in Prozent der Dokumente mit Treffer und Feld. Sortieren nach einer Spalte ordnet nach diesem einen Feld.</p>
+</section>
+
+<section id="bundestag">
+<h2>Vergleich mit dem Bundestag</h2>
+<p>Zur Einordnung, nicht zum Vergleich der Leistung: dieselben Hauptthemen an den {{ data.bundestag_total|num }} {{ data.bundestag_source }}, von Menschen kodiert, die Anteile abgeleitet aus den Codes (<a href="{{ u.cap_germany }}">Datensätze des CAP für Deutschland</a>, CC BY-NC-SA 4.0). Andere Ebene, andere Zeit, andere Dokumentart: ein Bundestag fragt nach Verteidigung, Außenpolitik und Deutschlandpolitik, ein Rat nach Ampeln, Spielplätzen und Bebauungsplänen.</p>
+<div class="scroll"><table id="bundestag-tabelle">
+<thead><tr><th scope="col">Politikfeld</th><th scope="col" class="num">diese Periode, %</th><th scope="col" class="num">Bundestag 1976 bis 2005, %</th></tr></thead>
+<tbody>
+{% for a in m.areas if a.bundestag_share is not none %}
+<tr><th scope="row">{{ a.short }} <span class="note">({{ a.code }})</span></th><td class="num">{{ (a.total_share * 100)|num(1) }} {{ bar(a.total_share, m.bundestag_max) }}</td><td class="num">{{ (a.bundestag_share * 100)|num(1) }} {{ bar(a.bundestag_share, m.bundestag_max) }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+</section>
+
+<section id="methode">
+<h2>Wie die Felder entstehen</h2>
+<p>Politikfeld je Dokument von einem Klassifikator (XLM-RoBERTa), trainiert auf von Menschen nach dem CAP kodierten Bundestagsanfragen und Wahlprogrammen und auf Labels eines lokalen Sprachmodells ({{ k.teacher }}) für {{ k.silver|num }} Ratsdokumente; in {{ c.measured_dataset }} {{ c.sentence }}: Genauigkeit {{ c.accuracy|pct(0) }}, Makro-F1 {{ c.macro_f1|num(2) }} ({{ k.interval[0]|num(2) }} bis {{ k.interval[1]|num(2) }}); an {{ k.bundestag_units|num }} von Menschen kodierten Bundestagsanfragen Makro-F1 {{ k.bundestag_f1|num(2) }}.</p>
+<ul>
+<li><strong>Eingabe.</strong> Titel und der Anfang des Textes, rund 1&#8239;500 Zeichen, im Modell auf 256 Token gekürzt; bei {{ m.cut|num }} Dokumenten sah der Klassifikator darum nicht den ganzen Text. Der Gegenstand steht in Ratsdokumenten fast immer im Titel und im Betreff.</li>
+<li><strong>Eine Destillation.</strong> Der Klassifikator lernt die Ratsdokumente zum großen Teil vom Sprachmodell: es lieferte die Labels für die Ratsdokumente, und beide sagen bei {{ k.teacher_agreement|num }} von {{ k.units|num }} Dokumenten der Prüfung dasselbe Feld. Das Sprachmodell selbst trifft etwas besser, kostet aber Stunden statt Minuten; wer seinen Prompt oder das Modell ändert, muss den Klassifikator neu trainieren.</li>
+<li><strong>Unsicherheit.</strong> Makro-F1 mittelt über die Felder, auch über seltene mit wenigen Dokumenten; das Intervall reicht bis {{ k.interval[0]|num(3) }}, unter die Schwelle von 0,70, an der das Verfahren gewählt wurde. Bei {{ m.low_confidence|num }} Dokumenten liegt die Wahrscheinlichkeit des gewählten Felds unter {{ data.low_confidence|num(1) }}; am schwächsten trifft er in der Prüfung {% for name, f1 in c.weakest %}{{ name }} (F1 {{ f1|num(2) }}){% if not loop.last %} und {% endif %}{% endfor %}, am häufigsten sagt er „{{ c.confusion[1] }}“, wo „{{ c.confusion[0] }}“ gemeint ist ({{ c.confusion[2]|num }} der {{ c.confusion[3]|num }} Dokumente zu {{ c.confusion[0] }}).</li>
+<li><strong>Nicht von Menschen.</strong> Die {{ c.units|num }} Dokumente der Prüfung kodierten {{ c.models[0] }}{% if c.same_model %} zweimal und schlichtete dasselbe Modell{% else %} und {{ c.models[1] }}, die Schlichtung {{ c.models[2] }}{% endif %}; sie waren sich bei {{ c.agreed|num }} von {{ c.units|num }} einig (Krippendorffs α {{ c.alpha|num(3) }}). Das ist eine obere Schätzung der Schärfe des Codebuchs, kein Beleg der Richtigkeit.</li>
+</ul>
+<p>Die Felder je Dokument und die Anteile je Gremiumsart stehen in den <a href="details.html#downloads">Downloads</a>, unter derselben Lizenz; die Spalten erklärt das <a href="spalten.html#politikfelder">Spaltenschema</a>. Messung, Urteil und verworfene Wege: <a href="{{ u.measurement }}">Messdokument</a>; die Prüfung: <a href="{{ u.check }}">Validierung</a>.</p>
+</section>

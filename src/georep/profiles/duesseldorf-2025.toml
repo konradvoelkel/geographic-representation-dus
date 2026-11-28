@@ -75,3 +75,8 @@ package = "snapshots/duesseldorf-beschluesse/raw/tagesordnungspunkte-2025.parque
 [context.need]                 # H1′ und H3′ rechnen erst mit zwölf Monaten Unfällen dieser Periode (Unfallatlas 2026, erwartet im Juli 2027); bis dahin aus
 enabled = false
 package = ""
+
+# --- Vorhaben 19: Politikfelder nach dem CAP (docs/plans/19-politikfelder.md, § 10)
+[policy_areas]                 # die Vorhersage des Klassifikators (Weg 3b) für diesen Datensatz: ab 2025, nur in der Hauptperiode geprüft (Frage 46, Annahme gilt)
+enabled = true
+package = "snapshots/duesseldorf-2025-politikfelder/processed/politikfelder.parquet"  # georep pack --policy-areas (README dort, CC BY-NC-SA 4.0); bootstrap kopiert nach raw/politikfelder_paket.parquet
