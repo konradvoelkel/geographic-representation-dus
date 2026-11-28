@@ -60,7 +60,7 @@
 <thead><tr><th scope="col">Prüfung</th><th scope="col">Rechnung, Zeitraum</th><th scope="col" class="num">Anträge</th><th scope="col" class="num">angenommen</th><th scope="col" class="num">p</th><th scope="col" class="num">p nach Holm</th><th scope="col">Ergebnis</th></tr></thead>
 <tbody>
 {% for t in v.tests %}
-<tr><th scope="row">{{ t.hypothesis }}</th><td>{{ t.calculation_label }}; {{ t.start|date_de }} bis {% if t.end %}{{ t.end|date_de }}{% else %}heute{% endif %}</td>{% if t.n %}<td class="num">{{ t.n|num }}</td><td class="num">{{ t.accepted|num }} ({{ t.share|pct(1) }}; bis {{ t.upper|pct(1) }})</td><td class="num">{{ t.p }}</td><td class="num">{{ t.p_holm }}</td>{% else %}<td class="num" colspan="4">nicht gerechnet</td>{% endif %}<td>{% if t.decision %}<strong>{{ t.decision }}</strong>{% else %}Nebenrechnung, entscheidet nicht{% endif %}{% if t.reason %} <span class="note">({{ t.reason }})</span>{% endif %}</td></tr>
+<tr><th scope="row">{{ t.hypothesis }}</th><td>{{ t.calculation_label }}; {{ t.start|date_de }} bis {% if t.end %}{{ t.end|date_de }}{% else %}heute{% endif %}</td>{% if t.n %}<td class="num">{{ t.n|num }}</td><td class="num">{{ t.accepted|num }} ({{ t.share|pct(1) }}; bis {{ t.upper|pct(1) }})</td><td class="num">{{ t.p }}</td><td class="num">{{ t.p_holm }}</td>{% else %}<td colspan="4" class="note">nicht gerechnet</td>{% endif %}<td>{% if t.decision %}<strong>{{ t.decision }}</strong>{% else %}Nebenrechnung, entscheidet nicht{% endif %}{% if t.reason %} <span class="note">({{ t.reason }})</span>{% endif %}</td></tr>
 {% endfor %}
 </tbody></table></div>
 <p class="note">Angenommen mit dem Anteil und der oberen einseitigen 95-%-Grenze nach Clopper-Pearson. „Nicht entscheidbar“ heißt: die Prüfung sagt weder ja noch nein, nicht „kein Effekt“.{% if not v.has_main %} Der Haupttest rechnet in der Periode, in der sein Zeitraum liegt; hier steht nur die Nebenrechnung.{% endif %}</p>
@@ -73,7 +73,7 @@
 <thead><tr><th scope="col">Rechnung</th><th scope="col" class="num">Anträge</th><th scope="col" class="num">angenommen</th><th scope="col" class="num">obere Grenze</th></tr></thead>
 <tbody>
 {% for t in v.side %}
-<tr><th scope="row">{{ t.calculation_label }}{% if t.party %}: {{ t.party }}{% endif %}</th>{% if t.n %}<td class="num">{{ t.n|num }}</td><td class="num">{{ t.accepted|num }} ({{ t.share|pct(1) }})</td><td class="num">{{ t.upper|pct(1) }}</td>{% else %}<td class="num" colspan="3">kein Antrag</td>{% endif %}</tr>
+<tr><th scope="row">{{ t.calculation_label }}{% if t.party %}: {{ t.party }}{% endif %}</th>{% if t.n %}<td class="num">{{ t.n|num }}</td><td class="num">{{ t.accepted|num }} ({{ t.share|pct(1) }})</td><td class="num">{{ t.upper|pct(1) }}</td>{% else %}<td colspan="3" class="note">kein Antrag</td>{% endif %}</tr>
 {% endfor %}
 </tbody></table></div>
 <p class="note">Ein gemeinsamer Antrag zweier Fraktionen der Opposition zählt unter R4 bei beiden.</p>

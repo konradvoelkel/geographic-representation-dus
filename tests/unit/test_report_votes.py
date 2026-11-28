@@ -191,6 +191,8 @@ def test_die_hauptperiode_zeigt_zaehlung_pruefsatz_und_haupttest() -> None:
     # zwei Anträge: H28.2 unter 30 Anträgen nicht entscheidbar, H28.1 und H28.3 ohne Ebene B
     assert html.count("<strong>nicht entscheidbar</strong>") == 3
     assert "zu wenige Anträge" in html
+    assert html.count("diese Ebene ist verworfen)") == 2  # der Grund bei H28.1 und H28.3, kurz
+    assert '<td colspan="4" class="note">nicht gerechnet</td>' in html
     assert "Nebenrechnungen von H28.2" in html
     assert "Bezirksvertretungen" in html and "Ausschüsse" in html
 
@@ -224,6 +226,8 @@ def test_ohne_schritt_sagt_der_abschnitt_nur_was_fehlt() -> None:
         "der Wortschatz, mit dem die Sitzungsleitung hier Ergebnisse einträgt, ist nicht gemessen"
         in html
     )
+    # ein Satz, kein „Abstimmungen: …: …" mit zwei Doppelpunkten (Foto vom 2026-11-28)
+    assert "<li>Ergebnis und Form der Beschlüsse: der Wortschatz" in html
     assert "<table" not in html and "abstimmungen-pruefung" not in html
 
 

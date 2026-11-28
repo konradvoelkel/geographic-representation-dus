@@ -84,10 +84,7 @@ CALCULATION_LABELS = {
     R4: "R4, je Fraktion",
 }
 REASON_TEXT = {
-    LEVEL_B_REJECTED: (
-        "braucht die Positionen der Fraktionen aus den Niederschriften, und diese Ebene verfehlte "
-        "das Kriterium"
-    ),
+    LEVEL_B_REJECTED: "braucht die Positionen der Fraktionen; diese Ebene ist verworfen",
     LEVEL_A_MISSED: "Ergebnis und Form aus dem Eintrag verfehlten das Kriterium",
     TOO_FEW: "zu wenige Anträge",
     NO_MAJORITY: "das Profil nennt für den Zeitraum keine Mehrheit",
@@ -386,12 +383,12 @@ def _missing(settings: Settings, on: bool, tests: Sequence[TestRow]) -> tuple[st
     """Was in diesem Profil fehlt, in Sätzen (Plan § 6)."""
     if not on:
         reason = (
-            "der Schritt ist für dieses Profil nicht eingeschaltet: der Wortschatz, mit dem die "
-            "Sitzungsleitung hier Ergebnisse einträgt, ist nicht gemessen"
+            "der Wortschatz, mit dem die Sitzungsleitung hier Ergebnisse einträgt, ist nicht "
+            "gemessen, und ohne die Beschlüsse von Vorhaben 26 gibt es keine Abstimmungen"
             if not settings.outcomes.enabled
-            else "der Schalter votes.enabled ist aus"
+            else "der Schritt ist für dieses Profil abgeschaltet (votes.enabled)"
         )
-        return (f"Abstimmungen: {reason}.",)
+        return (f"Ergebnis und Form der Beschlüsse: {reason}.",)
     lines = [
         "Wer wie gestimmt hat (Positionen der Fraktionen aus den Niederschriften): die Prüfung "
         f"verfehlte das Kriterium (Präzision {format_de(RULE_CHECK.level_b.precision, 3)} bei "
